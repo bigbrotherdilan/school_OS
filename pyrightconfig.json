@@ -1,0 +1,10 @@
+{
+  "executionEnvironments": [
+    {
+      "root": "School_OS/backend"
+    }
+  ],
+  "extraPaths": [
+    "School_OS/backend"
+  ]
+}
