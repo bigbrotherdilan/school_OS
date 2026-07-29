@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Academic Performance &amp; Program Coverage | School OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-fixed-variant": "#264191",
+                        "tertiary-fixed": "#ffdbcb",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-container": "#6e2c00",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#757682",
+                        "on-tertiary-container": "#f39461",
+                        "on-background": "#191c1e",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "secondary": "#515f74",
+                        "primary-fixed": "#dce1ff",
+                        "secondary-container": "#d5e3fc",
+                        "tertiary": "#4b1c00",
+                        "on-tertiary-fixed": "#341100",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-container": "#57657a",
+                        "on-primary-fixed": "#00164e",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "primary-container": "#1e3a8a",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#90a8ff",
+                        "surface-dim": "#d8dadc",
+                        "surface-tint": "#4059aa",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#444651",
+                        "surface": "#f7f9fb",
+                        "on-error-container": "#93000a",
+                        "background": "#f7f9fb",
+                        "on-tertiary-fixed-variant": "#773205",
+                        "secondary-fixed": "#d5e3fc",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b6c4ff",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f6",
+                        "primary": "#00236f",
+                        "surface-container": "#eceef0",
+                        "outline-variant": "#c5c5d3",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "on-primary": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Public Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(224, 227, 229, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background antialiased">
+<!-- TopNavBar -->
+<header class="bg-white dark:bg-slate-900 shadow-sm dark:shadow-none docked full-width top-0 border-b sticky z-50">
+<div class="flex justify-between items-center w-full px-6 py-3 max-w-[1920px] mx-auto font-['Public_Sans'] antialiased tracking-tight">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#1E3A8A] dark:text-blue-400">School OS</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Overview</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Regions</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Monitoring</a>
+<a class="text-[#1E3A8A] dark:text-blue-400 font-bold border-b-2 border-[#1E3A8A] pb-2" href="#">Academic</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Finance</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Workforce</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Infrastructure</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Administrator Profile" data-alt="Professional portrait of a male education administrator in a suit with a neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_tcFbKlTPAga2Ldap-VjOV6XTmG4Edc7gIr1fDoHSZAK7k_m2Mb8SiUggKAa7dTJsA53PX3O7vk6OBpTj3Wsar8tPhQivizBppUrCZ0il0-ILQv_CiPOm2481xPg4NGCf0h_kGqXRUTMyzpk0rAnrFwiluwRrXBMOfVfIQHEhPa0U3pEYJCl-XExYHrsoHp7I_-hj2EKvdcuUGv8RJwFVNZVJnlJAJmVD-jwVsNOEsDyHiAaLW-pOGNH_c9Rh4QHjQYWRoOnMcjE"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex min-h-[calc(100vh-64px)]">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col pt-8 bg-slate-50 dark:bg-slate-950 w-64 border-r font-['Public_Sans'] text-sm tracking-wide">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 bg-primary-container flex items-center justify-center rounded text-white">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<h2 class="font-bold text-[#1E3A8A] text-base leading-tight">Command Center</h2>
+<p class="text-xs text-slate-500">National Education</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-4 px-6 py-3 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span>Alerts</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 bg-white dark:bg-slate-900 text-[#1E3A8A] dark:text-blue-400 shadow-sm border-l-4 border-[#1E3A8A] scale-[0.99]" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span>Inspections</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span>Policy</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">help_center</span>
+<span>Support</span>
+</a>
+</nav>
+<div class="p-6 border-t border-outline-variant/10">
+<div class="bg-surface-container-highest/30 p-4 rounded-lg">
+<p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Active Cycle</p>
+<p class="font-bold text-on-surface">Term 2, 2023/24</p>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 ml-64 p-10 max-w-[1600px]">
+<!-- Header Section -->
+<div class="mb-12">
+<div class="flex items-center gap-2 mb-2 text-primary font-medium tracking-wide">
+<span class="h-1 w-6 bg-primary"></span>
+<span class="text-xs uppercase">National Performance Index</span>
+</div>
+<h1 class="font-headline text-4xl font-extrabold text-on-surface tracking-tight mb-4">Academic Performance &amp; Program Coverage</h1>
+<p class="text-secondary max-w-2xl leading-relaxed">Strategic oversight of curriculum execution across all 10 regions. Validating inspector field reports against institutional self-assessments.</p>
+</div>
+<!-- National Metric Tiles -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+<div class="bg-primary-container p-8 relative overflow-hidden group">
+<div class="relative z-10">
+<span class="text-on-primary-container font-medium text-xs tracking-widest uppercase mb-2 block">National Coverage</span>
+<div class="font-headline text-5xl font-black text-white">82.4%</div>
+<div class="mt-4 flex items-center gap-2 text-on-primary-container text-sm">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+<span>+4.2% from last cycle</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10 scale-150">
+<span class="material-symbols-outlined text-white text-9xl">menu_book</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 shadow-sm">
+<span class="text-secondary font-medium text-xs tracking-widest uppercase mb-2 block">Inspector Validation</span>
+<div class="font-headline text-5xl font-black text-primary">94.1%</div>
+<div class="mt-4 flex items-center gap-2 text-on-secondary-container text-sm">
+<span class="material-symbols-outlined text-xs text-green-600">check_circle</span>
+<span>842 Units Verified</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 shadow-sm">
+<span class="text-secondary font-medium text-xs tracking-widest uppercase mb-2 block">Exam Readiness</span>
+<div class="font-headline text-5xl font-black text-on-tertiary-container">71.8%</div>
+<div class="mt-4 flex items-center gap-2 text-on-secondary-container text-sm">
+<span class="material-symbols-outlined text-xs text-error">priority_high</span>
+<span>Low readiness in North</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 shadow-sm">
+<span class="text-secondary font-medium text-xs tracking-widest uppercase mb-2 block">Teacher Compliance</span>
+<div class="font-headline text-5xl font-black text-primary">88.5%</div>
+<div class="mt-4 flex items-center gap-2 text-on-secondary-container text-sm text-green-600">
+<span class="material-symbols-outlined text-xs">history_edu</span>
+<span>Logbooks updated</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid - Section 1: Coverage & Analytics -->
+<div class="grid grid-cols-12 gap-8 mb-12">
+<!-- Heatmap - 8 Columns -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-low p-8">
+<div class="flex justify-between items-end mb-8">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<div class="w-1 h-5 bg-primary"></div>
+<h3 class="font-headline font-bold text-xl">Curriculum Coverage Heatmap</h3>
+</div>
+<p class="text-slate-500 text-sm">Subject vs. Regional completion percentage</p>
+</div>
+<div class="flex gap-2">
+<div class="flex items-center gap-2 px-3 py-1 bg-white text-[10px] font-bold border border-outline-variant/20">
+<span class="w-2 h-2 bg-error"></span> &lt; 50%
+                            </div>
+<div class="flex items-center gap-2 px-3 py-1 bg-white text-[10px] font-bold border border-outline-variant/20">
+<span class="w-2 h-2 bg-on-tertiary-container"></span> 50-80%
+                            </div>
+<div class="flex items-center gap-2 px-3 py-1 bg-white text-[10px] font-bold border border-outline-variant/20">
+<span class="w-2 h-2 bg-primary"></span> &gt; 80%
+                            </div>
+</div>
+</div>
+<div class="grid grid-cols-11 gap-2">
+<!-- Header Row -->
+<div class="col-span-1"></div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Math</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Physics</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Bio</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">History</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Lit</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Comp Sci</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Chem</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Eco</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Geo</div>
+<div class="text-[10px] font-bold text-center text-slate-400 uppercase tracking-tighter">Philo</div>
+<!-- Region Rows -->
+<div class="text-xs font-bold text-slate-600">Coastal</div>
+<div class="h-10 bg-primary/90"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/70"></div> <div class="h-10 bg-primary/85"></div> <div class="h-10 bg-primary/90"></div> <div class="h-10 bg-primary/60"></div> <div class="h-10 bg-primary/75"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/90"></div> <div class="h-10 bg-primary/80"></div>
+<div class="text-xs font-bold text-slate-600">Central</div>
+<div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/70"></div> <div class="h-10 bg-primary/60"></div> <div class="h-10 bg-primary/75"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/90"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/70"></div> <div class="h-10 bg-primary/60"></div> <div class="h-10 bg-primary/75"></div>
+<div class="text-xs font-bold text-slate-600">North</div>
+<div class="h-10 bg-error"></div> <div class="h-10 bg-on-tertiary-container/80"></div> <div class="h-10 bg-error/90"></div> <div class="h-10 bg-on-tertiary-container/60"></div> <div class="h-10 bg-on-tertiary-container/70"></div> <div class="h-10 bg-error"></div> <div class="h-10 bg-on-tertiary-container/80"></div> <div class="h-10 bg-on-tertiary-container/60"></div> <div class="h-10 bg-error"></div> <div class="h-10 bg-error"></div>
+<div class="text-xs font-bold text-slate-600">Western</div>
+<div class="h-10 bg-primary/60"></div> <div class="h-10 bg-primary/75"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/90"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/70"></div> <div class="h-10 bg-primary/60"></div> <div class="h-10 bg-primary/75"></div> <div class="h-10 bg-primary/80"></div> <div class="h-10 bg-primary/90"></div>
+</div>
+</div>
+<!-- Subjects Lagging - 4 Columns -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-8 shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-1 h-5 bg-error"></div>
+<h3 class="font-headline font-bold text-xl">Critical Lag Targets</h3>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="font-bold text-sm">Advanced Mathematics</span>
+<span class="text-error font-black text-xs">42% Coverage</span>
+</div>
+<div class="w-full bg-surface-container-high h-2">
+<div class="bg-error w-[42%] h-full"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-2">Primary cause: Teacher deficit in Northern Region</p>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="font-bold text-sm">Organic Chemistry</span>
+<span class="text-on-tertiary-container font-black text-xs">56% Coverage</span>
+</div>
+<div class="w-full bg-surface-container-high h-2">
+<div class="bg-on-tertiary-container w-[56%] h-full"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-2">Laboratory supply chain disruption (Phase 4)</p>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="font-bold text-sm">Classical Literature</span>
+<span class="text-on-tertiary-container font-black text-xs">61% Coverage</span>
+</div>
+<div class="w-full bg-surface-container-high h-2">
+<div class="bg-on-tertiary-container w-[61%] h-full"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-2">Syllabus revision transition delay</p>
+</div>
+</div>
+<button class="w-full mt-8 py-3 bg-surface-container-high text-on-surface font-bold text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-colors">
+                        View Detailed Lag Report
+                    </button>
+</div>
+</div>
+<!-- Examination Readiness - Asymmetric Layout -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+<div class="md:col-span-2 bg-surface-container-lowest p-8 shadow-sm">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-1 h-5 bg-primary"></div>
+<h3 class="font-headline font-bold text-xl">Progression Completion Index</h3>
+</div>
+<div class="relative h-[300px] w-full border-l border-b border-outline-variant/30 px-4 py-4 flex items-end justify-between">
+<!-- Mock Line Chart Path -->
+<svg class="absolute inset-0 w-full h-full px-4 pt-10 pb-4" preserveaspectratio="none" viewbox="0 0 100 100">
+<path d="M 0 90 L 20 80 L 40 85 L 60 40 L 80 25 L 100 10" fill="none" stroke="#1e3a8a" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<path d="M 0 90 L 20 88 L 40 82 L 60 70 L 80 65 L 100 60" fill="none" stroke="#ba1a1a" stroke-dasharray="4" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<circle cx="0" cy="90" fill="#1e3a8a" r="1.5"></circle>
+<circle cx="20" cy="80" fill="#1e3a8a" r="1.5"></circle>
+<circle cx="40" cy="85" fill="#1e3a8a" r="1.5"></circle>
+<circle cx="60" cy="40" fill="#1e3a8a" r="1.5"></circle>
+<circle cx="80" cy="25" fill="#1e3a8a" r="1.5"></circle>
+<circle cx="100" cy="10" fill="#1e3a8a" r="1.5"></circle>
+</svg>
+<div class="text-[10px] font-bold text-slate-400 uppercase">Sept</div>
+<div class="text-[10px] font-bold text-slate-400 uppercase">Oct</div>
+<div class="text-[10px] font-bold text-slate-400 uppercase">Nov</div>
+<div class="text-[10px] font-bold text-slate-400 uppercase">Dec</div>
+<div class="text-[10px] font-bold text-slate-400 uppercase">Jan</div>
+<div class="text-[10px] font-bold text-slate-400 uppercase">Feb</div>
+</div>
+<div class="mt-6 flex gap-8">
+<div class="flex items-center gap-2">
+<div class="w-3 h-0.5 bg-primary"></div>
+<span class="text-xs font-medium text-slate-600">Current Progress</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-0.5 bg-error border-dashed border-t-2 border-error"></div>
+<span class="text-xs font-medium text-slate-600">Predicted Lag (No Intervention)</span>
+</div>
+</div>
+</div>
+<div class="bg-primary-container p-8 text-white relative">
+<h3 class="font-headline font-bold text-xl mb-6">Readiness Analytics</h3>
+<div class="space-y-8">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-on-primary-container">groups</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-primary-container">Classes Behind Syllabus</span>
+</div>
+<div class="text-3xl font-black">1,248</div>
+<p class="text-[10px] text-on-primary-container/80 mt-1">Requires urgent pedagogical catch-up</p>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-on-primary-container">edit_document</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-primary-container">Teacher Logbook Gaps</span>
+</div>
+<div class="text-3xl font-black">14.2%</div>
+<p class="text-[10px] text-on-primary-container/80 mt-1">Validation missing for 42 districts</p>
+</div>
+<div class="pt-6 border-t border-white/10">
+<p class="text-xs italic text-white/70">"Current trajectory suggests 68% of candidates will be 'Fully Prepared' by National Exam date."</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bilingual Monitoring Section -->
+<div class="mb-6">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-1 h-5 bg-on-tertiary-container"></div>
+<h3 class="font-headline font-bold text-2xl">Bilingual Education Monitoring</h3>
+</div>
+<p class="text-slate-500 text-sm mb-8">Metrics for Dual-System Institutions &amp; Linguistic Stream Comparison</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Stream Comparison Card -->
+<div class="bg-surface-container-low p-10 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-12">
+<div class="space-y-1">
+<h4 class="font-bold text-on-surface">Stream Metric Comparison</h4>
+<p class="text-xs text-slate-500">Resource allocation vs Achievement</p>
+</div>
+<span class="px-4 py-1 bg-white text-[10px] font-black uppercase tracking-widest border border-outline-variant/30">Live Sync</span>
+</div>
+<div class="flex items-center justify-between gap-12">
+<div class="flex-1 text-center">
+<div class="mb-4 text-primary font-black text-4xl">78%</div>
+<div class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-6">Anglophone Stream</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between text-[10px] px-2">
+<span>Resources</span>
+<span class="font-bold text-primary">82%</span>
+</div>
+<div class="w-full bg-white h-1.5 overflow-hidden">
+<div class="bg-primary w-[82%] h-full"></div>
+</div>
+</div>
+</div>
+<div class="h-24 w-[1px] bg-outline-variant/30"></div>
+<div class="flex-1 text-center">
+<div class="mb-4 text-on-tertiary-container font-black text-4xl">84%</div>
+<div class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-6">Francophone Stream</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between text-[10px] px-2">
+<span>Resources</span>
+<span class="font-bold text-on-tertiary-container">76%</span>
+</div>
+<div class="w-full bg-white h-1.5 overflow-hidden">
+<div class="bg-on-tertiary-container w-[76%] h-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dual-System Institutions Glass Card -->
+<div class="relative min-h-[300px] overflow-hidden shadow-xl border border-white/20">
+<img alt="Bilingual Institution" class="absolute inset-0 w-full h-full object-cover" data-alt="Modern architectural education building with glass windows and geometric shadows in daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-uhQLIMGdiLIO8gG-teNT_rvN0EYPHQXklAOc43v8w3SlrmSLGVFIl9HtMjyD_ZfAYxOxfJuZIl_1NZGI4gac-P_WxiFrstfE0lmZoBINJbH5Fjx9oyxJzZddIzqys_77-Hv9hPDJ3Cxc25qYepFqyK4WFeSxNlEVxltuKZddAefubmgiQkJbyY_rHiMIFjsZ_6ertPpgiR7mRbl9qAkw85DK46GV_C54yOjrOCDpeeY445E2IhnoE-UKkX76WVKzZ4qp-c2YtR8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent"></div>
+<div class="relative h-full p-10 flex flex-col justify-end text-white">
+<div class="mb-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 glass-panel rounded-full text-[10px] font-bold uppercase tracking-widest text-white mb-4">
+<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Hybrid Operations
+                            </div>
+<h4 class="font-headline font-bold text-2xl mb-2">Dual-System Operational Efficiency</h4>
+<p class="text-white/80 text-sm leading-relaxed max-w-md">Monitoring 156 institutions currently operating both academic systems simultaneously under single administrative leadership.</p>
+</div>
+<div class="flex gap-10">
+<div>
+<div class="text-2xl font-black">92%</div>
+<div class="text-[10px] uppercase font-bold tracking-widest text-white/60">Admin Cohesion</div>
+</div>
+<div>
+<div class="text-2xl font-black">156</div>
+<div class="text-[10px] uppercase font-bold tracking-widest text-white/60">Active Hubs</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Compliance Note -->
+<footer class="mt-20 pt-8 border-t border-outline-variant/10 flex justify-between items-center text-slate-400 text-xs">
+<div>© 2024 National Education Command Center. Data classified: Official Use Only.</div>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors" href="#">Integrity Protocol</a>
+<a class="hover:text-primary transition-colors" href="#">Access Logs</a>
+<a class="hover:text-primary transition-colors" href="#">System Status</a>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

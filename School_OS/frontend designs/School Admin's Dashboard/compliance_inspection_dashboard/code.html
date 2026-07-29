@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Compliance &amp; Governance | School OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface-variant": "#444651",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#005236",
+                        "outline-variant": "#c5c5d3",
+                        "primary-container": "#1e3a8a",
+                        "primary-fixed": "#dce1ff",
+                        "background": "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-surface": "#191c1e",
+                        "error": "#ba1a1a",
+                        "secondary": "#006c49",
+                        "on-background": "#191c1e",
+                        "surface-tint": "#4059aa",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-dim": "#d8dadc",
+                        "on-primary-container": "#90a8ff",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "on-tertiary-container": "#ef9900",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-fixed-variant": "#264191",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb8",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-container": "#00714d",
+                        "tertiary": "#3e2400",
+                        "primary": "#00236f",
+                        "inverse-primary": "#b6c4ff",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-container": "#5c3800",
+                        "secondary-container": "#6cf8bb",
+                        "on-secondary-fixed": "#002113",
+                        "surface": "#f7f9fb",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#00164e",
+                        "on-error-container": "#93000a",
+                        "outline": "#757682",
+                        "secondary-fixed": "#6ffbbe",
+                        "surface-variant": "#e0e3e5"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex">
+<!-- SideNavBar (The Anchor) -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col py-6 bg-slate-900 dark:bg-black w-72 z-50">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">L</div>
+<h2 class="text-lg font-bold text-white tracking-tight">The Institutional Ledger</h2>
+</div>
+<p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Global Administration</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Navigation items from JSON -->
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-regular tracking-wide">Overview</span>
+</a>
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="text-sm font-regular tracking-wide">Academic</span>
+</a>
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="text-sm font-regular tracking-wide">Operations</span>
+</a>
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-sm font-regular tracking-wide">Finance</span>
+</a>
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-regular tracking-wide">Community</span>
+</a>
+<!-- Active Tab: Compliance -->
+<a class="bg-blue-600 text-white rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 focus:ring-2 focus:ring-blue-500" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="text-sm font-regular tracking-wide">Compliance</span>
+</a>
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-regular tracking-wide">System</span>
+</a>
+</nav>
+<div class="mt-auto px-2 space-y-1 border-t border-slate-800 pt-6">
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-sm font-regular tracking-wide">Audit Logs</span>
+</a>
+<a class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-200 hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">manage_accounts</span>
+<span class="text-sm font-regular tracking-wide">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 ml-72 min-h-screen">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-12 h-16 bg-slate-50/80 backdrop-blur-md shadow-sm border-b border-slate-200/15">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold tracking-tighter text-blue-900">School OS</h1>
+<nav class="hidden md:flex gap-6">
+<a class="text-slate-600 text-sm font-medium tracking-tight hover:bg-slate-100 px-2 py-1 rounded transition-colors" href="#">2023-2024 Academic Year</a>
+<a class="text-slate-600 text-sm font-medium tracking-tight hover:bg-slate-100 px-2 py-1 rounded transition-colors" href="#">Bilingual Section</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a school administrator in a clean office environment with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWYuBYnJzVcuTXKiYdvhQoQnNsZG3ilQlwy5L4pEnstPrOjdwzZnzYp_76ACO_tLj6UhScvnCzeu3Yi65xocWwNwjwbcDpeODtyxPCmvvxpCos8ev-3VYXqWdCvnQ8sWS6DPx7gSwOYWDyliBatMHQAcxehKxv4XXHCN3pxqvgej219vwjt_uCUlrivLwDycM_UpKa3WUwVnl3w-9CXlgvLMYUvgxv76WYYjlIdRmL29izrE53O_HDnBM9-q1ecd3yTnNmbnlx5qU"/>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-12 max-w-7xl mx-auto space-y-12">
+<!-- Page Header (Architectural Monolith Style) -->
+<div class="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-outline-variant/15 pb-8">
+<div>
+<span class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-primary/60 mb-2 block">Governance &amp; Ministry Affairs</span>
+<h2 class="text-4xl font-semibold tracking-tight text-on-surface">Institutional Compliance</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">Real-time oversight of administrative accuracy and ministerial readiness. Ensure all operational data aligns with national educational standards.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-3 bg-surface-container-highest text-on-surface font-semibold rounded-xl text-sm transition-all hover:bg-surface-container-high active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Export Ministry Report
+                    </button>
+<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold rounded-xl text-sm shadow-lg transition-all active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">send</span>
+                        Submit Audit Data
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Section -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Compliance Gauges (Status Dashboard) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/10 shadow-sm">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h3 class="text-xl font-semibold text-on-surface">Compliance Status Dashboard</h3>
+<p class="text-sm text-on-surface-variant">Live metrics across key administrative domains</p>
+</div>
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full border border-secondary/20">System Wide: 94% Valid</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Logbook Completion -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Logbook Completion</span>
+<span class="text-xs font-bold text-secondary">Fully Compliant</span>
+</div>
+<div class="relative pt-1">
+<div class="overflow-hidden h-3 text-xs flex rounded-full bg-surface-container">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-secondary" style="width:100%"></div>
+</div>
+</div>
+<p class="text-[0.7rem] text-on-surface-variant">420/420 entries verified this week.</p>
+</div>
+<!-- Program Coverage -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Program Coverage</span>
+<span class="text-xs font-bold text-on-tertiary-container">Needs Attention</span>
+</div>
+<div class="relative pt-1">
+<div class="overflow-hidden h-3 text-xs flex rounded-full bg-surface-container">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-on-tertiary-container" style="width:78%"></div>
+</div>
+</div>
+<p class="text-[0.7rem] text-on-surface-variant">Physics Dept. syllabus lagging by 12%.</p>
+</div>
+<!-- Attendance Submission -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Attendance Submission</span>
+<span class="text-xs font-bold text-error">Critical Issues</span>
+</div>
+<div class="relative pt-1">
+<div class="overflow-hidden h-3 text-xs flex rounded-full bg-surface-container">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-error" style="width:45%"></div>
+</div>
+</div>
+<p class="text-[0.7rem] text-on-surface-variant">3 Classrooms missing data for 48 hours.</p>
+</div>
+<!-- Mark Entry -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Mark Entry</span>
+<span class="text-xs font-bold text-secondary">Fully Compliant</span>
+</div>
+<div class="relative pt-1">
+<div class="overflow-hidden h-3 text-xs flex rounded-full bg-surface-container">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-secondary" style="width:98%"></div>
+</div>
+</div>
+</div>
+<!-- Financial Reporting -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Financial Reporting</span>
+<span class="text-xs font-bold text-secondary">Fully Compliant</span>
+</div>
+<div class="relative pt-1">
+<div class="overflow-hidden h-3 text-xs flex rounded-full bg-surface-container">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-secondary" style="width:100%"></div>
+</div>
+</div>
+</div>
+<!-- Staff Records -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Staff Records</span>
+<span class="text-xs font-bold text-on-tertiary-container">Needs Attention</span>
+</div>
+<div class="relative pt-1">
+<div class="overflow-hidden h-3 text-xs flex rounded-full bg-surface-container">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-on-tertiary-container" style="width:85%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Government Integration Preview -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<div class="bg-primary text-on-primary rounded-xl p-8 flex-1 relative overflow-hidden group">
+<div class="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all"></div>
+<h3 class="text-lg font-semibold mb-4">Ministry Data Sync</h3>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="text-5xl font-extrabold tracking-tighter">100%</span>
+<span class="text-primary-fixed/60 text-sm">Synced</span>
+</div>
+<p class="text-sm text-primary-fixed/80 mb-6">Last global sync: Today, 08:42 AM</p>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-fixed">check_circle</span>
+<span class="text-sm font-medium">National Analytics Participation: Active</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-fixed">check_circle</span>
+<span class="text-sm font-medium">EMIS Standard: Compliant (v4.2)</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10 shadow-sm">
+<h4 class="text-sm font-bold uppercase tracking-wider text-on-surface-variant mb-4">Quick Audit Action</h4>
+<div class="flex flex-col gap-2">
+<button class="w-full text-left px-4 py-3 text-sm font-medium rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-between">
+                                Recalculate Compliance Score
+                                <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+<button class="w-full text-left px-4 py-3 text-sm font-medium rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-between">
+                                View Ministry Feedback
+                                <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Inspector Readiness Panel -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm flex flex-col overflow-hidden">
+<div class="p-6 bg-surface-container-low border-b border-outline-variant/10">
+<h3 class="text-lg font-bold text-on-surface">Inspector Readiness</h3>
+<p class="text-xs text-on-surface-variant mt-1">Pre-inspection health check</p>
+</div>
+<div class="p-6 space-y-6">
+<div>
+<span class="text-[0.65rem] font-bold text-on-surface-variant uppercase mb-3 block">Departments ready</span>
+<ul class="space-y-3">
+<li class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-sm font-medium">Mathematics</span>
+</div>
+<span class="text-xs text-on-surface-variant">Ready</span>
+</li>
+<li class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-sm font-medium">Science &amp; Labs</span>
+</div>
+<span class="text-xs text-on-surface-variant">Ready</span>
+</li>
+<li class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-on-tertiary-container"></div>
+<span class="text-sm font-medium">Humanities</span>
+</div>
+<span class="text-xs text-on-surface-variant">Reviewing</span>
+</li>
+</ul>
+</div>
+<div class="p-4 bg-error-container/30 rounded-xl">
+<div class="flex items-center gap-2 text-error mb-2">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="text-xs font-bold uppercase tracking-tight">Missing Records Alert</span>
+</div>
+<p class="text-xs text-on-error-container/80 leading-relaxed">
+                                Fire Drill Logs for Q3 are missing faculty signatures in the "Campus Safety" module. 
+                                <a class="underline font-bold" href="#">Fix Now</a>
+</p>
+</div>
+<div>
+<span class="text-[0.65rem] font-bold text-on-surface-variant uppercase mb-3 block">Documentation completeness</span>
+<div class="space-y-2">
+<label class="flex items-center gap-3 p-3 border border-outline-variant/10 rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input checked="" class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+<span class="text-xs font-medium">Faculty CVs Updated</span>
+</label>
+<label class="flex items-center gap-3 p-3 border border-outline-variant/10 rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input checked="" class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+<span class="text-xs font-medium">Financial Solvency Letter</span>
+</label>
+<label class="flex items-center gap-3 p-3 border border-outline-variant/10 rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+<span class="text-xs font-medium">Health Inspection Cert (2024)</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Audit Log Viewer -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm flex flex-col">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-lowest sticky top-0 rounded-t-xl z-10">
+<div>
+<h3 class="text-lg font-bold text-on-surface">System Audit Log</h3>
+<p class="text-xs text-on-surface-variant mt-1">Immutable ledger of all administrative actions</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors border border-outline-variant/20">
+<span class="material-symbols-outlined text-xl">filter_list</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors border border-outline-variant/20">
+<span class="material-symbols-outlined text-xl">search</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest">Timestamp</th>
+<th class="px-6 py-4 text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest">User Action</th>
+<th class="px-6 py-4 text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest">Category</th>
+<th class="px-6 py-4 text-[0.65rem] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 text-xs font-medium tabular-nums text-on-surface-variant">24 May, 14:22:10</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">Admin (A. Smith) edited Mark for Student X</span>
+<span class="text-[0.7rem] text-on-surface-variant">Mathematics Grade changed from B+ to A-</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[0.65rem] px-2 py-1 bg-surface-container rounded font-bold text-primary tracking-tighter uppercase">Academic Data</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1 text-secondary font-bold text-[0.65rem]">
+<div class="w-1 h-1 rounded-full bg-secondary"></div> VERIFIED
+                                        </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 text-xs font-medium tabular-nums text-on-surface-variant">24 May, 13:05:44</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">System Access: Remote IP 192.168.1.44</span>
+<span class="text-[0.7rem] text-on-surface-variant">User 'FinancialLead' logged in via VPN</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[0.65rem] px-2 py-1 bg-surface-container rounded font-bold text-primary tracking-tighter uppercase">Security</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1 text-secondary font-bold text-[0.65rem]">
+<div class="w-1 h-1 rounded-full bg-secondary"></div> SECURE
+                                        </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 text-xs font-medium tabular-nums text-on-surface-variant">24 May, 11:15:01</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">Tuition Waiver Approved</span>
+<span class="text-[0.7rem] text-on-surface-variant">Ref ID: TW-88493 - Value: $4,500.00</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[0.65rem] px-2 py-1 bg-surface-container rounded font-bold text-primary tracking-tighter uppercase">Financial Ops</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1 text-secondary font-bold text-[0.65rem]">
+<div class="w-1 h-1 rounded-full bg-secondary"></div> AUDITED
+                                        </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 text-xs font-medium tabular-nums text-on-surface-variant">24 May, 09:30:22</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">Bulk Upload: Staff Attendance</span>
+<span class="text-[0.7rem] text-on-surface-variant">Processed 145 records - 2 errors suppressed</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[0.65rem] px-2 py-1 bg-surface-container rounded font-bold text-primary tracking-tighter uppercase">HR Operations</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1 text-on-tertiary-container font-bold text-[0.65rem]">
+<div class="w-1 h-1 rounded-full bg-on-tertiary-container"></div> WARNING
+                                        </div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low/20 border-t border-outline-variant/10 text-center">
+<button class="text-[0.65rem] font-bold text-primary uppercase tracking-widest hover:underline">Load Extended Audit History (30 Days)</button>
+</div>
+</div>
+</div>
+<!-- Footer Compliance Quote -->
+<footer class="mt-12 py-12 border-t border-outline-variant/15 text-center">
+<div class="max-w-3xl mx-auto space-y-4">
+<div class="flex justify-center mb-6">
+<img class="w-16 h-16 rounded-full grayscale opacity-30" data-alt="High-angle shot of a university building's crest carved in stone with golden light accentuating the architectural details" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcBdUg6C-B-45vs7KxxR0o5hPw_LNX72aWQpXMIFmswHmJj4PdzERPLinLDRgUyUTWHycywqtPvzWXd1N6z1ht3EEfLUnQbkl0KeVrz4ly_y8JG5HIJlBO0SLXCeQGqYMCxGi7MSbjmpMdG9Cec_5I0KgxHQRzXWmbM_Y9ybUT-b2918FbKPNncF4-lgfYoXY5bYuSJS23K1a32oOYUxZ21zmG0sIqJkaj6xSjOoP1r6-Gyc8BpVQ7E3vkatXOSdyPWM0xCzfVYDM"/>
+</div>
+<p class="text-on-surface-variant italic font-serif leading-relaxed">
+                        "Institutional integrity is not a destination, but a continuous process of accurate documentation and radical transparency. Our system ensures that every decision made within these walls is accountable to the future."
+                    </p>
+<p class="text-xs font-bold uppercase tracking-[0.3em] text-primary/40">— Governance Charter v2.4</p>
+</div>
+</footer>
+</div>
+</main>
+</body></html>

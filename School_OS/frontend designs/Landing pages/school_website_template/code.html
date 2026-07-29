@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>School OS | Excellence in Education</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#191c1e",
+              "tertiary-fixed-dim": "#ffb95f",
+              "on-primary-fixed-variant": "#264191",
+              "on-error": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#006b5f",
+              "surface-tint": "#4059aa",
+              "on-primary": "#ffffff",
+              "inverse-on-surface": "#eff1f3",
+              "surface-container-highest": "#e0e3e5",
+              "primary-fixed-dim": "#b6c4ff",
+              "inverse-surface": "#2d3133",
+              "surface-container-low": "#f2f4f6",
+              "error": "#ba1a1a",
+              "surface-dim": "#d8dadc",
+              "tertiary": "#3e2400",
+              "on-tertiary-fixed": "#2a1700",
+              "outline": "#757682",
+              "on-secondary-fixed-variant": "#005048",
+              "on-surface-variant": "#444651",
+              "primary": "#00236f",
+              "secondary-fixed": "#71f8e4",
+              "background": "#f7f9fb",
+              "outline-variant": "#c5c5d3",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#653e00",
+              "on-secondary-fixed": "#00201c",
+              "surface-bright": "#f7f9fb",
+              "surface": "#f7f9fb",
+              "surface-container": "#eceef0",
+              "tertiary-container": "#5c3800",
+              "secondary-container": "#6df5e1",
+              "on-primary-container": "#90a8ff",
+              "surface-container-high": "#e6e8ea",
+              "on-error-container": "#93000a",
+              "on-secondary-container": "#006f64",
+              "on-tertiary": "#ffffff",
+              "on-background": "#191c1e",
+              "primary-container": "#1e3a8a",
+              "secondary-fixed-dim": "#4fdbc8",
+              "tertiary-fixed": "#ffddb8",
+              "inverse-primary": "#b6c4ff",
+              "on-tertiary-container": "#ef9900",
+              "surface-variant": "#e0e3e5",
+              "primary-fixed": "#dce1ff",
+              "error-container": "#ffdad6",
+              "on-primary-fixed": "#00164e"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-nav {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .editorial-shadow {
+            box-shadow: 0px 20px 40px rgba(25, 28, 30, 0.06);
+        }
+        .cta-gradient {
+            background: linear-gradient(135deg, #00236f 0%, #1e3a8a 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 glass-nav bg-surface/80">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="text-xl font-bold tracking-tighter text-blue-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="school">school</span>
+<span>School OS</span>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-blue-900 font-semibold border-b-2 border-blue-900 pb-1 font-inter tracking-tight" href="#home">Home</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors font-inter tracking-tight" href="#about">About</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors font-inter tracking-tight" href="#academics">Academics</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors font-inter tracking-tight" href="#admissions">Admissions</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors font-inter tracking-tight" href="#news">News</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors font-inter tracking-tight" href="#portal">Portal</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors font-inter tracking-tight" href="#contact">Contact</a>
+</div>
+<div class="flex items-center gap-3">
+<button class="hidden md:block px-5 py-2 text-sm font-semibold text-primary hover:bg-slate-100/50 rounded-lg transition-all">Login</button>
+<button class="cta-gradient text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md hover:opacity-90 transition-all">Request Demo</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<section class="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden" id="home">
+<div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+<div class="relative z-10">
+<span class="inline-block py-1 px-3 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-widest uppercase mb-6">Established 1994</span>
+<h1 class="text-5xl md:text-7xl font-bold text-primary leading-[1.1] tracking-tight mb-6">
+                    Nurturing the <br/><span class="text-on-secondary-container italic">Leaders of Tomorrow</span>
+</h1>
+<p class="text-lg text-on-surface-variant max-w-lg mb-10 leading-relaxed">
+                    A tradition of excellence, innovation, and global citizenship. Our curated learning environment empowers students to explore their full potential.
+                </p>
+<div class="flex flex-wrap gap-4">
+<button class="cta-gradient text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 group transition-all">
+                        Apply Now
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="bg-surface-container-low text-primary px-8 py-4 rounded-xl font-bold hover:bg-surface-container-high transition-all">
+                        Student Portal
+                    </button>
+</div>
+</div>
+<div class="relative">
+<div class="aspect-[4/5] rounded-[2rem] overflow-hidden editorial-shadow">
+<img class="w-full h-full object-cover" data-alt="Modern high-end school building with glass facade at sunrise with students walking on a lush green lawn" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGwsRouYvWNiRClU-TSdVCKDZ9ojdModJ_nCk8wYc-1RqeLXq7h7sjg0_fZsxodrPTunSKQQ_L548tzyD-e5yLzWXmcx87ob7yDTOPrTNP64-axYyh4ckg5PitrsHOuqd_4yq1tedhpPm91qmFhmcB2IBvS5fEUS3IhsSmwkghbC0n-tgkTN0T6IOZV71GYOp9ODIGtTcuZ5z3BsYRH8GEWzAu80vaabG0R1ngX5SocpU1b-9Vk0Swl1lnPwUgYX9h59fcONXdCIM"/>
+</div>
+<!-- Float Card -->
+<div class="absolute -bottom-8 -left-8 bg-surface-container-lowest p-6 rounded-2xl editorial-shadow max-w-[240px] hidden md:block border-l-4 border-on-tertiary-container">
+<p class="text-on-tertiary-container font-bold text-sm mb-1 uppercase tracking-wider">Top Rated</p>
+<p class="text-primary font-bold text-lg leading-tight mb-2">#1 Academic Excellence 2023</p>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+<img data-alt="close-up portrait of a smiling young student girl in a school uniform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsYERwy3tD9TCy8Vyz7acimXq1I4KvOsdEW7FDcf44BLLwqOgOIIT3MOQTIw1YNDD3XHTBfd1_W2X4qX-HecXl7mZH7I_8VP2RbjtCTDG9-VaYplTcNkeCsYmsvNPqSeS2lHUB3JqcyX-gCWwBK6go1ttnVAlY70BYHF-3Mko6u-ccPP_v7hete-SEyYp4JrEs-URgJkmBaGbCYi-lVXF8yY3QUucqOgoyuv8P70sVRcIrhUGp_821YPpK4N7CiFNnidf38FVA5zs"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold text-primary">
+                            +500
+                        </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative Shape -->
+<div class="absolute top-0 right-0 -z-10 w-1/3 h-full bg-surface-container-low/50 skew-x-12 transform translate-x-1/2"></div>
+</section>
+<!-- About Section -->
+<section class="py-24 bg-surface-container-low" id="about">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid lg:grid-cols-3 gap-12">
+<div class="lg:col-span-2 space-y-12">
+<div class="space-y-6">
+<h2 class="text-3xl font-bold text-primary tracking-tight">Our Legacy &amp; Vision</h2>
+<div class="grid md:grid-cols-2 gap-8">
+<div class="space-y-3">
+<h3 class="text-lg font-bold flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined" data-icon="history">history</span> History
+                                </h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                                    Founded with a singular vision to provide world-class education that integrates traditional values with modern pedagogical techniques. Over three decades, we have evolved into a premier institution of learning.
+                                </p>
+</div>
+<div class="space-y-3">
+<h3 class="text-lg font-bold flex items-center gap-2 text-on-tertiary-container">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span> Vision
+                                </h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                                    To be a global leader in transformative education, fostering innovative thinkers who contribute meaningfully to society through integrity, knowledge, and compassion.
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-10 rounded-3xl editorial-shadow relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<div class="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a middle aged female principal with a warm smile in a brightly lit office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrZVZeeysmTpkU9aEpyod0W5W4q8eatsXL4TCdyGSmryV-CVIlnQzODV6wLKCxGh01febeYPh3Cr5yOf8XLl2Mb2EKb4VC0hOyBjHUgsFwmpiuQSy3Hru9x_zr6IMFq5cIK1-uynK5rWJiinxFAANqPbtOs8lNhJMUTb6EilObEen3qmHpCIatTMyX0uGjhjdt_qsSo5gucaCwNCyivAeh28LQoGTB3F44Wqx59TF7q2i534dTpS_bdoz7WwaMEfrFRcwBGlh1qn4"/>
+</div>
+<div>
+<span class="material-symbols-outlined text-4xl text-primary/20 mb-2" data-icon="format_quote">format_quote</span>
+<p class="text-lg font-medium italic text-on-surface mb-4">"Education is not merely the acquisition of facts, but the training of the mind to think. We invite you to be part of our vibrant community."</p>
+<p class="font-bold text-primary uppercase text-sm tracking-widest">Dr. Elena Sterling, Principal</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-primary p-8 rounded-3xl text-white flex flex-col justify-between">
+<div>
+<h3 class="text-2xl font-bold mb-6">Admission Fast Track</h3>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-container" data-icon="check_circle">check_circle</span>
+<span class="text-sm opacity-90">Online Application Portal</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-container" data-icon="check_circle">check_circle</span>
+<span class="text-sm opacity-90">Personalized Campus Tours</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-container" data-icon="check_circle">check_circle</span>
+<span class="text-sm opacity-90">Financial Aid Guidance</span>
+</li>
+</ul>
+</div>
+<div class="mt-12">
+<button class="w-full py-4 bg-white text-primary rounded-xl font-bold hover:bg-opacity-90 transition-all">Schedule a Visit</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Academics Bento Grid -->
+<section class="py-24" id="academics">
+<div class="max-w-7xl mx-auto px-6">
+<div class="mb-16 text-center">
+<h2 class="text-4xl font-bold text-primary mb-4 tracking-tight">Academic Pathways</h2>
+<p class="text-on-surface-variant max-w-2xl mx-auto">From early discovery to university preparation, our curriculum is designed to challenge and inspire at every stage.</p>
+</div>
+<div class="grid md:grid-cols-4 gap-6">
+<!-- Nursery -->
+<div class="md:col-span-2 group relative overflow-hidden rounded-3xl h-[400px]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Happy nursery children playing with colorful blocks in a bright modern classroom" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQJLSGaFndJNtVSZGGLgUV9IUfxxSA7lvBoh_Bg_KXXikU2ZNanl_vZiNzMVvkXzP-FQ3MT0M6NpBZ-1hAxUAtwNIlsncEipwErCTEUAXJws9n9brSzAHabE7DIrylqUcvlkzsRjV6Rc6-8NRoZ5lCP4YyMP_FiETGati8jfbjbZ6vCgSbxNuP4g01HPnflYjtxeY7mtMJF_0uq8y_if_3dRVnBM3qlICLGU8YR2TacLb_URqRo1tLrjtRZSLZASGZwGltEIvMx4g"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8">
+<h3 class="text-2xl font-bold text-white mb-2">Early Years &amp; Nursery</h3>
+<p class="text-white/80 text-sm max-w-sm mb-4">Focusing on creative play, sensory exploration, and social development in a safe, nurturing space.</p>
+<span class="material-symbols-outlined text-white" data-icon="child_care">child_care</span>
+</div>
+</div>
+<!-- Primary -->
+<div class="md:col-span-2 group relative overflow-hidden rounded-3xl h-[400px]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Primary school students sitting in a circle reading books in a modern library" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLBJXf8fYN5zBM_rmOyczg51Oodmja-gTAAqjsHUzOheKFHDdBWRx-PINFImzalJOJD3xJQnQjJnXZbE-fcuLcPZBavyLlkX8wHOKoE1tyoh8jKhQWUWiOC08PW3tUzLOYy_2gMh1-hUQJK-N53evTdGS7RGWcPEK8zZuaX8PD-EIQF5A-IfPveVTG27zbTTtXqy6ADeNnZjP_8q1fIBHPTxyGXcZbknUA9Agb_fyPR8uP2Q0MoVbxNBq1cIHNtHfWu5KgpwnGlq4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-secondary/90 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8">
+<h3 class="text-2xl font-bold text-white mb-2">Primary Education</h3>
+<p class="text-white/80 text-sm max-w-sm mb-4">Building strong foundations in core subjects through inquiry-based learning and critical thinking.</p>
+<span class="material-symbols-outlined text-white" data-icon="menu_book">menu_book</span>
+</div>
+</div>
+<!-- Secondary -->
+<div class="md:col-span-1 group relative overflow-hidden rounded-3xl h-[300px]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Secondary school students performing a science experiment with safety goggles" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFrQHjO7Uff-OLZME4bGPo1Fw04fbiMvYkKYG2o5IdWNLJZtDg5oBcDXYVLjV6yyNlXDc8XVT4n2L3CSvESKWFau58eMR1F0_THbCdUwrgonElIjYjXzIUS-a9oD6vP6RE13D4JA0hjwWLu-3ai_mHgt1D6U1S9J9w_954YE-u0ytHfesG4AIr4SG802E9JtNY9uM8gvaHYRrtLdebahiX2rtiFXp2bDK5k0doyIw9FeVDpxGyuRyhAuObbH_WXEqzmFl8k2W2K6o"/>
+<div class="absolute inset-0 bg-primary/40 group-hover:bg-primary/20 transition-colors"></div>
+<div class="absolute bottom-0 left-0 p-6">
+<h3 class="text-xl font-bold text-white">Secondary</h3>
+</div>
+</div>
+<!-- A-Levels -->
+<div class="md:col-span-3 group relative overflow-hidden rounded-3xl h-[300px]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Senior students in a study hall collaborating on laptops with notebooks and coffee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_5rmdrqTll0UfaPmu8oBcIpnUbnstTbAwiaiX6Rz-XDZfb7EcZCYJwqe6G3KQkD6oSDjYAjuDs_ZFU8xYVpLNl4ZjSNP020Ld_I5IIGIm_PRKqSDYalQc-sq4YrWEBypFZSppcOPA8fqWG2onSBb3PWdKjIJt5jX-_rynoSUOUliz1AT3OZmDnFw8rLllxvP38RZlEvXWRKgO5T53VVp_JpN4vdYt2jp6D35v5vqIaL3F0G999j0PHP2-BVeN5fUiB8e-RSJkVNI"/>
+<div class="absolute inset-0 bg-gradient-to-r from-on-tertiary-container/80 to-transparent"></div>
+<div class="absolute inset-0 flex items-center p-10">
+<div class="max-w-md">
+<h3 class="text-3xl font-bold text-white mb-3">Pre-University &amp; A-Levels</h3>
+<p class="text-white/90 text-sm">Advanced pathways designed for global university entrance, fostering specialization and independence.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Admissions & Portals -->
+<section class="py-24 bg-surface-container" id="admissions">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid lg:grid-cols-2 gap-20">
+<div class="space-y-8">
+<h2 class="text-4xl font-bold text-primary tracking-tight">Joining Our Community</h2>
+<div class="space-y-6">
+<div class="flex gap-6">
+<div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">1</div>
+<div>
+<h4 class="font-bold text-lg mb-1">Online Inquiry</h4>
+<p class="text-on-surface-variant text-sm">Submit your initial interest via our digital form to start the conversation.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">2</div>
+<div>
+<h4 class="font-bold text-lg mb-1">Document Submission</h4>
+<p class="text-on-surface-variant text-sm">Upload academic transcripts, birth certificates, and reference letters.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">3</div>
+<div>
+<h4 class="font-bold text-lg mb-1">Interview &amp; Assessment</h4>
+<p class="text-on-surface-variant text-sm">Meet our academic team for a holistic evaluation of the student's needs.</p>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap gap-4 pt-4">
+<button class="cta-gradient text-white px-8 py-3.5 rounded-xl font-bold shadow-lg">Apply Online</button>
+<button class="bg-white text-primary border border-outline-variant/30 px-8 py-3.5 rounded-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                            Download Prospectus
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4" id="portal">
+<div class="bg-surface-container-lowest p-6 rounded-2xl editorial-shadow group hover:bg-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-4xl mb-4 transition-colors" data-icon="group">group</span>
+<h4 class="font-bold text-primary group-hover:text-white transition-colors">Parent Portal</h4>
+<p class="text-xs text-on-surface-variant group-hover:text-white/70 mt-2 transition-colors">Track progress &amp; attendance</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-2xl editorial-shadow group hover:bg-secondary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-secondary group-hover:text-white text-4xl mb-4 transition-colors" data-icon="payments">payments</span>
+<h4 class="font-bold text-primary group-hover:text-white transition-colors">Fee Payment</h4>
+<p class="text-xs text-on-surface-variant group-hover:text-white/70 mt-2 transition-colors">Secure online billing</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-2xl editorial-shadow group hover:bg-on-tertiary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-on-tertiary-container group-hover:text-white text-4xl mb-4 transition-colors" data-icon="calendar_month">calendar_month</span>
+<h4 class="font-bold text-primary group-hover:text-white transition-colors">Timetables</h4>
+<p class="text-xs text-on-surface-variant group-hover:text-white/70 mt-2 transition-colors">Daily academic schedule</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-2xl editorial-shadow group hover:bg-primary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary-container group-hover:text-white text-4xl mb-4 transition-colors" data-icon="article">article</span>
+<h4 class="font-bold text-primary group-hover:text-white transition-colors">Exam Results</h4>
+<p class="text-xs text-on-surface-variant group-hover:text-white/70 mt-2 transition-colors">Termly &amp; Annual reports</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- School Life Gallery -->
+<section class="py-24 overflow-hidden">
+<div class="max-w-7xl mx-auto px-6 mb-12 flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-bold text-primary mb-2">School Life</h2>
+<p class="text-on-surface-variant">Beyond the classroom – events, clubs, and sports.</p>
+</div>
+<button class="text-primary font-bold flex items-center gap-1 hover:underline">View All Gallery <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span></button>
+</div>
+<div class="flex gap-6 overflow-x-auto pb-8 px-6 no-scrollbar">
+<div class="min-w-[300px] h-[400px] rounded-3xl overflow-hidden relative group shrink-0">
+<img class="w-full h-full object-cover" data-alt="Action shot of school students playing basketball in a sunny outdoor court" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtoBL0kCZS3eYJSm95EVVd5fpMQROJsbATDpUBZ-zVVh_Eoot3fV0vvA7ksjZSSir7-_GQ_7yyXwO_4uM8rlB-r4hRtFVV3V4uYgr0-RU8HvPSQ42p6V7XWRtf_B6v8U3Dpl6QevMup5fBeTGa-64wCncsnIW9Cmnk-03rI50N3RvjH6dirqV5Y7ZxYY0p_05YXHVWu5t6_qBVBJzac7JFbkARBCa8grFILhMeQgh8kH4OO0NIFwEAoul2L96UZZKC1enzarBW1wA"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+<p class="text-white font-bold">Inter-School Sports 2024</p>
+</div>
+</div>
+<div class="min-w-[450px] h-[400px] rounded-3xl overflow-hidden relative group shrink-0">
+<img class="w-full h-full object-cover" data-alt="High school choir performing on a stage with professional lighting and microphones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCntW_Lvfz6PqQTqZUIUHs9Zc5LhkB0-HtZkM3IsTE7jHsGqU4j9KFxmD1aP0rGaHsrHmiiMfEh-Pz9Tz_5fdsUJio5PhsMDMB0nyvtsN8isiqDucQG2DmJ_dfjezZjkxda8ZzdVAvoEc309e_7ofrJfAuYwCyW8PxiaY0CID2E3WlLzu2dBaa8Bi3UoZmLuuHdkep83bVZwlrXqkww-2G5xZg6bqxtojQbn66dxTuVvuQBvk20rQPzI40NQJgGs8Nj3STuYzLdISQ"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+<p class="text-white font-bold">Annual Music Festival</p>
+</div>
+</div>
+<div class="min-w-[300px] h-[400px] rounded-3xl overflow-hidden relative group shrink-0">
+<img class="w-full h-full object-cover" data-alt="Students participating in a coding robotics club workshop with small robots on a table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDacU4CnqAYX94oDbBv5CIMHWteXE-A6_fndp0Bcv_qLvwmYoRgkAlp1Wsd5ANXNy-6F4H_wPdVMdEuBlzEkzGYjf9fr3BWo2lk71v7KktqyJEQPZfrxPvcRFS65JULDRtcMIyRROshIWqy0lEAMuRBYwA6wvFqDpqtb9wAUJFBR_DpnJ-M1RYFYY_yb0ah6k7S_wucv6_bpLphWAy2-CCmapy01GTBhuXcBIKNMiFXt8G7ttgTLvmqZzUaQESH1YpnA737_0xkQag"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+<p class="text-white font-bold">Robotics Club Expo</p>
+</div>
+</div>
+<div class="min-w-[300px] h-[400px] rounded-3xl overflow-hidden relative group shrink-0">
+<img class="w-full h-full object-cover" data-alt="Students painting on large canvases in a bright airy art studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfjwsTqTzsVpPwcmaigbRvMMcbqkdgFmaUglNEaTwT7nQ0y4ufLg9SqL0caa0eJ8aCqg3897_RQ_vY_ndlqzOLzXwJSGj8yEp6WEvlWVoXuyNO-XEn-tJ_mKmM_g8TA4mvej9Eu7GNoDSUsJ6SwdN9fkN-Zhh0LEzT8GZUwx2LdP6bV6ZP6kDTWTontoxVtzw82u70dn5wCJwodUX-AG7BajK7RqtsyvDAvF7M9gddfg_foCHen92PDy2coeQe4LcjzROzjshN-CQ"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+<p class="text-white font-bold">Fine Arts Exhibition</p>
+</div>
+</div>
+</div>
+</section>
+<!-- News & Blog -->
+<section class="py-24 bg-surface-container-low" id="news">
+<div class="max-w-7xl mx-auto px-6">
+<h2 class="text-4xl font-bold text-primary mb-12 tracking-tight">Latest News &amp; Announcements</h2>
+<div class="grid md:grid-cols-3 gap-8">
+<article class="bg-surface-container-lowest rounded-3xl overflow-hidden editorial-shadow group">
+<div class="aspect-video overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Wide shot of a modern graduation ceremony with students in blue gowns throwing caps" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzcErPB3GkozJM75j_vfXHgmZpGibS337evICmxuH1sKzY785QR0EAHTl5hS2arByuIqO_uS9REKaHYrs87-SAfI9Q8fc1mqqaGPJKV7_Sf0CL3G2hOaaWs1JPghlRre6noHBe9U2XsKCkA-7Szxk7aA0y777pypRyEn644rTQeCEjsiHU05zqrS9N5Rhmf2MLQli4sErURGu0CYiCONkBh5Q73nXD1fs0eOA8PPVAOQzKztND9fViBeWlVI4w3t5NHbLM7PWsy5s"/>
+</div>
+<div class="p-8">
+<div class="flex items-center gap-2 mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-secondary">Announcement</span>
+<span class="text-xs text-on-surface-variant">May 12, 2024</span>
+</div>
+<h3 class="text-xl font-bold text-primary mb-3 leading-tight">Class of 2024 Achieves Record-Breaking Results</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2">Our graduating seniors have secured admissions to top global universities with significant scholarships...</p>
+</div>
+</article>
+<article class="bg-surface-container-lowest rounded-3xl overflow-hidden editorial-shadow group">
+<div class="aspect-video overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Blueprint of a new school wing being held by an architect on a construction site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSHoy6x5Gl41T7itkd9cHyQnfqGadUNEQUcQjKg9SLSNug7lVYAp94VDqs0R67-lxpnBWU0Aq580xpE_BQOjiddVBi9G0EtlWTNbsxeSNr0QlUeZiLMKYSmIe9qLcHHGPb4S8D5W16BVOO_sj6PTQ4dzx3UOnXmZFhvPPmJFVcSPm5BoEaRUVxKTM4aCMEP4xQ0pqwOHtkW0VemAd-krvfUONEjvAjVQF61jNN7zpnYvOTipYJD__0DWfDRAa-Yz8sucsz4-_1R2k"/>
+</div>
+<div class="p-8">
+<div class="flex items-center gap-2 mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-tertiary-container">Campus Update</span>
+<span class="text-xs text-on-surface-variant">April 28, 2024</span>
+</div>
+<h3 class="text-xl font-bold text-primary mb-3 leading-tight">Unveiling the New STEM Innovation Hub</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2">Construction of our state-of-the-art laboratory wing is set to conclude ahead of the fall semester...</p>
+</div>
+</article>
+<article class="bg-surface-container-lowest rounded-3xl overflow-hidden editorial-shadow group">
+<div class="aspect-video overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Parents and teachers talking animatedly at an evening community event" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3-fIvvsXKe38FV-EB7F6ZjlkRWYnCyGvO0fuNx0vep8rN4wUFdQ2QuklTiPTZydm76LrgpTC3W_QnirWTO68MxFeuO1Dxe5ZfnUCfw2C-EzXXGLX-RDE0sOEkrCmSIkLBitqXFVGse0J4M0wUgLLDlSdowUHb-nyhhDKyQZKADlTxmFtoqZQpww1WP9ZVjYvaIeXKOC4J6tkPRH_lxtCWAfmI8O3POlQup5h2yhuFse1XDZu6U-zuvhvF_pHQ2NSlUB-qZFLVkZI"/>
+</div>
+<div class="p-8">
+<div class="flex items-center gap-2 mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Community</span>
+<span class="text-xs text-on-surface-variant">April 15, 2024</span>
+</div>
+<h3 class="text-xl font-bold text-primary mb-3 leading-tight">Highlights from Parent-Teacher Reflection Week</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2">A summary of the collaborative discussions held to enhance student wellness and holistic growth...</p>
+</div>
+</article>
+</div>
+</div>
+</section>
+<!-- Staff Grid -->
+<section class="py-24">
+<div class="max-w-7xl mx-auto px-6">
+<h2 class="text-4xl font-bold text-primary mb-12 text-center">Our Exceptional Faculty</h2>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="text-center group">
+<div class="aspect-square rounded-full overflow-hidden mb-6 editorial-shadow border-4 border-white grayscale group-hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="professional woman in blazer with glasses smiling against a neutral wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiynZKOI2bUqRZSPPrza1Z3po-rTu5Xg2gzTBnHUSwOW4mDJLq7wU_uc3n7MgIsnDZpPYHQO3VxPUtfAixUOf_jK6JO_J3fkoP-AU2VgwmzCVUEDu20fCDIg05YpiJ205ZmCx2N6XZjT1j_ui3yMsUIzqBOB-mIEO5GnCs0Jg2A8mQo_vr-zq9-gh2ez3VliRVR6zNz3gXO930-aUTK8KWXYSkyusQldR4xgr05w5_ZB6r4RXEVBYygGroVlMgcjcNIkdoeps4eWE"/>
+</div>
+<h4 class="font-bold text-primary">Sarah Jenkins</h4>
+<p class="text-sm text-on-surface-variant">Head of Secondary</p>
+</div>
+<div class="text-center group">
+<div class="aspect-square rounded-full overflow-hidden mb-6 editorial-shadow border-4 border-white grayscale group-hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="professional man in a grey suit looking forward with a confident posture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_53w-IsOaC1iOFh1YzV4c05l_OtkDca-gmIK7dSTUjDDNQK5tFY9QK32VnV09O4ybhk1V5QGXV273U7hOfMLIHcBq5tFcQpJAWEBNonQOwryp-lawHMSZCW4JwWwkHmd-jfsagAcNYJvUk5tnj1g5JO9FENENLrubSDnpJDe17HHHgO5k3cYR4iM0cHVb8D4JTdt9bKy-rx36nbjwzLP7ivb77APUlbNU7qP9kNTep_mpuBlnDVvcIenKcvuDORnjba-OFw2mOFo"/>
+</div>
+<h4 class="font-bold text-primary">Marcus Thorne</h4>
+<p class="text-sm text-on-surface-variant">Director of Sports</p>
+</div>
+<div class="text-center group">
+<div class="aspect-square rounded-full overflow-hidden mb-6 editorial-shadow border-4 border-white grayscale group-hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="woman with red hair and creative glasses smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJU-YOTyLJCyknCxlz2aBARnyfj76tGx4xcLEwmGzhT6vv_wI37tkcLpuvGZln3YarzttGnmiElSilLiMKYj1gG6pdrPuIRQr6uUPstGh8w1dPyz7kMhs5nMFrwduXVBSfR2HmKmnVTAXzJk54y2fYaP6ENGWyFHDxaNYLsx7qiRLLCC-Ix2tLkl6PCpV1f3OHlpR10pGivBlW5m2jHJ-HAxOWUP5CA_enh75b2h5-LE7WFFqMP1g58mSEOFL_lDSoeWRFJp8y0ac"/>
+</div>
+<h4 class="font-bold text-primary">Dr. Li Wei</h4>
+<p class="text-sm text-on-surface-variant">STEM Lead</p>
+</div>
+<div class="text-center group">
+<div class="aspect-square rounded-full overflow-hidden mb-6 editorial-shadow border-4 border-white grayscale group-hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="friendly woman in school setting with notebooks in background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuDy8g0ZvOvdY8qS7-9573JxEzI9DWV9C-8R3cymSXsqcoyvNxCHdaWh8CIdSZvkwdd_vYyR-dgboDsKH-u6Mbt8Fdmz3uTR2hNZEKcIgPrv9P6ftofyDS8AWkYwEyFZiYlFe2ZglcYY1V4bG-q1xfP1QtPSChcO7hLBcNa3IldlKOxS7d5EKxxxJqhmpKwkXj6f9ugbehFfMzH3Lc-KWO_l4t1TqqTmwHYESkdKWFwBJJQ1l1qDj_r4tf5PTn_XNf8xC0vFuD5kg"/>
+</div>
+<h4 class="font-bold text-primary">Anita Gomez</h4>
+<p class="text-sm text-on-surface-variant">Admissions Dean</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Contact & Map Section -->
+<section class="py-24 bg-primary text-white overflow-hidden relative" id="contact">
+<div class="max-w-7xl mx-auto px-6 relative z-10">
+<div class="grid lg:grid-cols-2 gap-20">
+<div>
+<h2 class="text-4xl font-bold mb-8">Get in Touch</h2>
+<div class="space-y-8 mb-12">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="location_on">location_on</span>
+<div>
+<h5 class="font-bold mb-1 uppercase text-xs tracking-widest text-secondary-container">Address</h5>
+<p class="opacity-90">124 Academic Way, Education District<br/>Lagos, Nigeria</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="mail">mail</span>
+<div>
+<h5 class="font-bold mb-1 uppercase text-xs tracking-widest text-secondary-container">Email</h5>
+<p class="opacity-90">admissions@schoolos.edu<br/>info@schoolos.edu</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="call">call</span>
+<div>
+<h5 class="font-bold mb-1 uppercase text-xs tracking-widest text-secondary-container">Phone</h5>
+<p class="opacity-90">+234 (0) 800 123 4567<br/>+234 (0) 800 987 6543</p>
+</div>
+</div>
+</div>
+<div class="h-64 rounded-3xl overflow-hidden grayscale opacity-50 brightness-150">
+<img class="w-full h-full object-cover" data-alt="Simplified dark styled map showing local streets around a central campus location" data-location="Lagos" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBG1C0gR30AVO-TQByzY6474d5IUpq1dy0rxsaANvqxQbklBw4yU8eFh4WbuSoGskaDJ94IzD2jSjPLf3H9e48C1SA5cyXtKrdyeVNQNLaoparbPg86DMoKgp5nd1dzPnuuY9_obgZfFd_fE5AqNwBASPPmHHRSjDR5I519v2UvUgpTGN037UOVbPv6kdNxnGWGcexlfWeAnvB-3ygKlKzJQBUX9f9P0damAbyGCzhPFQhRaM4iObbgTFwioSD4hLlTpzXcMnzJXIM"/>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-10 rounded-3xl text-on-surface">
+<h3 class="text-2xl font-bold mb-6 text-primary">General Inquiry</h3>
+<form class="space-y-6">
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Full Name</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-2 focus:ring-primary focus:bg-white transition-all" type="text"/>
+</div>
+<div class="grid md:grid-cols-2 gap-6">
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Email Address</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-2 focus:ring-primary focus:bg-white transition-all" type="email"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Student Age</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-2 focus:ring-primary focus:bg-white transition-all" type="number"/>
+</div>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Message</label>
+<textarea class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-2 focus:ring-primary focus:bg-white transition-all" rows="4"></textarea>
+</div>
+<button class="w-full cta-gradient text-white font-bold py-4 rounded-xl shadow-lg hover:opacity-90 transition-all">Send Inquiry</button>
+</form>
+</div>
+</div>
+</div>
+<div class="absolute bottom-0 right-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl transform translate-x-1/2 translate-y-1/2"></div>
+</section>
+<!-- Footer -->
+<footer class="w-full py-12 px-6 border-t border-slate-200 bg-slate-50">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
+<div class="col-span-2">
+<div class="text-lg font-black text-blue-900 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="school">school</span>
+                        School OS
+                    </div>
+<p class="text-slate-500 text-sm max-w-xs mb-6 font-inter">Educating global citizens through personalized learning and modern innovation since 1994.</p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="public">public</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</a>
+</div>
+</div>
+<div>
+<h5 class="font-bold text-blue-900 mb-6 font-inter text-sm">Institution</h5>
+<ul class="space-y-4">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">About</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Academics</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Admissions</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Calendar</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-blue-900 mb-6 font-inter text-sm">Portals</h5>
+<ul class="space-y-4">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Student Portal</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Parent Login</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Staff Hub</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Library</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-blue-900 mb-6 font-inter text-sm">Support</h5>
+<ul class="space-y-4">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Contact</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Privacy Policy</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors hover:underline decoration-2 underline-offset-4 text-sm font-inter" href="#">Terms</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-blue-900 mb-6 font-inter text-sm">Newsletter</h5>
+<div class="flex flex-col gap-2">
+<input class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-primary outline-none" placeholder="Your email" type="email"/>
+<button class="bg-primary text-white text-xs font-bold py-2.5 rounded-lg hover:opacity-90 transition-all">Subscribe</button>
+</div>
+</div>
+</div>
+<div class="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-slate-500 text-sm font-inter">© 2024 School OS. All rights reserved.</p>
+<div class="flex items-center gap-2 bg-slate-200/50 px-4 py-2 rounded-full">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Powered by</span>
+<span class="text-xs font-black text-blue-900 tracking-tighter">School OS</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

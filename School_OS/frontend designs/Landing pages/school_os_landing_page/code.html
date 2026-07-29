@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>School OS | One Platform. Total School Management.</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-surface": "#191c1e",
+                "tertiary-fixed-dim": "#ffb95f",
+                "on-primary-fixed-variant": "#264191",
+                "on-error": "#ffffff",
+                "surface-container-lowest": "#ffffff",
+                "secondary": "#006b5f",
+                "surface-tint": "#4059aa",
+                "on-primary": "#ffffff",
+                "inverse-on-surface": "#eff1f3",
+                "surface-container-highest": "#e0e3e5",
+                "primary-fixed-dim": "#b6c4ff",
+                "inverse-surface": "#2d3133",
+                "surface-container-low": "#f2f4f6",
+                "error": "#ba1a1a",
+                "surface-dim": "#d8dadc",
+                "tertiary": "#3e2400",
+                "on-tertiary-fixed": "#2a1700",
+                "outline": "#757682",
+                "on-secondary-fixed-variant": "#005048",
+                "on-surface-variant": "#444651",
+                "primary": "#00236f",
+                "secondary-fixed": "#71f8e4",
+                "background": "#f7f9fb",
+                "outline-variant": "#c5c5d3",
+                "on-secondary": "#ffffff",
+                "on-tertiary-fixed-variant": "#653e00",
+                "on-secondary-fixed": "#00201c",
+                "surface-bright": "#f7f9fb",
+                "surface": "#f7f9fb",
+                "surface-container": "#eceef0",
+                "tertiary-container": "#5c3800",
+                "secondary-container": "#6df5e1",
+                "on-primary-container": "#90a8ff",
+                "surface-container-high": "#e6e8ea",
+                "on-error-container": "#93000a",
+                "on-secondary-container": "#006f64",
+                "on-tertiary": "#ffffff",
+                "on-background": "#191c1e",
+                "primary-container": "#1e3a8a",
+                "secondary-fixed-dim": "#4fdbc8",
+                "tertiary-fixed": "#ffddb8",
+                "inverse-primary": "#b6c4ff",
+                "on-tertiary-container": "#ef9900",
+                "surface-variant": "#e0e3e5",
+                "primary-fixed": "#dce1ff",
+                "error-container": "#ffdad6",
+                "on-primary-fixed": "#00164e"
+              },
+              fontFamily: {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto font-inter tracking-tight">
+<div class="text-xl font-bold tracking-tighter text-blue-900">School OS</div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-blue-900 font-semibold border-b-2 border-blue-900 pb-1" href="#">Home</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors" href="#">About</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors" href="#">Academics</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors" href="#">Admissions</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors" href="#">News</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors" href="#">Portal</a>
+<a class="text-slate-600 hover:text-blue-900 transition-colors" href="#">Contact</a>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-slate-600 hover:text-blue-900 transition-colors font-medium">Login</button>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-5 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity">Request Demo</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+<div class="max-w-7xl mx-auto px-6 text-center">
+<h1 class="text-5xl md:text-7xl font-extrabold text-primary tracking-tighter mb-6">
+                One Platform.<br/>Total School Management.
+            </h1>
+<p class="max-w-2xl mx-auto text-lg md:text-xl text-on-surface-variant mb-10 leading-relaxed">
+                Streamline academics, automate fee collection, and gain deep insights into student performance. Empowering 500+ modern schools to thrive in the digital age.
+            </p>
+<div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
+<button class="w-full sm:w-auto px-8 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all">Request Demo</button>
+<button class="w-full sm:w-auto px-8 py-4 bg-white text-primary rounded-xl font-bold text-lg border border-outline-variant hover:bg-surface-container-low transition-all">Register School</button>
+</div>
+<div class="relative group mt-10">
+<div class="absolute -inset-4 bg-primary/5 blur-3xl rounded-full"></div>
+<div class="relative rounded-2xl overflow-hidden shadow-2xl bg-white p-2 border border-outline-variant/20">
+<img alt="School OS Dashboard Interface" class="w-full rounded-xl object-cover aspect-[21/9]" data-alt="Modern sleek education management dashboard showing student analytics charts and academic performance heatmaps in a clean minimalist interface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1k9R3wTskmNutevO8BHM_HtDQgToU_000do7FDjc69FfQmZKPqESHdCEL-KTpxntR9oeCSn1Py5yXjHu3W5PuyK3EQg62YN20iuS2Xh8PbBhFatn33LJVzzKWw2OQZ_kH7novjgwra3FGMeLkEnFIqbD7DNL9UuziYQoznJrk3BAeZWZolbB26Ium_yeWxBRqRjpdG7wEWpydQANqkCh7kleG_wNy8BoSiB2t_5Ig-CphLht8_kuWdEZEmlG-8pPphXpZlr-pAB8"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Problem Section -->
+<section class="py-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<span class="text-secondary font-bold tracking-widest text-xs uppercase">The Challenge</span>
+<h2 class="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">Schools Are Still Running on Paper</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="p-8 bg-surface-container-lowest rounded-2xl shadow-sm border-l-4 border-error">
+<span class="material-symbols-outlined text-error text-4xl mb-4">person_off</span>
+<h3 class="text-xl font-bold text-primary mb-2">Manual Attendance</h3>
+<p class="text-on-surface-variant text-sm">Hours wasted every day calling rolls and tracking absences manually in paper registers.</p>
+</div>
+<div class="p-8 bg-surface-container-lowest rounded-2xl shadow-sm border-l-4 border-error">
+<span class="material-symbols-outlined text-error text-4xl mb-4">cloud_off</span>
+<h3 class="text-xl font-bold text-primary mb-2">Lost Records</h3>
+<p class="text-on-surface-variant text-sm">Student data and academic history scattered across physical files that are prone to damage.</p>
+</div>
+<div class="p-8 bg-surface-container-lowest rounded-2xl shadow-sm border-l-4 border-error">
+<span class="material-symbols-outlined text-error text-4xl mb-4">money_off</span>
+<h3 class="text-xl font-bold text-primary mb-2">Fee Tracking</h3>
+<p class="text-on-surface-variant text-sm">Difficult to monitor payment status, leading to revenue leaks and awkward parent conversations.</p>
+</div>
+<div class="p-8 bg-surface-container-lowest rounded-2xl shadow-sm border-l-4 border-error">
+<span class="material-symbols-outlined text-error text-4xl mb-4">forum</span>
+<h3 class="text-xl font-bold text-primary mb-2">Poor Communication</h3>
+<p class="text-on-surface-variant text-sm">Fragmented updates through newsletters and phone calls that parents often miss entirely.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Solution Grid -->
+<section class="py-24">
+<div class="max-w-7xl mx-auto px-6">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+<div class="max-w-xl">
+<span class="text-secondary font-bold tracking-widest text-xs uppercase">The Solution</span>
+<h2 class="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">Meet School OS</h2>
+</div>
+<p class="text-on-surface-variant text-lg">A comprehensive operating system designed for the specific needs of modern educational institutions.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+<!-- Bento Grid Card 1 -->
+<div class="md:col-span-2 bg-primary p-8 rounded-3xl text-white relative overflow-hidden flex flex-col justify-between h-[320px]">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-4xl mb-4">groups</span>
+<h3 class="text-2xl font-bold mb-2">Student Management</h3>
+<p class="opacity-80 text-sm max-w-xs">Complete 360-degree view of every student, from enrollment to graduation.</p>
+</div>
+<div class="absolute -bottom-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+<button class="relative z-10 self-start text-white flex items-center gap-2 mt-4 hover:gap-4 transition-all">
+                        Learn More <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<!-- Bento Grid Card 2 -->
+<div class="bg-secondary-container p-8 rounded-3xl text-on-secondary-container h-[320px] flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-4xl mb-4">how_to_reg</span>
+<h3 class="text-2xl font-bold mb-2">Attendance</h3>
+<p class="text-sm">Digital tracking with real-time SMS alerts to parents.</p>
+</div>
+</div>
+<!-- Bento Grid Card 3 -->
+<div class="bg-surface-container-high p-8 rounded-3xl h-[320px] flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-primary text-4xl mb-4">payments</span>
+<h3 class="text-2xl font-bold text-primary mb-2">Fees</h3>
+<p class="text-on-surface-variant text-sm">Automated invoicing and secure online payment gateway integration.</p>
+</div>
+</div>
+<!-- Bento Grid Card 4 -->
+<div class="bg-surface-container-high p-8 rounded-3xl h-[320px] flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-primary text-4xl mb-4">analytics</span>
+<h3 class="text-2xl font-bold text-primary mb-2">Result Mgmt</h3>
+<p class="text-on-surface-variant text-sm">Generate report cards and transcripts with a single click.</p>
+</div>
+</div>
+<!-- Bento Grid Card 5 -->
+<div class="md:col-span-2 bg-surface-container-lowest border border-outline-variant/30 p-8 rounded-3xl h-[320px] flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="max-w-xs">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4">school</span>
+<h3 class="text-2xl font-bold text-primary mb-2">Teacher Portal</h3>
+<p class="text-on-surface-variant text-sm">Dedicated workspace for lesson planning, grading, and communication.</p>
+</div>
+<div class="hidden sm:block">
+<img class="w-32 h-32 rounded-2xl object-cover shadow-md" data-alt="Teacher using a tablet in a bright modern classroom setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzOoiQmrGFMh04hChYa0mQjjFPcdEn7wfE3Clllz1vnmP0nIX3m_JUwTnJmWXR4bRQrTf3-250d_t0y8jhhe075BFka_2p5QhJKxIzvmm-tM9DjSDBw47PtA8j0aDumcOrmDml6P5g6puBoNrg_LGvTIQCbUm6pdnF1OoEvEmfZBA3hBkQTNhUvOKiPNfvM_V4oobwy9VneGRdaT1Lg4kX6zHyywUGytEf5_1GLUp2tnTKVGQYCYuW9IXTN5M2DaGsUqWbAm_SJLg"/>
+</div>
+</div>
+</div>
+<!-- Bento Grid Card 6 -->
+<div class="bg-primary-container text-white p-8 rounded-3xl h-[320px] flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-4xl mb-4">dashboard</span>
+<h3 class="text-2xl font-bold mb-2">Analytics</h3>
+<p class="opacity-80 text-sm">Predictive trends and school performance metrics.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Platform Preview -->
+<section class="py-24 bg-surface-container">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold text-primary mb-4">Built for Everyone</h2>
+<p class="text-on-surface-variant">Seamless interfaces tailored for every user in your ecosystem.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-4 space-y-6">
+<div class="p-6 bg-white rounded-2xl shadow-sm cursor-pointer border-l-4 border-primary">
+<h4 class="font-bold text-primary mb-1">Admin Dashboard</h4>
+<p class="text-sm text-on-surface-variant">Full control over operations, finances, and staffing.</p>
+</div>
+<div class="p-6 bg-white/50 rounded-2xl hover:bg-white transition-all cursor-pointer border-l-4 border-transparent">
+<h4 class="font-bold text-on-surface mb-1">Teacher Panel</h4>
+<p class="text-sm text-on-surface-variant">Simplified grading and attendance management.</p>
+</div>
+<div class="p-6 bg-white/50 rounded-2xl hover:bg-white transition-all cursor-pointer border-l-4 border-transparent">
+<h4 class="font-bold text-on-surface mb-1">Parent Mobile App</h4>
+<p class="text-sm text-on-surface-variant">Real-time tracking of their child's progress.</p>
+</div>
+</div>
+<div class="lg:col-span-8">
+<div class="relative rounded-3xl overflow-hidden shadow-2xl bg-white p-4">
+<img alt="Platform Interface Preview" class="rounded-2xl w-full" data-alt="High fidelity software mockup of a data-rich administration dashboard with vibrant charts and intuitive navigation sidebar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEM6KqUPsEXXx40_sFe1IbqCysvRw2xy-Bzryhz6Ie9OncqncGeh7ip--er7JZs6BfuXpHNqBb55gswtEwpUY8PHhElGsaGjYguvC5mSYP_hKtEJFMDIz4TXNBDpf4q9GGbDGEr_673qxTjI7dFX3I29_68I95l2GqoTr8PNgzODf__86_b_1gQB1CIvYQ-iCxZbK03JG4MlkVC-0ESrSWUeiaU9QOCanC6-JWWJkyD-V20ShwzrWvLebvDNG7mXr4LEUCqLArocQ"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Key Features (Horizontal Ticker-style) -->
+<section class="py-24 overflow-hidden">
+<div class="max-w-7xl mx-auto px-6 mb-16">
+<span class="text-secondary font-bold tracking-widest text-xs uppercase">Power Features</span>
+<h2 class="text-4xl font-bold text-primary mt-2">Everything You Need</h2>
+</div>
+<div class="space-y-12">
+<div class="flex gap-8 px-6 animate-none md:flex-wrap justify-center">
+<div class="min-w-[300px] flex items-center gap-4 bg-surface-container-low p-6 rounded-2xl">
+<span class="material-symbols-outlined text-secondary text-3xl">bolt</span>
+<span class="font-bold text-primary">Real-time Analytics</span>
+</div>
+<div class="min-w-[300px] flex items-center gap-4 bg-surface-container-low p-6 rounded-2xl">
+<span class="material-symbols-outlined text-secondary text-3xl">auto_stories</span>
+<span class="font-bold text-primary">Automated Reports</span>
+</div>
+<div class="min-w-[300px] flex items-center gap-4 bg-surface-container-low p-6 rounded-2xl">
+<span class="material-symbols-outlined text-secondary text-3xl">cloud_done</span>
+<span class="font-bold text-primary">Secure Cloud Storage</span>
+</div>
+<div class="min-w-[300px] flex items-center gap-4 bg-surface-container-low p-6 rounded-2xl">
+<span class="material-symbols-outlined text-secondary text-3xl">smartphone</span>
+<span class="font-bold text-primary">Mobile-First Access</span>
+</div>
+<div class="min-w-[300px] flex items-center gap-4 bg-surface-container-low p-6 rounded-2xl">
+<span class="material-symbols-outlined text-secondary text-3xl">hub</span>
+<span class="font-bold text-primary">Multi-School Management</span>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works -->
+<section class="py-24 bg-primary text-white">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-20">
+<h2 class="text-4xl font-bold mb-4">Go Digital in 3 Simple Steps</h2>
+<p class="opacity-70">Implementation is fast, simple, and fully supported.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+<div class="absolute top-1/2 left-0 w-full h-1 bg-white/10 hidden md:block -translate-y-1/2"></div>
+<div class="relative flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center font-bold text-2xl mb-6 relative z-10 shadow-xl">1</div>
+<h3 class="text-2xl font-bold mb-2">Register School</h3>
+<p class="opacity-70 text-sm">Input your school details and brand identity.</p>
+</div>
+<div class="relative flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center font-bold text-2xl mb-6 relative z-10 shadow-xl">2</div>
+<h3 class="text-2xl font-bold mb-2">Setup Classes</h3>
+<p class="opacity-70 text-sm">Onboard your teachers and students via bulk upload.</p>
+</div>
+<div class="relative flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center font-bold text-2xl mb-6 relative z-10 shadow-xl">3</div>
+<h3 class="text-2xl font-bold mb-2">Run Digitally</h3>
+<p class="opacity-70 text-sm">Start managing attendance, fees, and results instantly.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-24">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold text-primary mb-4">Trusted by Educational Leaders</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-low p-8 rounded-3xl relative">
+<span class="text-tertiary-fixed-dim absolute top-6 right-8 text-6xl font-serif opacity-30">“</span>
+<p class="text-on-surface mb-8 italic">"School OS has completely eliminated our paperwork. The fee collection tracking alone saved us over 15% in lost revenue this year."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a smiling professional school administrator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw8sM0KVvkZoBSwIFsHymwCtkTug5MyFX8Ep6rwpjf862rYGGhfIsufbi7zBOjYXpFw5bwlvhYQIMhLaItuMkxb7cdVQCVFloFtVyaTKjMgTgq7Iqkcm8G_lqOproqi6KNXbzQQMdRL1-TOqy0AYKGKRRbIf0yzGzrF3kNXp3DfTmWNqsPsvAmBcKPyP70Z_TMJB1lXSsEAQ9m6t-UcKNP_yPHGYUQla4556olLMcQqBIRU72uQy9fjgOH4kaOWn4vP6AKZPnaRQg"/>
+</div>
+<div>
+<p class="font-bold text-primary">Dr. Samuel O.</p>
+<p class="text-xs text-on-surface-variant">School Proprietor</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-3xl relative">
+<span class="text-tertiary-fixed-dim absolute top-6 right-8 text-6xl font-serif opacity-30">“</span>
+<p class="text-on-surface mb-8 italic">"I can now grade results in half the time. The portal is so intuitive that even our least tech-savvy teachers picked it up in a day."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a friendly female high school teacher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV6CBL62KjMrgYrWh9jicEZBK1klRy37X6VBG7WmI_7uLnt3-ggz2S11KD9t-3024SbW2ATQ8EtsNBWmXGqk3rJArUJCIuA6tcxueFH8xiuaMwhli65O-5fx9__R0ANN9uRCJ4PF7abErMOFlgTd794gati8kpTUF1EIy2iro_Qcn0sDUvpGIEHUoKpZlrfDTuhFqXDlARhCCaiATn75QODdp2lsiyqoTddwVYGdGBXD1DehKSn2IJkaB9wyCjTW69PAUzVmHpAfQ"/>
+</div>
+<div>
+<p class="font-bold text-primary">Mrs. Jane D.</p>
+<p class="text-xs text-on-surface-variant">Senior Teacher</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-3xl relative">
+<span class="text-tertiary-fixed-dim absolute top-6 right-8 text-6xl font-serif opacity-30">“</span>
+<p class="text-on-surface mb-8 italic">"Getting real-time notifications about my son's attendance gives me peace of mind while I'm at work. The app is a lifesaver."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a happy father using a smartphone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-FSkSFYaVz24NZ5c7FqmqyxBbTKFu2dGfSGQ-sw5HSc_rOF1C95e9M57Q6UKvp4vMqdcP9UqQd2LHlLAPaNxbJS59ybElRqCXXO6uayrCc2gt6McNxyIXUT_K6_1vxR_KwWabjGaZ1QlVS8kA6Rk8jecGzI2F5kIhP8pwja2qVqnaHtU9lwOmpoJmeho3NUq4jkDjycPyj2a7QbXRgxetM-TL7snbqL3ejFUafS_zREmzgJNLflBN-BtHRjo7h14vMrJwlBed6tc"/>
+</div>
+<div>
+<p class="font-bold text-primary">David K.</p>
+<p class="text-xs text-on-surface-variant">Parent</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing Preview -->
+<section class="py-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold text-primary mb-4">Simple, Transparent Pricing</h2>
+<p class="text-on-surface-variant">Choose the plan that fits your school's current size.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Starter -->
+<div class="bg-surface-container-lowest p-8 rounded-3xl border border-outline-variant/30 flex flex-col">
+<h3 class="text-xl font-bold text-primary mb-2">Starter School</h3>
+<p class="text-on-surface-variant text-sm mb-6">Perfect for new institutions starting their digital journey.</p>
+<div class="mb-8">
+<span class="text-4xl font-black text-primary">$49</span>
+<span class="text-on-surface-variant">/month</span>
+</div>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Up to 200 Students</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Attendance Tracking</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Basic Fee Management</li>
+</ul>
+<button class="w-full py-3 border border-primary text-primary font-bold rounded-xl hover:bg-primary/5">Choose Starter</button>
+</div>
+<!-- Growing (Featured) -->
+<div class="bg-primary p-8 rounded-3xl text-white shadow-2xl scale-105 relative z-10 flex flex-col">
+<div class="absolute top-4 right-8 bg-secondary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Most Popular</div>
+<h3 class="text-xl font-bold mb-2">Growing School</h3>
+<p class="opacity-70 text-sm mb-6">Advanced features for expanding schools.</p>
+<div class="mb-8">
+<span class="text-4xl font-black">$129</span>
+<span class="opacity-70">/month</span>
+</div>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary-container text-sm">check_circle</span> Up to 1000 Students</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary-container text-sm">check_circle</span> Result Management</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary-container text-sm">check_circle</span> Parent Mobile App</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary-container text-sm">check_circle</span> SMS Notifications</li>
+</ul>
+<button class="w-full py-3 bg-secondary text-white font-bold rounded-xl hover:opacity-90">Start Free Trial</button>
+</div>
+<!-- Enterprise -->
+<div class="bg-surface-container-lowest p-8 rounded-3xl border border-outline-variant/30 flex flex-col">
+<h3 class="text-xl font-bold text-primary mb-2">Enterprise</h3>
+<p class="text-on-surface-variant text-sm mb-6">Bespoke solutions for large multi-campus groups.</p>
+<div class="mb-8">
+<span class="text-4xl font-black text-primary">Custom</span>
+</div>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Unlimited Students</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Multi-Campus Sync</li>
+<li class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Dedicated Account Manager</li>
+</ul>
+<button class="w-full py-3 border border-primary text-primary font-bold rounded-xl hover:bg-primary/5">Contact Sales</button>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24">
+<div class="max-w-5xl mx-auto px-6">
+<div class="bg-gradient-to-br from-primary to-primary-container rounded-[2rem] p-12 text-center text-white relative overflow-hidden">
+<div class="absolute -top-24 -left-24 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-24 -right-24 w-64 h-64 bg-tertiary-fixed-dim/20 rounded-full blur-3xl"></div>
+<h2 class="text-4xl md:text-5xl font-bold mb-6 relative z-10 tracking-tight">Transform Your School Today</h2>
+<p class="text-lg opacity-80 mb-10 max-w-xl mx-auto relative z-10">Join hundreds of schools digitizing their operations with School OS. Start your 14-day free trial now.</p>
+<div class="flex flex-col sm:flex-row justify-center items-center gap-4 relative z-10">
+<button class="w-full sm:w-auto px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-surface-container-low transition-colors">Create School Account</button>
+<button class="w-full sm:w-auto px-10 py-4 bg-secondary text-white font-bold rounded-xl hover:opacity-90 transition-opacity">Book Demo</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-slate-50 dark:bg-slate-950 w-full py-12 px-6 border-t border-slate-200 dark:border-slate-800">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 max-w-7xl mx-auto font-inter text-sm">
+<div class="col-span-2">
+<div class="text-lg font-black text-blue-900 mb-4">School OS</div>
+<p class="text-slate-500 max-w-xs mb-6">The definitive operating system for modern education. Empowering schools to focus on what matters most: learning.</p>
+</div>
+<div>
+<h4 class="text-blue-900 font-bold mb-4 uppercase text-xs tracking-widest">Product</h4>
+<ul class="space-y-3">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Features</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Pricing</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Security</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-blue-900 font-bold mb-4 uppercase text-xs tracking-widest">Company</h4>
+<ul class="space-y-3">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">About</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Blog</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Careers</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-blue-900 font-bold mb-4 uppercase text-xs tracking-widest">Support</h4>
+<ul class="space-y-3">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Support</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Contact</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Guides</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-blue-900 font-bold mb-4 uppercase text-xs tracking-widest">Legal</h4>
+<ul class="space-y-3">
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Privacy</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-colors" href="#">Terms</a></li>
+</ul>
+</div>
+</div>
+<div class="max-w-7xl mx-auto mt-16 pt-8 border-t border-slate-200 text-center text-slate-500">
+            © 2024 School OS. All rights reserved.
+        </div>
+</footer>
+</body></html>

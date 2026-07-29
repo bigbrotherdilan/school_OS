@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Academic Management | School OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        /* Custom scrollbar for data-heavy sections */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c5c5d3; }
+    </script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#ffdad6",
+              "surface-container-low": "#f2f4f6",
+              "on-surface-variant": "#444651",
+              "surface-container-highest": "#e0e3e5",
+              "on-secondary-fixed-variant": "#005236",
+              "outline-variant": "#c5c5d3",
+              "primary-container": "#1e3a8a",
+              "primary-fixed": "#dce1ff",
+              "background": "#f7f9fb",
+              "surface-container": "#eceef0",
+              "on-tertiary-fixed": "#2a1700",
+              "on-surface": "#191c1e",
+              "error": "#ba1a1a",
+              "secondary": "#006c49",
+              "on-background": "#191c1e",
+              "surface-tint": "#4059aa",
+              "tertiary-fixed-dim": "#ffb95f",
+              "surface-dim": "#d8dadc",
+              "on-primary-container": "#90a8ff",
+              "inverse-surface": "#2d3133",
+              "primary-fixed-dim": "#b6c4ff",
+              "on-tertiary-container": "#ef9900",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed-dim": "#4edea3",
+              "on-primary-fixed-variant": "#264191",
+              "on-tertiary-fixed-variant": "#653e00",
+              "on-primary": "#ffffff",
+              "tertiary-fixed": "#ffddb8",
+              "inverse-on-surface": "#eff1f3",
+              "surface-bright": "#f7f9fb",
+              "on-secondary-container": "#00714d",
+              "tertiary": "#3e2400",
+              "primary": "#00236f",
+              "inverse-primary": "#b6c4ff",
+              "surface-container-high": "#e6e8ea",
+              "tertiary-container": "#5c3800",
+              "secondary-container": "#6cf8bb",
+              "on-secondary-fixed": "#002113",
+              "surface": "#f7f9fb",
+              "on-tertiary": "#ffffff",
+              "on-error": "#ffffff",
+              "on-primary-fixed": "#00164e",
+              "on-error-container": "#93000a",
+              "outline": "#757682",
+              "secondary-fixed": "#6ffbbe",
+              "surface-variant": "#e0e3e5"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- SideNavBar (The Anchor) -->
+        <aside class="fixed left-0 top-0 h-screen flex flex-col py-6 bg-slate-900 dark:bg-black text-slate-400 font-sans text-sm font-regular tracking-wide shadow-2xl z-50 w-72">
+            <div class="px-6 mb-8 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-tight">The Institutional Ledger</h1>
+                    <p class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Global Administration</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto px-2 space-y-1">
+                <!-- Overview: Inactive -->
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200 group">
+                    <span class="material-symbols-outlined text-xl" data-icon="dashboard">dashboard</span>
+                    <span>Overview</span>
+                </a>
+                <!-- Academic: Active -->
+                <a href="#" class="bg-blue-600 text-white rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 shadow-lg shadow-blue-900/20">
+                    <span class="material-symbols-outlined text-xl" data-icon="school">school</span>
+                    <span class="font-medium">Academic</span>
+                </a>
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="settings_input_component">settings_input_component</span>
+                    <span>Operations</span>
+                </a>
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="account_balance_wallet">account_balance_wallet</span>
+                    <span>Finance</span>
+                </a>
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="group">group</span>
+                    <span>Community</span>
+                </a>
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="fact_check">fact_check</span>
+                    <span>Compliance</span>
+                </a>
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+                    <span>System</span>
+                </a>
+            </nav>
+
+            <div class="mt-auto pt-6 border-t border-slate-800 px-2 space-y-1">
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+                    <span>Audit Logs</span>
+                </a>
+                <a href="#" class="text-slate-400 hover:text-white mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl" data-icon="manage_accounts">manage_accounts</span>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 ml-72 overflow-y-auto min-h-screen">
+            <!-- TopAppBar -->
+            <header class="sticky top-0 z-40 flex justify-between items-center w-full px-12 h-16 bg-slate-50/80 backdrop-blur-md border-b border-slate-200/15 shadow-sm">
+                <div class="flex items-center gap-8">
+                    <span class="text-xl font-bold tracking-tighter text-blue-900">School OS</span>
+                    <nav class="hidden md:flex gap-6">
+                        <a href="#" class="text-blue-700 font-semibold border-b-2 border-blue-700 py-5 text-sm">2023-2024 Academic Year</a>
+                        <a href="#" class="text-slate-600 hover:bg-slate-100 transition-colors px-3 py-5 text-sm">Bilingual Section</a>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">
+                            <span class="material-symbols-outlined text-sm" data-icon="search">search</span>
+                        </span>
+                        <input type="text" placeholder="Global Student Search..." class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-sm w-64 focus:ring-2 focus:ring-primary/20">
+                    </div>
+                    <button class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                    </button>
+                    <button class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        <span class="material-symbols-outlined" data-icon="help">help</span>
+                    </button>
+                    <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden ml-2 border border-slate-300">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&h=100&auto=format&fit=crop" data-alt="close-up portrait of professional academic administrator with glasses in a bright office environment" alt="Admin Profile">
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-12 space-y-12 max-w-[1600px] mx-auto">
+                <!-- Hero Section: Stats & Asymmetric Layout -->
+                <section class="grid grid-cols-12 gap-8 items-end">
+                    <div class="col-span-12 lg:col-span-7">
+                        <span class="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Executive Control Center</span>
+                        <h2 class="text-4xl font-semibold tracking-tight text-on-surface mb-4">Academic Operations & Registry</h2>
+                        <p class="text-on-surface-variant text-lg max-w-2xl leading-relaxed">
+                            Oversee the dual-stream curriculum implementation, real-time enrollment dynamics, and institutional academic health across all sections.
+                        </p>
+                    </div>
+                    <div class="col-span-12 lg:col-span-5 grid grid-cols-2 gap-4">
+                        <div class="bg-surface-container-lowest p-6 rounded-xl border-b-4 border-primary shadow-sm">
+                            <span class="text-outline text-[10px] font-bold uppercase tracking-wider">Total Enrollment</span>
+                            <div class="text-3xl font-bold mt-1">2,482</div>
+                            <div class="flex items-center gap-1 text-secondary text-xs font-semibold mt-2">
+                                <span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                +4.2% YoY
+                            </div>
+                        </div>
+                        <div class="bg-surface-container-lowest p-6 rounded-xl border-b-4 border-secondary shadow-sm">
+                            <span class="text-outline text-[10px] font-bold uppercase tracking-wider">Fee Compliance</span>
+                            <div class="text-3xl font-bold mt-1">92.4%</div>
+                            <div class="flex items-center gap-1 text-secondary text-xs font-semibold mt-2">
+                                <span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+                                On Target
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Top Row: Class Structure & Program Coverage -->
+                <div class="grid grid-cols-12 gap-8">
+                    <!-- Class Structure View (Bento Card) -->
+                    <div class="col-span-12 xl:col-span-5 bg-surface-container-low p-8 rounded-xl flex flex-col">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 class="text-xl font-semibold text-primary">Institutional Hierarchy</h3>
+                                <p class="text-xs text-on-surface-variant uppercase font-medium mt-1">Organizational stream mapping</p>
+                            </div>
+                            <button class="bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-medium shadow-md">Modify Structure</button>
+                        </div>
+                        
+                        <div class="space-y-4 flex-1">
+                            <!-- School Level -->
+                            <div class="flex items-center gap-4 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/15">
+                                <div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+                                    <span class="material-symbols-outlined" data-icon="school">school</span>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-sm">The International Academy</div>
+                                    <div class="text-xs text-outline">K-12 Educational Complex</div>
+                                </div>
+                            </div>
+                            
+                            <div class="ml-6 border-l-2 border-outline-variant/30 pl-6 space-y-4 relative">
+                                <!-- Section Level: Anglophone -->
+                                <div class="relative group">
+                                    <div class="absolute -left-[26px] top-5 w-4 h-[2px] bg-outline-variant/30"></div>
+                                    <div class="bg-white p-3 rounded-lg border border-outline-variant/15 flex justify-between items-center cursor-pointer hover:border-primary/50 transition-colors">
+                                        <div class="flex items-center gap-3">
+                                            <span class="material-symbols-outlined text-primary text-xl" data-icon="language">language</span>
+                                            <span class="text-sm font-semibold">Anglophone Stream (GCE)</span>
+                                        </div>
+                                        <span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+                                    </div>
+                                    <!-- Level Subview -->
+                                    <div class="ml-8 mt-2 space-y-2 opacity-60">
+                                        <div class="text-[11px] font-bold text-outline uppercase px-2">Upper Sixth • Form 1</div>
+                                    </div>
+                                </div>
+
+                                <!-- Section Level: Francophone -->
+                                <div class="relative group">
+                                    <div class="absolute -left-[26px] top-5 w-4 h-[2px] bg-outline-variant/30"></div>
+                                    <div class="bg-white p-3 rounded-lg border border-outline-variant/15 flex justify-between items-center cursor-pointer hover:border-primary/50 transition-colors">
+                                        <div class="flex items-center gap-3">
+                                            <span class="material-symbols-outlined text-secondary text-xl" data-icon="translate">translate</span>
+                                            <span class="text-sm font-semibold">Section Francophone (BAC)</span>
+                                        </div>
+                                        <span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Coverage Monitor -->
+                    <div class="col-span-12 xl:col-span-7 bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/15 shadow-sm">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 class="text-xl font-semibold text-primary">Academic Pacing</h3>
+                                <p class="text-xs text-on-surface-variant uppercase font-medium mt-1">Curriculum Completion - Term 2</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-secondary"></span>
+                                <span class="text-xs font-bold text-on-surface">On Schedule</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                            <!-- Progress Item -->
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-end">
+                                    <div>
+                                        <div class="text-sm font-bold">Mathematics & Analytics</div>
+                                        <div class="text-xs text-outline">Form 5 • Science Group</div>
+                                    </div>
+                                    <div class="text-lg font-bold text-primary">85%</div>
+                                </div>
+                                <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full" style="width: 85%"></div>
+                                </div>
+                                <p class="text-[10px] text-on-surface-variant italic">Next: Advanced Calculus (Module 14)</p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-end">
+                                    <div>
+                                        <div class="text-sm font-bold">Francais & Literature</div>
+                                        <div class="text-xs text-outline">Première A4</div>
+                                    </div>
+                                    <div class="text-lg font-bold text-secondary">92%</div>
+                                </div>
+                                <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+                                    <div class="h-full bg-secondary rounded-full" style="width: 92%"></div>
+                                </div>
+                                <p class="text-[10px] text-on-surface-variant italic">Next: Molière Retrospective</p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-end">
+                                    <div>
+                                        <div class="text-sm font-bold">Chemistry & Lab</div>
+                                        <div class="text-xs text-outline">Lower Sixth S1</div>
+                                    </div>
+                                    <div class="text-lg font-bold text-on-tertiary-container">64%</div>
+                                </div>
+                                <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+                                    <div class="h-full bg-on-tertiary-container rounded-full" style="width: 64%"></div>
+                                </div>
+                                <p class="text-[10px] text-on-surface-variant italic">Delay: Practical session backlogs</p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-end">
+                                    <div>
+                                        <div class="text-sm font-bold">History & Geography</div>
+                                        <div class="text-xs text-outline">Form 3 Combined</div>
+                                    </div>
+                                    <div class="text-lg font-bold text-primary">78%</div>
+                                </div>
+                                <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full" style="width: 78%"></div>
+                                </div>
+                                <p class="text-[10px] text-on-surface-variant italic">Next: Cold War Geopolitics</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Row: Timetable Management Widget -->
+                <section class="bg-surface-container-low p-8 rounded-xl overflow-x-auto">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-primary">Faculty Deployment Grid</h3>
+                            <p class="text-xs text-on-surface-variant uppercase font-medium mt-1">Resource allocation by week</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <select class="bg-white border-none rounded-lg text-sm font-medium px-4 py-2 focus:ring-primary shadow-sm">
+                                <option>Block A - Science Wing</option>
+                                <option>Block B - Arts & Languages</option>
+                            </select>
+                            <button class="bg-white border border-outline-variant/30 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="material-symbols-outlined text-primary" data-icon="print">print</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="min-w-[1000px] border border-outline-variant/15 rounded-xl overflow-hidden shadow-sm bg-white">
+                        <div class="grid grid-cols-6 bg-surface-container text-[11px] font-bold uppercase tracking-wider text-outline border-b border-outline-variant/15">
+                            <div class="p-4 border-r border-outline-variant/15">Time Slot</div>
+                            <div class="p-4 border-r border-outline-variant/15">Monday</div>
+                            <div class="p-4 border-r border-outline-variant/15">Tuesday</div>
+                            <div class="p-4 border-r border-outline-variant/15">Wednesday</div>
+                            <div class="p-4 border-r border-outline-variant/15">Thursday</div>
+                            <div class="p-4">Friday</div>
+                        </div>
+                        
+                        <!-- Grid Rows -->
+                        <div class="divide-y divide-outline-variant/10">
+                            <!-- 8:00 Slot -->
+                            <div class="grid grid-cols-6 min-h-[100px]">
+                                <div class="p-4 border-r border-outline-variant/15 bg-surface-container-low/30 font-semibold text-xs text-on-surface-variant">08:00 — 09:30</div>
+                                <div class="p-2 border-r border-outline-variant/15">
+                                    <div class="bg-primary-container/10 border-l-4 border-primary p-3 rounded h-full">
+                                        <div class="text-[11px] font-bold text-primary">Advanced Physics</div>
+                                        <div class="text-[10px] text-on-surface-variant">Dr. Nkono • Lab 402</div>
+                                    </div>
+                                </div>
+                                <div class="p-2 border-r border-outline-variant/15">
+                                    <div class="bg-secondary/10 border-l-4 border-secondary p-3 rounded h-full">
+                                        <div class="text-[11px] font-bold text-secondary">French Grammar</div>
+                                        <div class="text-[10px] text-on-surface-variant">Mme. Dubois • Room 12</div>
+                                    </div>
+                                </div>
+                                <div class="p-2 border-r border-outline-variant/15"></div>
+                                <div class="p-2 border-r border-outline-variant/15">
+                                    <div class="bg-primary-container/10 border-l-4 border-primary p-3 rounded h-full">
+                                        <div class="text-[11px] font-bold text-primary">Applied Maths</div>
+                                        <div class="text-[10px] text-on-surface-variant">Mr. Talla • Hall A</div>
+                                    </div>
+                                </div>
+                                <div class="p-2"></div>
+                            </div>
+
+                            <!-- 09:45 Slot -->
+                            <div class="grid grid-cols-6 min-h-[100px]">
+                                <div class="p-4 border-r border-outline-variant/15 bg-surface-container-low/30 font-semibold text-xs text-on-surface-variant">09:45 — 11:15</div>
+                                <div class="p-2 border-r border-outline-variant/15"></div>
+                                <div class="p-2 border-r border-outline-variant/15">
+                                    <div class="bg-tertiary-container/10 border-l-4 border-on-tertiary-container p-3 rounded h-full">
+                                        <div class="text-[11px] font-bold text-on-tertiary-container">Civic Education</div>
+                                        <div class="text-[10px] text-on-surface-variant">Mr. Ndong • Hall B</div>
+                                    </div>
+                                </div>
+                                <div class="p-2 border-r border-outline-variant/15">
+                                    <div class="bg-primary-container/10 border-l-4 border-primary p-3 rounded h-full">
+                                        <div class="text-[11px] font-bold text-primary">Pure Chemistry</div>
+                                        <div class="text-[10px] text-on-surface-variant">Mrs. Fouda • Lab 2</div>
+                                    </div>
+                                </div>
+                                <div class="p-2 border-r border-outline-variant/15"></div>
+                                <div class="p-2">
+                                    <div class="bg-secondary/10 border-l-4 border-secondary p-3 rounded h-full">
+                                        <div class="text-[11px] font-bold text-secondary">Oral Exam</div>
+                                        <div class="text-[10px] text-on-surface-variant">Various • Room 05</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Student Management Table -->
+                <section class="space-y-6">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h3 class="text-2xl font-semibold text-primary">Student Registry</h3>
+                            <p class="text-sm text-on-surface-variant mt-1">Real-time status tracking for high-performance management</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="flex items-center gap-2 border border-outline-variant/50 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-all">
+                                <span class="material-symbols-outlined text-lg" data-icon="filter_list">filter_list</span>
+                                Filter Registry
+                            </button>
+                            <button class="flex items-center gap-2 bg-primary text-on-primary px-6 py-2 rounded-lg text-sm font-semibold shadow-lg active:scale-95 transition-all">
+                                <span class="material-symbols-outlined text-lg" data-icon="person_add">person_add</span>
+                                Add New Student
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
+                                    <th class="p-6">Student Information</th>
+                                    <th class="p-6">Registry ID</th>
+                                    <th class="p-6">Classification</th>
+                                    <th class="p-6">Parent Link</th>
+                                    <th class="p-6">Financials</th>
+                                    <th class="p-6">Academic Standing</th>
+                                    <th class="p-6 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/10">
+                                <!-- Student Row 1 -->
+                                <tr class="hover:bg-surface-container-low/50 transition-colors group">
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100">
+                                                <img src="https://images.unsplash.com/photo-1544717297-fa95b3ee51f3?q=80&w=100&h=100&auto=format&fit=crop" data-alt="portrait of a confident female student in school uniform against a soft blue background" alt="Student Photo">
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-on-surface">Amina Bakari</div>
+                                                <div class="text-[10px] font-bold uppercase tracking-tighter text-outline mt-0.5">Anglo Stream</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 font-mono text-xs text-on-surface-variant">S-2023-AF82</td>
+                                    <td class="p-6">
+                                        <div class="text-sm font-medium">Form 5 Science</div>
+                                        <div class="text-[10px] text-outline">Upper Secondary</div>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-2 text-secondary">
+                                            <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;" data-icon="verified_user" data-weight="fill">verified_user</span>
+                                            <span class="text-xs font-semibold">Active</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6">
+                                        <span class="bg-secondary-container/20 text-on-secondary-container text-[10px] font-bold px-2 py-1 rounded-full uppercase">Settled</span>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-secondary"></div>
+                                            <span class="text-sm font-medium">Excellence</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-outline group-hover:text-primary">
+                                            <span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Student Row 2 -->
+                                <tr class="hover:bg-surface-container-low/50 transition-colors group">
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100">
+                                                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&h=100&auto=format&fit=crop" data-alt="headshot of a young male student smiling with warm natural lighting and blurred park background" alt="Student Photo">
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-on-surface">Jean-Luc Ndi</div>
+                                                <div class="text-[10px] font-bold uppercase tracking-tighter text-outline mt-0.5">Section Francophone</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 font-mono text-xs text-on-surface-variant">S-2023-FR19</td>
+                                    <td class="p-6">
+                                        <div class="text-sm font-medium">Terminale C</div>
+                                        <div class="text-[10px] text-outline">Lycée Section</div>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-2 text-on-tertiary-container">
+                                            <span class="material-symbols-outlined text-lg" data-icon="warning">warning</span>
+                                            <span class="text-xs font-semibold">Pending</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6">
+                                        <span class="bg-error-container text-on-error-container text-[10px] font-bold px-2 py-1 rounded-full uppercase">Overdue</span>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-on-tertiary-container"></div>
+                                            <span class="text-sm font-medium">Needs Support</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-outline group-hover:text-primary">
+                                            <span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Student Row 3 -->
+                                <tr class="hover:bg-surface-container-low/50 transition-colors group">
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100">
+                                                <img src="https://images.unsplash.com/photo-1544126592-807daf21565c?q=80&w=100&h=100&auto=format&fit=crop" data-alt="close-up of a diverse young student with an engaged expression in a library setting with soft bookshelf background" alt="Student Photo">
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-on-surface">Li Chen Wang</div>
+                                                <div class="text-[10px] font-bold uppercase tracking-tighter text-outline mt-0.5">Anglo Stream</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 font-mono text-xs text-on-surface-variant">S-2023-AS44</td>
+                                    <td class="p-6">
+                                        <div class="text-sm font-medium">Form 1 A</div>
+                                        <div class="text-[10px] text-outline">Lower Secondary</div>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-2 text-secondary">
+                                            <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;" data-icon="verified_user" data-weight="fill">verified_user</span>
+                                            <span class="text-xs font-semibold">Active</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6">
+                                        <span class="bg-secondary-container/20 text-on-secondary-container text-[10px] font-bold px-2 py-1 rounded-full uppercase">Settled</span>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-primary-container"></div>
+                                            <span class="text-sm font-medium">Satisfactory</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-outline group-hover:text-primary">
+                                            <span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Pagination -->
+                        <div class="bg-surface-container-low/50 p-4 border-t border-outline-variant/15 flex justify-between items-center">
+                            <span class="text-xs text-on-surface-variant font-medium">Showing 1 to 10 of 1,248 students</span>
+                            <div class="flex gap-2">
+                                <button class="p-2 rounded hover:bg-white text-outline disabled:opacity-30" disabled>
+                                    <span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+                                </button>
+                                <button class="p-2 rounded bg-primary text-on-primary text-xs font-bold px-4">1</button>
+                                <button class="p-2 rounded hover:bg-white text-on-surface text-xs font-bold px-4">2</button>
+                                <button class="p-2 rounded hover:bg-white text-on-surface text-xs font-bold px-4">3</button>
+                                <button class="p-2 rounded hover:bg-white text-outline">
+                                    <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Footer spacing -->
+            <div class="h-12"></div>
+        </main>
+    </div>
+
+    <!-- Floating Action Button: Suppressed for Details Screen but visible on Academic Dash -->
+    <button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+        <span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+    </button>
+
+</body>
+</html></style></head><body></body></html>

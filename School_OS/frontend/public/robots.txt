@@ -1,0 +1,12 @@
+# robots.txt — School OS
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /gov/
+Disallow: /login/
+Disallow: /dashboard
+Disallow: /unauthorized
+
+Sitemap: https://schoolos.cm/sitemap.xml

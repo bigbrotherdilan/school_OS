@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Overview | Scholar Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#4edea3",
+                        "outline-variant": "#c5c5d3",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "on-primary-container": "#90a8ff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "outline": "#757682",
+                        "surface": "#f7f9fb",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-dim": "#d8dadc",
+                        "on-primary-fixed-variant": "#264191",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#00164e",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#5c3800",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-surface": "#2d3133",
+                        "surface-bright": "#f7f9fb",
+                        "background": "#f7f9fb",
+                        "on-surface-variant": "#444651",
+                        "secondary-fixed": "#6ffbbe",
+                        "secondary": "#006c49",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-tertiary-container": "#ef9900",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed": "#002113",
+                        "inverse-primary": "#b6c4ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dce1ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "primary-container": "#1e3a8a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary-container": "#00714d",
+                        "tertiary": "#3e2400",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface-tint": "#4059aa",
+                        "primary": "#00236f",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#6cf8bb",
+                        "on-surface": "#191c1e",
+                        "on-error": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden lg:flex flex-col h-screen border-r border-slate-800 bg-slate-900 dark:bg-black h-full w-64 fixed left-0 top-0 shadow-xl z-50">
+<div class="p-6">
+<h1 class="text-lg font-black text-white">Scholar Command</h1>
+<p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-medium">School OS Institutional</p>
+</div>
+<nav class="flex-1 mt-4">
+<a class="text-slate-300 hover:bg-slate-800 mx-2 my-1 px-4 py-3 rounded-lg flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-medium">Home</span>
+</a>
+<a class="bg-blue-800 text-white rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-medium">Fees</span>
+</a>
+<a class="text-slate-300 hover:bg-slate-800 mx-2 my-1 px-4 py-3 rounded-lg flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-medium">Reports</span>
+</a>
+<a class="text-slate-300 hover:bg-slate-800 mx-2 my-1 px-4 py-3 rounded-lg flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-medium">Analytics</span>
+</a>
+<a class="text-slate-300 hover:bg-slate-800 mx-2 my-1 px-4 py-3 rounded-lg flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-800 flex items-center gap-3">
+<img alt="Parent Profile" class="w-10 h-10 rounded-full bg-slate-700" data-alt="professional headshot of a mature person in business casual attire with soft office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuClppYRjRVpmEhsTonW8d2H-3xLYju8PhRZwl52xuqW4M-D0b5Z9ZdRfkAwUMYAmDOXdzTB3QVX8Tb6yi-3kWSoAox0nk8qnlmCCcv_i2s334PwWmD9XycW-nV1NFMVKBwxp7trcFmVPeAwIMEja3MKxFsRW_rzSC0M82OIYc__yK3bnxcH7mYBiIMdMl5FMHYJtGpRXjZ8jnWkzTRTwirGKxAzwRyvdb3RD_gfEjOROtt5YtUkjsl8Bw6OKkKNI15Erus_6Q8bnlc"/>
+<div>
+<p class="text-white text-sm font-semibold">Julianna Smith</p>
+<p class="text-slate-400 text-xs">Parent Dashboard</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 p-8 md:p-12 space-y-12">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-2">
+<p class="text-sm font-bold text-primary tracking-[0.2em] uppercase">Financial Portal</p>
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight">Financial Overview</h2>
+</div>
+<!-- Child Switcher (Shared Component Trailing Action) -->
+<div class="flex items-center gap-4 bg-surface-container-low p-2 rounded-xl border border-outline-variant/15">
+<div class="flex -space-x-2">
+<img alt="Liam" class="w-10 h-10 rounded-full border-2 border-white" data-alt="portrait of a young school-age boy smiling warmly with a blue backpack in a soft focus school hallway" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1zEizbDuyoHTy9rZ0NjfF7kVrSrwEMWIUoNubU56Et2Y7_RRKu0XX558JODA2DNaFFwbdv-B2sciO2F5MtVyak6hT6OX1oN74nHfUyEmhXQTIGJyLfksd1xgJJ_GjjZKs3a1TrnzVw4vxjB7oDtBZTo6Khj3qCQUsaXX9j2bgXqXbpgfB_QpHkC0le-epq6nrr1tkRgQ5TjHmleGRNNx-rSo30SKo-WifOby0pcoFNRfPHNlKN3my3VG5uVmD7FJHKZo0zwZgeCY"/>
+<img alt="Emma" class="w-10 h-10 rounded-full border-2 border-white grayscale opacity-50" data-alt="portrait of a young school-age girl with braids wearing a school uniform in a bright library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOm99Cdl8WZcGgxdaJX-B8nw7EI5SZ1Gz8KrJCNUzSCQMS399WZ_gkpU3Fhy9jnJp04Zr0c5mV4i-D40FF0Q184KkVaQzYtPexeaH9_oNjO4W31JCDusyqy4m5PZ7dFbBhPVNzEAp2yXeq4u--GxSJ5Zl3zucBBXSjLCnUj1Z4ZauhOEPnAa1Rh12guujRDhuKZ5aSAPpGF6J_jctw9aji5gov78FkuV_qkI-UArwgCVnbYUrhsSxNkv-4MK4Qg8bsUIomVK_szds"/>
+</div>
+<div class="pr-4">
+<p class="text-xs font-bold text-outline uppercase tracking-wider">Active Child</p>
+<select class="bg-transparent border-none text-primary font-semibold py-0 focus:ring-0 cursor-pointer">
+<option>Liam Smith (Grade 4)</option>
+<option>Emma Smith (Grade 2)</option>
+<option>All Dependents</option>
+</select>
+</div>
+</div>
+</header>
+<!-- Summary Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Total Fees Paid -->
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/15 flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-secondary text-3xl mb-4" data-icon="check_circle">check_circle</span>
+<p class="text-sm font-medium text-outline uppercase tracking-widest">Total Fees Paid</p>
+</div>
+<div class="mt-4">
+<h3 class="text-3xl font-extrabold text-on-surface">$12,450.00</h3>
+<p class="text-secondary text-xs font-semibold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="trending_up">trending_up</span>
+                        85% of annual total
+                    </p>
+</div>
+</div>
+<!-- Outstanding Balance -->
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/15 flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-error text-3xl mb-4" data-icon="account_balance_wallet">account_balance_wallet</span>
+<p class="text-sm font-medium text-outline uppercase tracking-widest">Outstanding Balance</p>
+</div>
+<div class="mt-4">
+<h3 class="text-3xl font-extrabold text-on-surface">$2,100.00</h3>
+<p class="text-on-tertiary-container text-xs font-semibold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="schedule">schedule</span>
+                        Due in 14 days
+                    </p>
+</div>
+</div>
+<!-- Upcoming Installment -->
+<div class="bg-primary text-on-primary rounded-xl p-8 shadow-xl flex flex-col justify-between relative overflow-hidden">
+<div class="absolute -right-4 -top-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="event_repeat">event_repeat</span>
+</div>
+<div class="relative z-10">
+<span class="material-symbols-outlined text-secondary-fixed text-3xl mb-4" data-icon="calendar_month">calendar_month</span>
+<p class="text-sm font-medium text-primary-fixed-dim uppercase tracking-widest">Next Installment</p>
+</div>
+<div class="mt-4 relative z-10">
+<h3 class="text-3xl font-extrabold">$700.00</h3>
+<p class="text-primary-fixed text-xs font-semibold mt-1">October 15, 2023</p>
+</div>
+</div>
+</section>
+<!-- Analytics Row -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Payment History Bar Graph -->
+<div class="lg:col-span-8 bg-surface-container-low rounded-xl p-8 border border-outline-variant/15">
+<div class="flex items-center justify-between mb-8">
+<h4 class="text-xl font-bold text-primary">Payment History</h4>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 text-xs font-medium text-outline">
+<span class="w-3 h-3 rounded-full bg-primary"></span> Paid
+                        </span>
+<span class="flex items-center gap-1 text-xs font-medium text-outline">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span> Projected
+                        </span>
+</div>
+</div>
+<div class="flex items-end justify-between h-48 gap-4 px-4">
+<!-- April -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-lg transition-all group-hover:opacity-80" style="height: 60%"></div>
+<span class="text-xs font-bold text-outline">APR</span>
+</div>
+<!-- May -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-lg transition-all group-hover:opacity-80" style="height: 45%"></div>
+<span class="text-xs font-bold text-outline">MAY</span>
+</div>
+<!-- June -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-lg transition-all group-hover:opacity-80" style="height: 90%"></div>
+<span class="text-xs font-bold text-outline">JUN</span>
+</div>
+<!-- July -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-lg transition-all group-hover:opacity-80" style="height: 70%"></div>
+<span class="text-xs font-bold text-outline">JUL</span>
+</div>
+<!-- August -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-lg transition-all group-hover:opacity-80" style="height: 85%"></div>
+<span class="text-xs font-bold text-outline">AUG</span>
+</div>
+<!-- September -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-outline-variant/40 rounded-t-lg border-2 border-dashed border-outline-variant" style="height: 40%"></div>
+<span class="text-xs font-bold text-primary">SEP</span>
+</div>
+</div>
+</div>
+<!-- Fee Coverage Pie Chart -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/15">
+<h4 class="text-xl font-bold text-primary mb-6">Fee Coverage</h4>
+<div class="relative flex items-center justify-center mb-8">
+<!-- Circular SVG Chart -->
+<svg class="w-40 h-40 transform -rotate-90">
+<circle cx="80" cy="80" fill="transparent" r="70" stroke="#eceef0" stroke-width="20"></circle>
+<circle cx="80" cy="80" fill="transparent" r="70" stroke="#00236f" stroke-dasharray="440" stroke-dashoffset="110" stroke-width="20"></circle> <!-- 75% -->
+<circle cx="80" cy="80" fill="transparent" r="70" stroke="#006c49" stroke-dasharray="440" stroke-dashoffset="374" stroke-width="20"></circle> <!-- 15% -->
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-black text-primary">90%</span>
+<span class="text-[10px] font-bold text-outline uppercase tracking-tighter">Settled</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm font-medium text-on-surface">Tuition Fees</span>
+</div>
+<span class="text-sm font-bold text-primary">75%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-sm font-medium text-on-surface">Activities</span>
+</div>
+<span class="text-sm font-bold text-primary">15%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+<span class="text-sm font-medium text-on-surface">Unpaid</span>
+</div>
+<span class="text-sm font-bold text-primary">10%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Transactions Table -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/15 overflow-hidden">
+<div class="p-8 border-b border-surface-container flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h4 class="text-xl font-bold text-primary">Recent Transactions</h4>
+<p class="text-sm text-outline mt-1">Review your latest payments and download academic receipts.</p>
+</div>
+<button class="bg-surface-container-high text-on-surface px-4 py-2 rounded-lg font-bold text-sm hover:bg-surface-dim transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                    Advanced Filters
+                </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-widest">Child Name</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-widest">Description</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-widest">Date</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-widest">Amount</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-widest text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<img alt="Liam" class="w-8 h-8 rounded-full" data-alt="portrait of a young boy smiling warmly in a school hallway" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeSS7utgBTW6qnjRveM_5bbUAsI2TwczBUhQqgPiebinozghVyzYWbQgax446_FAPiH3FF4CfPxnPosu42v9d8yTL7W6Wyc6vHg_8N7KOwwB39wsyN3aYWXulKvhkGc2WwujZZTPCQsL55la_4oE0Hs8YWbVp7HAJszG09jY_e2cMrAMNCBD2Hh8oSf9Po7j7p0X-MsxnKXHBc_O8WlVhdDYJGKUqDm8EPadKjx5hFTBupR0aWjqFirwKO2anYbtr1NUrdvD8Dfo"/>
+<span class="text-sm font-semibold text-on-surface">Liam Smith</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Q3 Tuition Installment</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Sept 12, 2023</td>
+<td class="px-8 py-5">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">$1,200.00</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:text-primary-container font-bold text-sm flex items-center gap-1 ml-auto group-hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="download">download</span>
+                                    Download Receipt
+                                </button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<img alt="Emma" class="w-8 h-8 rounded-full" data-alt="portrait of a young school girl in school uniform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9oTwLIHvFMxQQDzlTbe39UC-HIEf7NSNKqkdFWb1AaRlWsz7V6rwO08ea_RIYplyiFHAL8n5smk08Stef6tzMF6yrfjrkJmUjgj6jqLSp7sBsKGHAE9XMItwkDnxkZ_Tf16-0oXeeLeK1_GUGCej-r8ZdV0O7YVYUQOTjEdtlx_mZ0I7I3R3X5wm4GQvY7pEm75GEIr3syxXdA8iyOYbAph6d5Ft_d2K1hR5_1vZeDT3eMYI8azYezcSRMxlxjyvClaNCnPNgIkI"/>
+<span class="text-sm font-semibold text-on-surface">Emma Smith</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Annual Sports Levy</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Sept 05, 2023</td>
+<td class="px-8 py-5">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">$350.00</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:text-primary-container font-bold text-sm flex items-center gap-1 ml-auto group-hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="download">download</span>
+                                    Download Receipt
+                                </button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<img alt="Liam" class="w-8 h-8 rounded-full" data-alt="portrait of a young boy smiling warmly in a school hallway" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBG9yUVkQJa67mSRkcfvi521loQXbVQ0_zvzw78tPeNPztBbjovsjL8p7Vx_crUAFtW9s7eLSR49VcZaDK6jpHcfvtEiV8-wR-dNmg-RW0jfGlPd0XZI2OIZ5VMNgF_j1hd59uBc6FKKOWivxl7jtI7ejIm4kl0LVRGinhFREw9hugviDCHI1HGQJKVRIRpIjjJWr94pPcYxOmLk9CGHgnJhn6XTwfvx11_hP-xuolgXWXfWmceFuwWUcNMlUmhF75eZUbsIylZuSw"/>
+<span class="text-sm font-semibold text-on-surface">Liam Smith</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Art Supplies &amp; Lab Fee</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Aug 28, 2023</td>
+<td class="px-8 py-5">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">$125.00</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:text-primary-container font-bold text-sm flex items-center gap-1 ml-auto group-hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="download">download</span>
+                                    Download Receipt
+                                </button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<img alt="Emma" class="w-8 h-8 rounded-full" data-alt="portrait of a young school girl in school uniform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUh5ols6S8xaxChsgEZPx_QsHDgq3wB7Znm8ljZjyjBE_jPXfLr-pP1OKPmRGV2r9Ojq-o19SjX3NdJacKjEVhh9xR-N_JNjisUQYIlWGpM5HMeOjMOz13rYnIDQSFeK6RYHLs-3CdDl2AwGdPu2qm-jymYbx1FoyuRrilokzdS2cOxwe2f__r5efzPdF8VUq0kS7yOgmmqka32Rb5a8cisaTK_bLZbNTuKk8sdGxQPJ2tVGomz5qGXOJP8OWV9sOOtH3EjllU-d4"/>
+<span class="text-sm font-semibold text-on-surface">Emma Smith</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Science Excursion - Planetarium</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Aug 15, 2023</td>
+<td class="px-8 py-5">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">$45.00</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:text-primary-container font-bold text-sm flex items-center gap-1 ml-auto group-hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="download">download</span>
+                                    Download Receipt
+                                </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-surface-container-low flex justify-center">
+<button class="text-primary font-bold text-sm underline underline-offset-4 decoration-surface-tint">View Full Transaction History</button>
+</div>
+</section>
+<!-- Institutional Footer Note -->
+<footer class="text-center pt-8 border-t border-outline-variant/10">
+<p class="text-xs text-outline font-medium uppercase tracking-[0.3em]">Institutional Grade Financial Compliance • Scholar Command v4.2</p>
+</footer>
+</main>
+<!-- Bottom Navigation for Mobile (Shared Component Logic) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-surface-variant flex justify-around items-center py-3 z-50">
+<a class="flex flex-col items-center gap-1 text-outline" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="payments" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="text-[10px] font-bold">Fees</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-outline" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="text-[10px] font-bold">Reports</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-outline" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-[10px] font-bold">Profile</span>
+</a>
+</nav>
+</body></html>

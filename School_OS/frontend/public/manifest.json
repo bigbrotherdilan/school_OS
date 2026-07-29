@@ -1,0 +1,19 @@
+{
+  "name": "School OS — Parent Portal",
+  "short_name": "School OS",
+  "description": "View your child's school fees, report cards, grades, and school announcements.",
+  "start_url": "/parent",
+  "display": "standalone",
+  "background_color": "#F7F9FB",
+  "theme_color": "#00236f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "finance"]
+}

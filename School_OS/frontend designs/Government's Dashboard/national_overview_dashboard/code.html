@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>National Overview Dashboard | School OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#ffdad6",
+              "surface-variant": "#e0e3e5",
+              "on-primary-fixed-variant": "#264191",
+              "tertiary-fixed": "#ffdbcb",
+              "surface-bright": "#f7f9fb",
+              "tertiary-container": "#6e2c00",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#757682",
+              "on-tertiary-container": "#f39461",
+              "on-background": "#191c1e",
+              "surface-container-highest": "#e0e3e5",
+              "on-secondary-fixed-variant": "#3a485b",
+              "tertiary-fixed-dim": "#ffb691",
+              "secondary": "#515f74",
+              "primary-fixed": "#dce1ff",
+              "secondary-container": "#d5e3fc",
+              "tertiary": "#4b1c00",
+              "on-tertiary-fixed": "#341100",
+              "inverse-on-surface": "#eff1f3",
+              "on-secondary-container": "#57657a",
+              "on-primary-fixed": "#00164e",
+              "primary-fixed-dim": "#b6c4ff",
+              "primary-container": "#1e3a8a",
+              "surface-container-high": "#e6e8ea",
+              "on-primary-container": "#90a8ff",
+              "surface-dim": "#d8dadc",
+              "surface-tint": "#4059aa",
+              "on-surface": "#191c1e",
+              "on-surface-variant": "#444651",
+              "surface": "#f7f9fb",
+              "on-error-container": "#93000a",
+              "background": "#f7f9fb",
+              "on-tertiary-fixed-variant": "#773205",
+              "secondary-fixed": "#d5e3fc",
+              "inverse-surface": "#2d3133",
+              "on-secondary-fixed": "#0d1c2e",
+              "on-secondary": "#ffffff",
+              "inverse-primary": "#b6c4ff",
+              "error": "#ba1a1a",
+              "surface-container-low": "#f2f4f6",
+              "primary": "#00236f",
+              "surface-container": "#eceef0",
+              "outline-variant": "#c5c5d3",
+              "on-error": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#b9c7df",
+              "on-primary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Public Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .monolith-shadow {
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Public Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased">
+<!-- TopNavBar -->
+<header class="bg-white dark:bg-slate-900 shadow-sm dark:shadow-none docked full-width top-0 border-b z-50 sticky">
+<div class="flex justify-between items-center w-full px-6 py-3 max-w-[1920px] mx-auto font-['Public_Sans'] antialiased tracking-tight">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#1E3A8A] dark:text-blue-400">School OS</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#1E3A8A] dark:text-blue-400 font-bold border-b-2 border-[#1E3A8A] pb-2" href="#">Overview</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Regions</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Monitoring</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Academic</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Finance</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Workforce</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Infrastructure</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-md text-sm w-64 focus:ring-2 focus:ring-primary" placeholder="Search national records..." type="text"/>
+</div>
+<button class="p-2 hover:bg-slate-50 transition-colors rounded-full text-slate-600">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-50 transition-colors rounded-full text-slate-600">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="Professional portrait of a government official in a sharp suit with a neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCe3CM4H3vKyRfedql7I81fh1MXOhYljq-N6Ybv9qoGFRxVxPX98r1qWzL71lsaRO5ZMi4QSWzvmLllyteZH5_bVLr3zsW8s001seWJhpSITvvVcwvxE45wwEeJ8N-WjL_rifjqSv2dSEjOH0GFYidi2khPHpCipmZH6p1xatuNwfkXCFvb1NklpwaYiL9OIVH54KjN1uN71M0FoWTUoIRxeA2w2zGS8fxJfP-A6ILFYllW5t1DPrgVIkALVEovjOW5p0uvv51634"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col pt-8 bg-slate-50 dark:bg-slate-950 w-64 border-r border-transparent">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded-sm">
+<span class="material-symbols-outlined text-white">account_balance</span>
+</div>
+<div>
+<h2 class="font-bold text-[#1E3A8A] text-sm uppercase tracking-wider">Command Center</h2>
+<p class="text-[10px] text-slate-500 font-medium">National Education</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all duration-150 rounded-md" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Alerts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all duration-150 rounded-md" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Inspections</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all duration-150 rounded-md" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Policy</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all duration-150 rounded-md" href="#">
+<span class="material-symbols-outlined">help_center</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Support</span>
+</a>
+</nav>
+<div class="p-6 mt-auto">
+<div class="bg-primary-container p-4 rounded-lg">
+<p class="text-on-primary-container text-xs font-bold mb-1">System Health</p>
+<div class="w-full bg-primary/30 h-1.5 rounded-full overflow-hidden">
+<div class="bg-on-primary-container w-[92%] h-full"></div>
+</div>
+<p class="text-[10px] text-on-primary-container/80 mt-2">All nodes operational</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 p-8 lg:p-12 overflow-y-auto">
+<!-- National Header Section -->
+<div class="mb-12">
+<div class="flex items-baseline gap-4 mb-2">
+<div class="w-1 h-8 bg-primary"></div>
+<h1 class="text-4xl font-black tracking-tight text-on-surface">National Education Dashboard</h1>
+</div>
+<p class="text-on-surface-variant font-medium ml-5 italic opacity-70">Reporting Period: FY 2024 Q3 • Last synchronized 4 minutes ago</p>
+</div>
+<!-- National KPI Cards (The Architectural Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
+<!-- Connected Schools -->
+<div class="bg-primary-container p-6 monolith-shadow relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-on-primary-container/70 text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Schools Connected</p>
+<h3 class="text-3xl font-black text-white">1,248</h3>
+<div class="flex items-center gap-1 mt-4 text-emerald-400">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-[10px] font-bold">+12% YoY</span>
+</div>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-white/5 group-hover:scale-110 transition-transform duration-500">school</span>
+</div>
+<!-- Students Nationwide -->
+<div class="bg-surface-container-lowest p-6 monolith-shadow border-l-4 border-primary">
+<p class="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Total Students</p>
+<h3 class="text-3xl font-black text-on-surface">425k</h3>
+<div class="flex items-center gap-1 mt-4 text-primary">
+<span class="material-symbols-outlined text-sm">groups</span>
+<span class="text-[10px] font-medium">National Census</span>
+</div>
+</div>
+<!-- Active Teachers -->
+<div class="bg-surface-container-lowest p-6 monolith-shadow border-l-4 border-primary">
+<p class="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Active Teachers</p>
+<h3 class="text-3xl font-black text-on-surface">18.5k</h3>
+<div class="flex items-center gap-1 mt-4 text-on-secondary-container">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-[10px] font-medium">Certified Workforce</span>
+</div>
+</div>
+<!-- Attendance Rate -->
+<div class="bg-surface-container-lowest p-6 monolith-shadow border-l-4 border-primary">
+<p class="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Attendance Rate</p>
+<h3 class="text-3xl font-black text-on-surface">94%</h3>
+<div class="flex items-center gap-1 mt-4 text-emerald-600">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span class="text-[10px] font-medium">Above Target</span>
+</div>
+</div>
+<!-- Fee Compliance -->
+<div class="bg-surface-container-lowest p-6 monolith-shadow border-l-4 border-on-tertiary-container">
+<p class="text-on-tertiary-container text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Fee Compliance</p>
+<h3 class="text-3xl font-black text-on-surface">82%</h3>
+<div class="flex items-center gap-1 mt-4 text-on-tertiary-container">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span class="text-[10px] font-medium">Collection Progress</span>
+</div>
+</div>
+<!-- Program Coverage -->
+<div class="bg-surface-container-lowest p-6 monolith-shadow border-l-4 border-primary">
+<p class="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Program Coverage</p>
+<h3 class="text-3xl font-black text-on-surface">76%</h3>
+<div class="flex items-center gap-1 mt-4 text-primary">
+<span class="material-symbols-outlined text-sm">map</span>
+<span class="text-[10px] font-medium">Rural Initiatives</span>
+</div>
+</div>
+</div>
+<!-- Secondary Layout: Map and Indicators -->
+<div class="grid grid-cols-12 gap-10">
+<!-- Map Section (Asymmetric Large Column) -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-low p-8 h-full min-h-[600px] flex flex-col monolith-shadow">
+<div class="flex justify-between items-center mb-8">
+<div class="flex items-center gap-3">
+<div class="w-1 h-6 bg-primary"></div>
+<h2 class="text-xl font-bold tracking-tight">Regional Performance Distribution</h2>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-lowest text-[10px] font-bold border border-outline-variant/20 rounded-full flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> High Access
+                                </span>
+<span class="px-3 py-1 bg-surface-container-lowest text-[10px] font-bold border border-outline-variant/20 rounded-full flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span> Moderate
+                                </span>
+<span class="px-3 py-1 bg-surface-container-lowest text-[10px] font-bold border border-outline-variant/20 rounded-full flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-red-500"></span> Critical Support
+                                </span>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-highest relative group overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover opacity-80 mix-blend-multiply" data-alt="Stylized topographic map of Cameroon with interactive colored overlays representing regional performance metrics, professional GIS style" data-location="Cameroon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz75z_zkxKv1cHb1sYeYUg0TiL-RmFUJNzsbu1wLCRp2MBgxC7H49vvopzars948W0ka8b5JnauRP4UpFWzyrpWKN9VpufvUKLPUPB4DaC907Jl6YmNxFjrd7rwArQru1aryOrNJ3et4mNW8hsI3iDlNF2TeIvuxyz_h9viB5GACMCVzhJLtsoCuoDzOe7J1jXEf4B9aDD-01BmG_-VGHbSjQHdqapy4rU_L_19LbTsrJF575qbCgB7PhLl8cxw9_j6tubFmhE3zE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent"></div>
+<!-- Floating Data Tooltip -->
+<div class="absolute top-10 left-10 p-4 bg-white/90 backdrop-blur-md monolith-shadow border-l-4 border-emerald-500 max-w-[200px]">
+<h4 class="text-xs font-black uppercase text-on-surface mb-1">Littoral Region</h4>
+<p class="text-2xl font-black text-primary">98.2%</p>
+<p class="text-[10px] text-on-surface-variant leading-tight">Highest connectivity and fee compliance nationally.</p>
+</div>
+<!-- Map Markers -->
+<div class="absolute top-1/2 left-1/3">
+<span class="material-symbols-outlined text-red-500 animate-pulse" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Education Health Indicators (Sidebar Column) -->
+<div class="col-span-12 lg:col-span-4 space-y-10">
+<!-- Academic Performance Gauge -->
+<div class="bg-surface-container-lowest p-8 monolith-shadow">
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">analytics</span> Performance Average
+                        </h4>
+<div class="flex flex-col items-center justify-center py-4">
+<div class="relative w-48 h-24 overflow-hidden">
+<div class="absolute top-0 left-0 w-48 h-48 border-[16px] border-surface-container-high rounded-full"></div>
+<div class="absolute top-0 left-0 w-48 h-48 border-[16px] border-primary rounded-full" style="clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: rotate(140deg);"></div>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+<span class="text-4xl font-black text-on-surface">B+</span>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">National Grade</p>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant mt-4 text-center">Trending up by <span class="text-emerald-600 font-bold">2.4%</span> since last semester</p>
+</div>
+</div>
+<!-- Enrollment Growth Trend -->
+<div class="bg-surface-container-lowest p-8 monolith-shadow">
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">show_chart</span> Enrollment Growth
+                        </h4>
+<div class="space-y-4">
+<div class="flex items-end gap-2 h-24">
+<div class="flex-1 bg-primary/20 h-[30%]"></div>
+<div class="flex-1 bg-primary/20 h-[45%]"></div>
+<div class="flex-1 bg-primary/40 h-[40%]"></div>
+<div class="flex-1 bg-primary/60 h-[65%]"></div>
+<div class="flex-1 bg-primary/80 h-[85%]"></div>
+<div class="flex-1 bg-primary h-[95%]"></div>
+</div>
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>2019</span>
+<span>2021</span>
+<span>2024</span>
+</div>
+</div>
+</div>
+<!-- Dropout Risk Indicator (Heatmap widget) -->
+<div class="bg-error-container p-8 monolith-shadow">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h4 class="text-xs font-black uppercase text-on-error-container">High Dropout Risk</h4>
+</div>
+<p class="text-sm text-on-error-container mb-4 font-medium">Anomalies detected in Northern rural zones. 12% increase in non-attendance triggers intervention protocol.</p>
+<button class="w-full py-2 bg-error text-white text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">Deploy Inspectors</button>
+</div>
+</div>
+</div>
+<!-- Bottom Section: Live Activity Feed -->
+<div class="mt-12">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<div class="w-1 h-6 bg-primary"></div>
+<h2 class="text-xl font-bold tracking-tight">Operational Command Feed</h2>
+</div>
+<button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                        View Audit Log <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Feed Item 1 -->
+<div class="bg-surface-container-lowest p-5 monolith-shadow border-t-2 border-emerald-500">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-emerald-600 text-sm">add_home</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">New School Onboarded</p>
+<p class="text-[10px] text-on-surface-variant mt-1">St. Augustine Academy, Buea</p>
+<p class="text-[9px] text-outline mt-2 uppercase font-bold">2 minutes ago</p>
+</div>
+</div>
+</div>
+<!-- Feed Item 2 -->
+<div class="bg-surface-container-lowest p-5 monolith-shadow border-t-2 border-primary">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-sm">assignment_turned_in</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Inspection Submitted</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Region: Adamaoua | Score: 84%</p>
+<p class="text-[9px] text-outline mt-2 uppercase font-bold">14 minutes ago</p>
+</div>
+</div>
+</div>
+<!-- Feed Item 3 -->
+<div class="bg-surface-container-lowest p-5 monolith-shadow border-t-2 border-on-tertiary-container">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm">finance_chip</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Financial Alert</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Fee collection lag in Central District</p>
+<p class="text-[9px] text-outline mt-2 uppercase font-bold">1 hour ago</p>
+</div>
+</div>
+</div>
+<!-- Feed Item 4 -->
+<div class="bg-surface-container-lowest p-5 monolith-shadow border-t-2 border-slate-400">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-slate-600 text-sm">policy</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Policy Update</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Updated Curriculum v2.4 Published</p>
+<p class="text-[9px] text-outline mt-2 uppercase font-bold">3 hours ago</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Floating Action Button (FAB) - Suppressed on Dashboard as per guidelines, but if allowed: -->
+<!-- <button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white monolith-shadow rounded-full flex items-center justify-center group hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
+    </button> -->
+</body></html>

@@ -1,0 +1,9 @@
+{
+  "name": "school-os",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && VITE_API_URL=/api/v1 npx vite build",
+    "start": "cd backend && pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+  }
+}

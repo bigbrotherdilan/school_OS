@@ -1,0 +1,109 @@
+Watching for file changes with StatReloader
+C:\Users\BIG BROTHER\Desktop\Projects\Personal Projects\School_OS\School_OS\backend\apps\authentication\views.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\BIG BROTHER\Desktop\Projects\Personal Projects\School_OS\School_OS\backend\config\settings.py changed, reloading.
+Watching for file changes with StatReloader
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/academic-years/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/notifications/announcements/?published=true&ordering=-created_at&limit=10 HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/notifications/messages/?ordering=-created_at&limit=10 HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/cycles/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/terms/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/sections/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/notifications/announcements/?published=true&ordering=-created_at&limit=10 HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/auth/me/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/subjects/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/classes/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/notifications/messages/?ordering=-created_at&limit=10 HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/academic-years/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/subjects/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/cycles/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/classes/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/terms/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/academic/sections/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:56] "OPTIONS /api/v1/auth/me/ HTTP/1.1" 200 0
+[29/Jul/2026 18:09:57] "GET /api/v1/notifications/messages/?ordering=-created_at&limit=10 HTTP/1.1" 200 52
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/sections/ HTTP/1.1" 200 238
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/cycles/ HTTP/1.1" 200 223
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/terms/ HTTP/1.1" 200 778
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 931
+[29/Jul/2026 18:09:57] "GET /api/v1/notifications/announcements/?published=true&ordering=-created_at&limit=10 HTTP/1.1" 200 7531
+[29/Jul/2026 18:09:57] "GET /api/v1/auth/me/ HTTP/1.1" 200 496
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/cycles/ HTTP/1.1" 200 223
+[29/Jul/2026 18:09:57] "GET /api/v1/notifications/messages/?ordering=-created_at&limit=10 HTTP/1.1" 200 52
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/sections/ HTTP/1.1" 200 238
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/subjects/ HTTP/1.1" 200 1633
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1054
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/terms/ HTTP/1.1" 200 778
+[29/Jul/2026 18:09:57] "GET /api/v1/auth/me/ HTTP/1.1" 200 496
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 931
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/subjects/ HTTP/1.1" 200 1633
+[29/Jul/2026 18:09:57] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1054
+[29/Jul/2026 18:09:57] "GET /api/v1/notifications/announcements/?published=true&ordering=-created_at&limit=10 HTTP/1.1" 200 7531
+Bad Request: /api/v1/auth/login/
+[29/Jul/2026 18:10:20] "POST /api/v1/auth/login/ HTTP/1.1" 400 107
+Bad Request: /api/v1/auth/login/
+[29/Jul/2026 18:10:24] "POST /api/v1/auth/login/ HTTP/1.1" 400 107
+Bad Request: /api/v1/auth/login/
+[29/Jul/2026 18:10:27] "POST /api/v1/auth/login/ HTTP/1.1" 400 107
+Bad Request: /api/v1/academic/terms/
+[29/Jul/2026 18:10:39] "POST /api/v1/academic/terms/ HTTP/1.1" 400 87
+[29/Jul/2026 18:10:57] "POST /api/v1/academic/sections/ HTTP/1.1" 201 89
+[29/Jul/2026 18:10:57] "GET /api/v1/academic/sections/ HTTP/1.1" 200 328
+[29/Jul/2026 18:10:57] "GET /api/v1/academic/cycles/ HTTP/1.1" 200 223
+[29/Jul/2026 18:10:57] "GET /api/v1/academic/subjects/ HTTP/1.1" 200 1633
+[29/Jul/2026 18:10:57] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1054
+[29/Jul/2026 18:10:57] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 931
+[29/Jul/2026 18:10:57] "GET /api/v1/academic/terms/ HTTP/1.1" 200 778
+[29/Jul/2026 18:12:03] "POST /api/v1/academic/classes/ HTTP/1.1" 201 166
+[29/Jul/2026 18:12:03] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 931
+[29/Jul/2026 18:12:03] "GET /api/v1/academic/terms/ HTTP/1.1" 200 778
+[29/Jul/2026 18:12:03] "GET /api/v1/academic/cycles/ HTTP/1.1" 200 223
+[29/Jul/2026 18:12:03] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221
+[29/Jul/2026 18:12:03] "GET /api/v1/academic/subjects/ HTTP/1.1" 200 1633
+[29/Jul/2026 18:12:03] "GET /api/v1/academic/sections/ HTTP/1.1" 200 328
+[29/Jul/2026 18:13:07] "POST /api/v1/academic/subjects/ HTTP/1.1" 201 173
+[29/Jul/2026 18:13:07] "GET /api/v1/academic/cycles/ HTTP/1.1" 200 223
+[29/Jul/2026 18:13:07] "GET /api/v1/academic/terms/ HTTP/1.1" 200 778
+[29/Jul/2026 18:13:07] "GET /api/v1/academic/sections/ HTTP/1.1" 200 328
+[29/Jul/2026 18:13:07] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221
+[29/Jul/2026 18:13:07] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 931
+[29/Jul/2026 18:13:07] "GET /api/v1/academic/subjects/ HTTP/1.1" 200 1808
+Bad Request: /api/v1/academic/terms/
+[29/Jul/2026 18:13:52] "POST /api/v1/academic/terms/ HTTP/1.1" 400 87
+[29/Jul/2026 18:14:15] "POST /api/v1/academic/terms/ HTTP/1.1" 201 112
+[29/Jul/2026 18:14:15] "GET /api/v1/academic/cycles/ HTTP/1.1" 200 223
+[29/Jul/2026 18:14:15] "GET /api/v1/academic/sections/ HTTP/1.1" 200 328
+[29/Jul/2026 18:14:15] "GET /api/v1/academic/terms/ HTTP/1.1" 200 891
+[29/Jul/2026 18:14:15] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 1044
+[29/Jul/2026 18:14:15] "GET /api/v1/academic/subjects/ HTTP/1.1" 200 1808
+[29/Jul/2026 18:14:15] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221
+[29/Jul/2026 18:14:28] "OPTIONS /api/v1/students/students/ HTTP/1.1" 200 0
+[29/Jul/2026 18:14:28] "OPTIONS /api/v1/students/students/ HTTP/1.1" 200 0
+[29/Jul/2026 18:14:29] "GET /api/v1/students/students/ HTTP/1.1" 200 1573
+[29/Jul/2026 18:14:29] "GET /api/v1/students/students/ HTTP/1.1" 200 1573
+[29/Jul/2026 18:14:36] "OPTIONS /api/v1/assessments/mark-windows/ HTTP/1.1" 200 0
+[29/Jul/2026 18:14:36] "OPTIONS /api/v1/assessments/mark-windows/ HTTP/1.1" 200 0
+[29/Jul/2026 18:14:36] "GET /api/v1/academic/terms/ HTTP/1.1" 200 891
+[29/Jul/2026 18:14:36] "GET /api/v1/assessments/mark-windows/ HTTP/1.1" 200 586
+[29/Jul/2026 18:14:36] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221
+[29/Jul/2026 18:14:36] "GET /api/v1/academic/terms/ HTTP/1.1" 200 891
+[29/Jul/2026 18:14:36] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 1044
+[29/Jul/2026 18:14:36] "GET /api/v1/assessments/mark-windows/ HTTP/1.1" 200 586
+[29/Jul/2026 18:14:36] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221
+[29/Jul/2026 18:14:36] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 1044
+[29/Jul/2026 18:15:07] "OPTIONS /api/v1/academic/sequences/ HTTP/1.1" 200 0
+[29/Jul/2026 18:15:07] "POST /api/v1/academic/sequences/ HTTP/1.1" 201 99
+[29/Jul/2026 18:15:07] "POST /api/v1/academic/sequences/ HTTP/1.1" 201 99
+[29/Jul/2026 18:15:07] "GET /api/v1/assessments/mark-windows/ HTTP/1.1" 200 586
+[29/Jul/2026 18:15:08] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 1243
+[29/Jul/2026 18:15:08] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221
+[29/Jul/2026 18:15:08] "GET /api/v1/academic/terms/ HTTP/1.1" 200 1090
+Conflict: /api/v1/auth/login/
+[29/Jul/2026 18:15:57] "POST /api/v1/auth/login/ HTTP/1.1" 409 754
+[29/Jul/2026 18:20:46] "POST /api/v1/assessments/mark-windows/ HTTP/1.1" 201 267
+[29/Jul/2026 18:20:46] "OPTIONS /api/v1/assessments/exams/ensure-for-term/ HTTP/1.1" 200 0
+[29/Jul/2026 18:20:46] "POST /api/v1/assessments/exams/ensure-for-term/ HTTP/1.1" 200 84
+[29/Jul/2026 18:20:47] "GET /api/v1/assessments/mark-windows/ HTTP/1.1" 200 854
+[29/Jul/2026 18:20:47] "GET /api/v1/academic/terms/ HTTP/1.1" 200 1090
+[29/Jul/2026 18:20:47] "GET /api/v1/academic/academic-years/ HTTP/1.1" 200 1243
+[29/Jul/2026 18:20:47] "GET /api/v1/academic/classes/ HTTP/1.1" 200 1221

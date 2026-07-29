@@ -1,0 +1,78 @@
+"""
+School OS — Main URL Configuration
+API-First Architecture: All endpoints under /api/v1/
+"""
+import os
+from django.contrib import admin
+from django.urls import path, include, re_path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.generic import TemplateView
+from django.views.static import serve as static_serve
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+FRONTEND_DIST = settings.BASE_DIR.parent / 'frontend' / 'dist'
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health_check(request):
+    """GET /api/v1/health/ — System health check."""
+    return Response({
+        'status': 'healthy',
+        'platform': 'School OS',
+        'version': settings.SOS_CONFIG['PLATFORM_VERSION'],
+    })
+
+
+urlpatterns = [
+    # Django Admin
+    path('admin/', admin.site.urls),
+
+    # API v1
+    path('api/v1/health/', health_check, name='health-check'),
+    path('api/v1/', include('apps.authentication.urls')),
+    path('api/v1/tenants/', include('apps.tenants.urls')),
+
+    # Future API routes (will be added in subsequent phases)
+    path('api/v1/academic/', include('apps.academic.urls')),
+    path('api/v1/students/', include('apps.students.urls')),
+    path('api/v1/staff/', include('apps.staff.urls')),
+    path('api/v1/timetable/', include('apps.timetable.urls')),
+    path('api/v1/logbook/', include('apps.logbook.urls')),
+    path('api/v1/assessments/', include('apps.assessments.urls')),
+    path('api/v1/reports/', include('apps.reports.urls')),
+    path('api/v1/finance/', include('apps.finance.urls')),
+    path('api/v1/attendance/', include('apps.attendance.urls')),
+    path('api/v1/notifications/', include('apps.notifications.urls')),
+    path('api/v1/documents/', include('apps.documents.urls')),
+    path('api/v1/gov/', include('apps.government.urls')),
+    path('api/v1/audit/', include('apps.audit.urls')),
+
+    # Public API — no auth required, uses different prefix for security
+    path('pub/v1/', include('apps.public.urls')),
+]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Serve frontend assets (JS, CSS, images) from Vite build
+if FRONTEND_DIST.exists():
+    urlpatterns += [
+        re_path(r'^assets/(?P<path>.*)$', static_serve, {'document_root': str(FRONTEND_DIST / 'assets')}),
+    ]
+
+# Catch-all: serve React index.html for any non-API, non-admin route
+if os.path.exists(FRONTEND_DIST / 'index.html'):
+    urlpatterns += [
+        re_path(r'^(?!api/|admin/|media/|static/|assets/).*$', TemplateView.as_view(template_name='index.html'), name='catch-all'),
+    ]
+
+# Customize Django admin
+admin.site.site_header = 'School OS Administration'
+admin.site.site_title = 'School OS'
+admin.site.index_title = 'Platform Management'

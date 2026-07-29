@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;800;900&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#ffdad6",
+              "surface-variant": "#e0e3e5",
+              "on-primary-fixed-variant": "#264191",
+              "tertiary-fixed": "#ffdbcb",
+              "surface-bright": "#f7f9fb",
+              "tertiary-container": "#6e2c00",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#757682",
+              "on-tertiary-container": "#f39461",
+              "on-background": "#191c1e",
+              "surface-container-highest": "#e0e3e5",
+              "on-secondary-fixed-variant": "#3a485b",
+              "tertiary-fixed-dim": "#ffb691",
+              "secondary": "#515f74",
+              "primary-fixed": "#dce1ff",
+              "secondary-container": "#d5e3fc",
+              "tertiary": "#4b1c00",
+              "on-tertiary-fixed": "#341100",
+              "inverse-on-surface": "#eff1f3",
+              "on-secondary-container": "#57657a",
+              "on-primary-fixed": "#00164e",
+              "primary-fixed-dim": "#b6c4ff",
+              "primary-container": "#1e3a8a",
+              "surface-container-high": "#e6e8ea",
+              "on-primary-container": "#90a8ff",
+              "surface-dim": "#d8dadc",
+              "surface-tint": "#4059aa",
+              "on-surface": "#191c1e",
+              "on-surface-variant": "#444651",
+              "surface": "#f7f9fb",
+              "on-error-container": "#93000a",
+              "background": "#f7f9fb",
+              "on-tertiary-fixed-variant": "#773205",
+              "secondary-fixed": "#d5e3fc",
+              "inverse-surface": "#2d3133",
+              "on-secondary-fixed": "#0d1c2e",
+              "on-secondary": "#ffffff",
+              "inverse-primary": "#b6c4ff",
+              "error": "#ba1a1a",
+              "surface-container-low": "#f2f4f6",
+              "primary": "#00236f",
+              "surface-container": "#eceef0",
+              "outline-variant": "#c5c5d3",
+              "on-error": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#b9c7df",
+              "on-primary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Public Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .monolith-shadow {
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+        }
+        .glass-panel {
+            background: rgba(224, 227, 229, 0.4);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- TopNavBar -->
+<header class="bg-white dark:bg-slate-900 shadow-sm dark:shadow-none docked full-width top-0 border-b z-50 sticky">
+<div class="flex justify-between items-center w-full px-6 py-3 max-w-[1920px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#1E3A8A] dark:text-blue-400 font-headline">School OS</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Overview</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Regions</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Monitoring</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Academic</a>
+<a class="text-[#1E3A8A] dark:text-blue-400 font-bold border-b-2 border-[#1E3A8A] pb-2" href="#">Finance</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Workforce</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Infrastructure</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-[#1E3A8A] transition-colors duration-200" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-low px-3 py-1.5 rounded flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48" placeholder="Global search..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-slate-50 p-2 rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-slate-50 p-2 rounded-full transition-colors">settings</button>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="close-up portrait of a professional administrator in a suit, soft office lighting, authoritative and calm expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsKfLIU38uwHubs486JK8IMuaaBEVqzQHQETahIO25fmdLTqWjmk8UGG5DxFzWpUuraRGw3U8Ps91D8nXsq5sEHhrsu2rrxpppQff2pCc2t0MWNjhyVTSNqzN1d8nF9d5Rgb7dbytZb5Y4PMrBG-GDgc7Tu1bExnkakBuRDghmMzv74pRKw5Efsy4C3ilzme8bgHbMn6rJSBYEJaoKr78pHGtOiuxbIxQkF5sykfDeKQJFNxfEszCtcR4b7uhJRoIo8X2juojJb1c"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Suppressed on this view as it's a Finance deep-dive, but kept as context if needed per JSON hierarchy) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col pt-8 bg-slate-50 dark:bg-slate-950 w-64 border-r hidden lg:flex">
+<div class="px-6 mb-8">
+<h2 class="font-bold text-[#1E3A8A] text-lg font-headline">Command Center</h2>
+<p class="text-slate-500 text-xs tracking-widest">NATIONAL EDUCATION</p>
+</div>
+<div class="flex flex-col gap-1 px-2">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Alerts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 text-[#1E3A8A] dark:text-blue-400 shadow-sm border-l-4 border-[#1E3A8A] scale-[0.99]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide font-bold">Inspections</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Policy</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">help_center</span>
+<span class="font-['Public_Sans'] text-sm tracking-wide">Support</span>
+</a>
+</div>
+</aside>
+<main class="lg:ml-64 pt-6 px-8 pb-20">
+<!-- Header Section -->
+<div class="mb-10 flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-black font-headline text-primary tracking-tight mb-2">Finance &amp; Compliance</h1>
+<p class="text-on-surface-variant font-medium">Governance oversight and national financial transparency matrix.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface-container-high text-on-surface text-sm font-semibold rounded hover:bg-surface-container-highest transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">download</span>
+                    Export Ledger
+                </button>
+<button class="px-6 py-2 bg-primary text-on-primary text-sm font-bold rounded shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+                    New Audit Task
+                </button>
+</div>
+</div>
+<!-- National Finance Dashboard - Command focal point -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+<div class="md:col-span-4 bg-primary-container p-8 monolith-shadow rounded-lg relative overflow-hidden">
+<div class="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="flex flex-col">
+<span class="text-on-primary-container text-xs font-bold tracking-widest uppercase mb-2">Total Fees Collected</span>
+<div class="text-4xl font-black font-headline text-white tracking-tighter">₦842.1B</div>
+<div class="flex items-center gap-1 text-on-secondary-container mt-2 text-sm">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+12.4% vs LY</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-on-primary-container text-xs font-bold tracking-widest uppercase mb-2">Outstanding Payments</span>
+<div class="text-4xl font-black font-headline text-white tracking-tighter">₦54.8B</div>
+<div class="flex items-center gap-1 text-on-tertiary-container mt-2 text-sm font-bold">
+<span class="material-symbols-outlined text-sm">priority_high</span>
+<span>Action Required</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-on-primary-container text-xs font-bold tracking-widest uppercase mb-2">Compliance Rate</span>
+<div class="text-4xl font-black font-headline text-white tracking-tighter">94.2%</div>
+<div class="h-2 w-full bg-primary/30 rounded-full mt-4">
+<div class="h-full bg-on-primary-container rounded-full" style="width: 94.2%"></div>
+</div>
+</div>
+<div class="flex flex-col justify-center">
+<button class="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-bold py-3 rounded-md transition-all">
+                            View Treasury Analytics
+                        </button>
+</div>
+</div>
+<div class="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[160px]" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+</div>
+</section>
+<!-- Main Content Asymmetric Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+<!-- Left Column: Inspection Center (60%) -->
+<div class="lg:col-span-8 space-y-10">
+<section>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-1 h-8 bg-primary"></div>
+<h3 class="text-2xl font-bold font-headline">Inspection Center</h3>
+</div>
+<div class="bg-surface-container-lowest monolith-shadow rounded-lg p-6">
+<div class="mb-6 flex justify-between items-center">
+<div class="flex gap-4">
+<button class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-bold tracking-wide">Live Workflow</button>
+<button class="px-4 py-1.5 bg-secondary-fixed text-on-secondary-fixed rounded-full text-xs font-bold tracking-wide">History</button>
+</div>
+<div class="text-xs text-on-surface-variant font-medium italic">Showing data for Q3 FY24</div>
+</div>
+<div class="space-y-6">
+<!-- Inspector Task Row -->
+<div class="flex items-center gap-6 p-4 bg-surface-container-low rounded group hover:bg-surface-container hover:translate-x-1 transition-all">
+<div class="w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">distance</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Region North-Central: Zone 4</h4>
+<p class="text-sm text-on-surface-variant">42 Scheduled • 12 In Progress</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<div class="text-sm font-bold text-on-surface">86% Completion</div>
+<div class="w-24 h-1.5 bg-surface-container-highest rounded-full mt-1">
+<div class="h-full bg-primary rounded-full" style="width: 86%"></div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary">chevron_right</span>
+</div>
+</div>
+<!-- Flagged School Item -->
+<div class="flex items-center gap-6 p-4 bg-error-container/20 rounded border-l-4 border-error">
+<div class="w-12 h-12 rounded bg-error/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">report_problem</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Lakeside International Academy</h4>
+<p class="text-sm text-error font-medium">Automatic Risk Flag: Discrepancy in infrastructure levy reporting.</p>
+</div>
+<button class="px-4 py-2 bg-error text-white text-xs font-bold rounded">Urgent Audit</button>
+</div>
+<!-- Standard Task Row -->
+<div class="flex items-center gap-6 p-4 bg-surface-container-low rounded group hover:bg-surface-container hover:translate-x-1 transition-all">
+<div class="w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">description</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Report Submission: National High</h4>
+<p class="text-sm text-on-surface-variant">Submitted 2h ago by Inspector Marcus V.</p>
+</div>
+<span class="material-symbols-outlined text-on-secondary-container">verified</span>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-1 h-8 bg-primary"></div>
+<h3 class="text-2xl font-bold font-headline">Compliance Monitoring</h3>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-lg border-b-2 border-outline-variant">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-outline">folder_off</span>
+<span class="text-xs font-bold bg-error-container text-on-error-container px-2 py-0.5 rounded">Critical</span>
+</div>
+<h5 class="font-bold text-lg mb-1">Outdated Records</h5>
+<p class="text-sm text-on-surface-variant">148 Schools have not updated staff payroll records for 60+ days.</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-lg border-b-2 border-outline-variant">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-outline">payments</span>
+<span class="text-xs font-bold bg-on-tertiary-container text-white px-2 py-0.5 rounded">Alert</span>
+</div>
+<h5 class="font-bold text-lg mb-1">Unauthorized Fees</h5>
+<p class="text-sm text-on-surface-variant">12 Institutions flagged for charging levies above national ceiling.</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-lg border-b-2 border-outline-variant">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-outline">history_edu</span>
+<span class="text-xs font-bold bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded">Monitoring</span>
+</div>
+<h5 class="font-bold text-lg mb-1">Late Reporting</h5>
+<p class="text-sm text-on-surface-variant">District 9 reporting latency increased by 14% this month.</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-lg border-b-2 border-outline-variant">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-outline">menu_book</span>
+<span class="text-xs font-bold bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded">Audit</span>
+</div>
+<h5 class="font-bold text-lg mb-1">Missing Logbooks</h5>
+<p class="text-sm text-on-surface-variant">45 Schools failed to submit maintenance logbooks for Q3.</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Alerts Panel & Quick Actions (40%) -->
+<div class="lg:col-span-4 space-y-10">
+<section>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-1 h-8 bg-primary"></div>
+<h3 class="text-2xl font-bold font-headline">Alerts Panel</h3>
+</div>
+<div class="space-y-4">
+<!-- Critical Alert -->
+<div class="p-5 bg-error-container border-l-4 border-error rounded-r-lg">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-error">dangerous</span>
+<div>
+<h6 class="font-bold text-on-error-container leading-tight">Financial Breach Detected</h6>
+<p class="text-sm text-on-error-container/80 mt-1">Unsanctioned withdrawal of ₦12M from Regional Sub-account #4019.</p>
+<p class="text-xs font-bold mt-2 uppercase tracking-tighter">14 mins ago</p>
+</div>
+</div>
+</div>
+<!-- Warning Alert -->
+<div class="p-5 bg-tertiary-fixed border-l-4 border-on-tertiary-container rounded-r-lg">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-on-tertiary-container">warning</span>
+<div>
+<h6 class="font-bold text-on-tertiary-fixed leading-tight">Audit Deadline Imminent</h6>
+<p class="text-sm text-on-tertiary-fixed-variant mt-1">Semi-annual financial returns due in 48 hours for 200+ schools.</p>
+<p class="text-xs font-bold mt-2 uppercase tracking-tighter">2 hours ago</p>
+</div>
+</div>
+</div>
+<!-- Info Alert -->
+<div class="p-5 bg-secondary-container border-l-4 border-primary rounded-r-lg">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-primary">info</span>
+<div>
+<h6 class="font-bold text-on-secondary-fixed leading-tight">Policy Update Published</h6>
+<p class="text-sm text-on-secondary-fixed-variant mt-1">New guidelines for school fee structure regulation are now live.</p>
+<p class="text-xs font-bold mt-2 uppercase tracking-tighter">6 hours ago</p>
+</div>
+</div>
+</div>
+<!-- Informational Alert -->
+<div class="p-5 bg-surface-container-high border-l-4 border-outline rounded-r-lg">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-on-surface-variant">update</span>
+<div>
+<h6 class="font-bold text-on-surface-variant leading-tight">System Maintenance</h6>
+<p class="text-sm text-on-surface-variant mt-1">Compliance database will be offline for 10 minutes at midnight.</p>
+<p class="text-xs font-bold mt-2 uppercase tracking-tighter">1 day ago</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Visualization Widget -->
+<section class="glass-panel p-6 rounded-xl monolith-shadow">
+<h4 class="font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">pie_chart</span>
+                        Regional Compliance Spread
+                    </h4>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-widest">
+<span>Central Region</span>
+<span>98%</span>
+</div>
+<div class="w-full h-1.5 bg-white/50 rounded-full">
+<div class="h-full bg-primary rounded-full" style="width: 98%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-widest text-on-tertiary-fixed-variant">
+<span>Northern Frontier</span>
+<span>64%</span>
+</div>
+<div class="w-full h-1.5 bg-white/50 rounded-full">
+<div class="h-full bg-on-tertiary-container rounded-full" style="width: 64%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-widest">
+<span>Coastal Belt</span>
+<span>82%</span>
+</div>
+<div class="w-full h-1.5 bg-white/50 rounded-full">
+<div class="h-full bg-primary rounded-full" style="width: 82%"></div>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-2 text-primary font-bold text-sm border-2 border-primary/20 rounded hover:bg-primary/5 transition-colors">
+                        Detailed Regional Report
+                    </button>
+</section>
+<!-- Status Map Preview (Abstracted) -->
+<div class="rounded-lg overflow-hidden monolith-shadow h-48 relative">
+<img alt="National map with data overlays" class="w-full h-full object-cover" data-alt="Stylized map of Nigeria with administrative boundaries and glowing data nodes representing regional education centers in professional blue tones" data-location="Nigeria" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA33HVnZ2BWYJzT_2AoFmAVJOR-_CHwfjTec9ChQEbj1iXEjxRXZbyvHepM6CepDuDb9K2wsUrhTsbAG8uPQsNAJ05ZoO0lzCSKXmjPZmy1Q_Y-wlMdUNfS1w6uaEd3_vCxdkeZstfylJGNCcPCTXjWH__O6grgaij8xlsndzFc_-_hGz5N34bhqkzwbjow0lqmEn6FN-v3Yo5kOXAbbCuWn7AqQsI3zjTJgXb3NQli7iZmFfmVcC_z-U_k8Al4oZG57m3X-A3fJk8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent flex items-end p-4">
+<div class="text-white">
+<p class="text-[10px] font-bold tracking-widest uppercase">Live Surveillance</p>
+<p class="font-headline font-black text-lg">National Inspection Grid</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB - Restricted to core action -->
+<div class="fixed bottom-8 right-8">
+<button class="bg-primary text-on-primary w-14 h-14 rounded-full monolith-shadow flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">add_chart</span>
+</button>
+</div>
+</body></html>

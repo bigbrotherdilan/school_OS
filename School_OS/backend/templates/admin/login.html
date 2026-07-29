@@ -1,0 +1,86 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Final Polish for Login Page */
+    #branding-login {
+        background: var(--primary) !important;
+        padding: 50px 40px !important;
+        text-align: center !important;
+        border-bottom: 5px solid var(--accent) !important;
+    }
+    #branding-login h1 {
+        margin: 0 !important;
+        color: #fff !important;
+        font-size: 28px !important;
+        font-weight: 800 !important;
+        letter-spacing: -1px !important;
+    }
+    #branding-login p {
+        color: rgba(255,255,255,0.5) !important;
+        font-size: 11px !important;
+        margin-top: 8px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 3px !important;
+        font-weight: 700 !important;
+    }
+    .errornote {
+        margin: 20px 40px 0 !important;
+        padding: 12px !important;
+        background: #fef2f2 !important;
+        border: 1px solid #fee2e2 !important;
+        color: #b91c1c !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div id="branding-login">
+        <h1>SCHOOL OS</h1>
+        <p>Master Control</p>
+    </div>
+    
+    {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+    {% if form.errors.items|length == 1 %}{% translate "Invalid credentials. Please check your username and password." %}{% else %}{% translate "Please correct the errors below." %}{% endif %}
+    </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+    <p class="errornote">
+        {{ error }}
+    </p>
+    {% endfor %}
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+      <div class="form-row">
+        <label for="id_username">{% translate 'Authorized User ID' %}</label>
+        <input type="text" name="username" autofocus required id="id_username" placeholder="e.g. admin@schoolos.sos">
+      </div>
+      <div class="form-row">
+        <label for="id_password">{% translate 'Master Passcode' %}</label>
+        <input type="password" name="password" required id="id_password" placeholder="••••••••">
+        <input type="hidden" name="next" value="{{ next }}">
+      </div>
+      <div className="submit-row">
+        <input type="submit" value="{% translate 'Initiate Session' %}">
+      </div>
+    </form>
+</div>
+{% endblock %}
