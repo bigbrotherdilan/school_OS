@@ -27,7 +27,10 @@ class MarkEntryWindowViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
-        qs = MarkEntryWindow.objects.filter(tenant_id=tenant_id)  # type: ignore
+        if not tenant_id and hasattr(self.request.user, 'tenant_id'):
+            tenant_id = self.request.user.tenant_id
+
+        qs = MarkEntryWindow.objects.filter(tenant_id=tenant_id).select_related('sequence', 'sequence__term')  # type: ignore
         sequence_id = self.request.query_params.get('sequence')
         if sequence_id:
             qs = qs.filter(sequence_id=sequence_id)

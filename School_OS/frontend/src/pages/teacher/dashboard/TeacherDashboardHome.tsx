@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentClass } from '../../../hooks/useCurrentClass';
 import { api } from '../../../services/api';
@@ -85,8 +85,11 @@ export default function TeacherDashboardHome() {
 
   useEffect(() => {
     api.get('/assessments/mark-windows/?is_open=true').then((res) => {
-      setOpenWindows(res.data.results || res.data || []);
-    }).catch(() => {});
+      const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+      setOpenWindows(data);
+    }).catch((err) => {
+      console.error('Failed to load open mark entry windows:', err);
+    });
   }, []);
 
   const toggleAnnouncements = () => {
@@ -578,8 +581,9 @@ export default function TeacherDashboardHome() {
           <ChecklistItem
             icon="grade"
             title="Enter marks"
-            desc="Input exam or assessment scores for your classes"
+            desc={openWindows.length > 0 ? `${openWindows.length} mark entry window(s) open now` : "Input exam or assessment scores for your classes"}
             onClick={() => navigate('/teacher/assessments')}
+            urgent={openWindows.length > 0}
           />
           <ChecklistItem
             icon="how_to_reg"

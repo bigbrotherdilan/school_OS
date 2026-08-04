@@ -9,6 +9,10 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
+        extra_kwargs = {
+            'tenant': {'read_only': True},
+            'created_by': {'read_only': True},
+        }
 
 
 class DirectMessageSerializer(serializers.ModelSerializer):
@@ -18,3 +22,7 @@ class DirectMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = DirectMessage
         fields = '__all__'
+        extra_kwargs = {
+            'tenant': {'read_only': True},
+            'sender': {'read_only': True},
+        }

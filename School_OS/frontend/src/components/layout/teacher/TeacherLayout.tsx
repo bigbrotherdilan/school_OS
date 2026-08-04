@@ -15,13 +15,6 @@ export default function TeacherLayout() {
     fetchAssignments();
   }, [fetchAssignments]);
 
-  // guard redirect
-  useEffect(() => {
-    if (!loading && assignments.length === 0 && location.pathname !== '/teacher') {
-      navigate('/teacher');
-    }
-  }, [loading, assignments.length, location.pathname, navigate]);
-
   const activeClass = activeAssignment ? `${activeAssignment.class_name} Active` : undefined;
   return (
     <div className="min-h-screen bg-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
