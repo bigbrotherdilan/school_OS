@@ -9,6 +9,7 @@ Cameroon Education Structure:
 - 2nd cycle has academic series (A, B, C, S1, S2, etc.)
 """
 from django.db import models
+from decimal import Decimal
 from apps.tenants.models import Tenant
 
 
@@ -237,6 +238,10 @@ class Subject(models.Model):
         max_digits=4, decimal_places=2, default=1.0,
     )
     is_compulsory = models.BooleanField(default=True)
+    is_double_preferred = models.BooleanField(
+        default=False,
+        help_text="Sciences, languages and workshop subjects often run as 2 consecutive periods (double period)",
+    )
 
     class Meta:
         db_table = 'academic_subjects'
@@ -246,6 +251,49 @@ class Subject(models.Model):
     def __str__(self):
         label = f" ({self.code})" if self.code else ""
         return f"{self.name}{label}"
+
+
+class SectionSubject(models.Model):
+    """
+    Links a subject to a section, with a coefficient specific to that section.
+
+    Subjects live in a school-wide master list (Subject). Assigning a subject to
+    a section makes it available to every class in that section, and the
+    coefficient here overrides the subject's default for that section.
+    """
+    section = models.ForeignKey(
+        Section, on_delete=models.CASCADE, related_name='section_subjects'
+    )
+    subject = models.ForeignKey(
+        Subject, on_delete=models.CASCADE, related_name='section_subjects'
+    )
+    coefficient = models.DecimalField(
+        max_digits=4, decimal_places=2, default=1.0,
+        help_text="Coefficient of this subject within the section",
+    )
+
+    class Meta:
+        db_table = 'academic_section_subjects'
+        unique_together = ['section', 'subject']
+        ordering = ['subject__name']
+
+    def __str__(self):
+        return f"{self.subject.name} → {self.section.name} (coeff {self.coefficient})"
+
+
+def effective_coefficient(section, subject):
+    """
+    Resolve the coefficient for a subject within a section.
+    Prefers the section-specific override; falls back to the subject default.
+    """
+    if subject is None:
+        return Decimal('1.0')
+    if section is not None:
+        try:
+            return SectionSubject.objects.get(section=section, subject=subject).coefficient
+        except SectionSubject.DoesNotExist:
+            pass
+    return subject.default_coefficient
 
 
 class ClassSubject(models.Model):
@@ -266,6 +314,14 @@ class ClassSubject(models.Model):
     coefficient = models.DecimalField(
         max_digits=4, decimal_places=2, default=1.0,
         help_text="Subject coefficient for this class/series",
+    )
+    weekly_hours = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Official weekly hours (volume horaire) for this subject in this class. Used by the timetable generator.",
+    )
+    is_double = models.BooleanField(
+        null=True, blank=True,
+        help_text="Run this subject as double periods in this class. Empty = use the subject's default.",
     )
 
     class Meta:

@@ -1,4 +1,4 @@
-﻿import { useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
@@ -164,12 +164,6 @@ export default function SchoolProfile() {
               </div>
             </div>
             <div className="flex gap-3 shrink-0">
-              <Link
-                to="/login"
-                className="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all text-sm"
-              >
-                Student Portal
-              </Link>
               <button
                 onClick={() => setActiveTab('enroll')}
                 className="bg-secondary text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all text-sm"
@@ -234,28 +228,6 @@ export default function SchoolProfile() {
               <div className="bg-white rounded-3xl p-8 md:p-10 border border-outline-variant/10 shadow-sm">
                 <h3 className="text-xl font-bold text-primary mb-6">Contact Information</h3>
                 <div className="grid md:grid-cols-2 gap-5">
-                  {school.phone && (
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-white text-lg">call</span>
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Phone</div>
-                        <div className="text-on-surface font-medium text-sm">{school.phone}</div>
-                      </div>
-                    </div>
-                  )}
-                  {school.email && (
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-white text-lg">mail</span>
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Email</div>
-                        <div className="text-on-surface font-medium text-sm">{school.email}</div>
-                      </div>
-                    </div>
-                  )}
                   {school.address && (
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center shrink-0">
@@ -279,7 +251,7 @@ export default function SchoolProfile() {
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {school.classes.map((cls) => (
-                    <div key={cls.id} className="bg-white rounded-2xl p-6 border border-outline-variant/10 shadow-sm flex items-center gap-4">
+                    <div key={cls.name} className="bg-white rounded-2xl p-6 border border-outline-variant/10 shadow-sm flex items-center gap-4">
                       <div className="w-12 h-12 bg-primary-container rounded-xl flex items-center justify-center shrink-0">
                         <span className="material-symbols-outlined text-white text-xl">school</span>
                       </div>
@@ -393,7 +365,7 @@ export default function SchoolProfile() {
                         className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
                         <option value="">Select level</option>
                         {school.classes.map((cls) => (
-                          <option key={cls.id} value={cls.name}>{cls.name}</option>
+                          <option key={cls.name} value={cls.name}>{cls.name}</option>
                         ))}
                       </select>
                     </div>

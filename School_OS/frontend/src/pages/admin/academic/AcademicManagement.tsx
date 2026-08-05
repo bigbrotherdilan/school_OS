@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
+import { useSectionStore } from '../../../stores/sectionStore';
 
 export default function AcademicManagement() {
   const navigate = useNavigate();
   const { addToast } = useToastStore();
+  const { activeSectionId } = useSectionStore();
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +18,7 @@ export default function AcademicManagement() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await api.get('/students/students/');
+        const res = await api.get('/students/students/', { params: activeSectionId ? { stream: activeSectionId } : undefined });
         setStudents(res.data.results || res.data);
       } catch (e) {
         console.error("Failed to fetch students", e);
@@ -25,7 +27,7 @@ export default function AcademicManagement() {
       }
     };
     fetchStudents();
-  }, []);
+  }, [activeSectionId]);
 
   return (
     <div className="p-4 lg:p-12 space-y-12 max-w-[1600px] mx-auto">

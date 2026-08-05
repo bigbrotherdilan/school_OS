@@ -5,3 +5,6 @@ class StudentsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.students'
     label = 'students'
+
+    def ready(self):
+        from apps.students import signals  # noqa: F401

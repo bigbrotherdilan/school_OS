@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 export interface User {
   id: string;
   email: string;
+  phone?: string;
   full_name: string;
   first_name: string;
   last_name: string;
@@ -12,6 +13,7 @@ export interface User {
   email_alerts: boolean;
   sms_alerts: boolean;
   is_platform_admin: boolean;
+  must_change_password?: boolean;
 }
 
 export interface TenantInfo {
@@ -46,6 +48,7 @@ interface AuthState {
   // Actions
   setAuth: (token: string, refreshToken: string, user: User, tenants: TenantInfo[], roles: RoleInfo[], sessionId?: string, deviceInfo?: DeviceInfo) => void;
   setToken: (token: string) => void;
+  clearMustChangePassword: () => void;
   logout: () => void;
   
   // Selectors/Computed
@@ -67,6 +70,11 @@ export const useAuthStore = create<AuthState>()(
         set({ token, refreshToken, user, tenants, roles, sessionId, deviceInfo: deviceInfo || null }),
 
       setToken: (token) => set({ token }),
+
+      clearMustChangePassword: () =>
+        set((state) => ({
+          user: state.user ? { ...state.user, must_change_password: false } : state.user,
+        })),
 
       logout: () =>
         set({ token: null, refreshToken: null, user: null, tenants: [], roles: [], sessionId: null, deviceInfo: null }),

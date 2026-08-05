@@ -45,10 +45,11 @@ class ExamSerializer(serializers.ModelSerializer):
         return obj.term.name if obj.term_id else None
 
     def get_sequences_status(self, obj):
+        from .models import MarkEntryWindow
         sequences = obj.term.sequences.all().order_by('order_number')
         windows = {
             w.sequence_id: w.is_open
-            for w in obj.markentrywindow_set.all()
+            for w in MarkEntryWindow.objects.filter(sequence__term=obj.term)
         }
         return [
             {

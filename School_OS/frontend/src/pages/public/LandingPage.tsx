@@ -302,8 +302,8 @@ export default function LandingPage() {
                 One platform. Every system. No notebooks. No spreadsheets. No midnight grading.
               </p>
             </div>
-            <Link to="/trust" className="text-primary font-bold flex items-center gap-2 hover:gap-4 transition-all">
-              See Everything <span className="material-symbols-outlined">arrow_forward</span>
+            <Link to="/schools" className="text-primary font-bold flex items-center gap-2 hover:gap-4 transition-all">
+              Explore Schools <span className="material-symbols-outlined">arrow_forward</span>
             </Link>
           </div>
 
@@ -317,8 +317,8 @@ export default function LandingPage() {
               </div>
               <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
               <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl" />
-              <Link to="/trust" className="relative z-10 self-start text-white flex items-center gap-2 mt-6 hover:gap-4 transition-all font-semibold">
-                Learn More <span className="material-symbols-outlined">arrow_forward</span>
+              <Link to="/find-teachers" className="relative z-10 self-start text-white flex items-center gap-2 mt-6 hover:gap-4 transition-all font-semibold">
+                Explore Marketplace <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </article>
 
@@ -475,10 +475,10 @@ export default function LandingPage() {
                 Start Free -- No Credit Card
               </Link>
               <Link
-                to="/trust"
+                to="/schools"
                 className="w-full sm:w-auto px-10 py-4 bg-secondary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-center"
               >
-                See the Full Platform
+                Explore Schools
               </Link>
             </div>
           </div>

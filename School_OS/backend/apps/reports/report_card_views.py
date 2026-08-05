@@ -14,36 +14,34 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.academic.models import AcademicYear, Term
+from apps.academic.models import AcademicYear, Term, effective_coefficient
 from apps.assessments.models import Exam, ExamResult
+from apps.attendance.models import AttendanceRecord, AttendanceSession
 from apps.authentication.permissions import IsSchoolAdmin, IsSchoolMember
 from apps.students.models import Student
 from apps.tenants.models import Tenant
 
 from .models import SchoolPerformanceReport, StudentReportCard, ReportCardTemplate
 from .serializers import SchoolPerformanceReportSerializer, ReportCardTemplateSerializer
-from .utils import generate_batch_report_cards, generate_report_card_pdf, _get_pass_mark
+from .utils import generate_batch_report_cards, generate_report_card_pdf, _get_pass_mark, _decision
 
 
 def _get_subject_scores(student, term, tenant):
     """Build subject score data for a student in a given term."""
-    term_ids = [term]
-    child_sequences = term.sequences.filter(type='sequence')
-    if child_sequences.exists():
-        term_ids.extend(child_sequences)
-    exams = Exam.objects.filter(tenant=tenant, term__in=term_ids)
+    exams = Exam.objects.filter(tenant=tenant, term=term)
     results = ExamResult.objects.filter(
         exam__in=exams,
         student=student,
     ).select_related('subject', 'exam')
 
     # Group by subject and calculate weighted score
+    section = student.current_class.stream if student.current_class else None
     subject_data = {}
     for r in results:
         if r.subject.id not in subject_data:
             subject_data[r.subject.id] = {
                 'subject_name': r.subject.name,
-                'coefficient': r.subject.default_coefficient,
+                'coefficient': effective_coefficient(section, r.subject),
                 'scores': [],
                 'max_scores': [],
                 'weight': Decimal('0'),
@@ -416,6 +414,116 @@ class ReportCardViewSet(viewsets.ViewSet):
         response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
         return response
+
+    @action(detail=False, methods=['post'], url_path='preview')
+    def preview_data(self, request):
+        """Return computed report card data as JSON for the live frontend preview."""
+        tenant = self._get_tenant(request)
+        if not tenant:
+            return Response({'detail': 'Tenant not found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        student_id = request.data.get('student_id')
+        term_id = request.data.get('term_id')
+        academic_year_id = request.data.get('academic_year_id')
+
+        if not all([student_id, term_id, academic_year_id]):
+            return Response(
+                {'detail': 'student_id, term_id, and academic_year_id are required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            student = Student.objects.get(id=student_id, tenant=tenant)
+            term = Term.objects.get(id=term_id, academic_year_id=academic_year_id)
+            academic_year = AcademicYear.objects.get(id=academic_year_id, tenant=tenant)
+        except (Student.DoesNotExist, Term.DoesNotExist, AcademicYear.DoesNotExist) as e:
+            return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        subject_scores = _get_subject_scores(student, term, tenant)
+        if not subject_scores:
+            return Response(
+                {'detail': 'No exam results found for this student in the selected term.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Student's weighted average + total coefficient
+        my_avg = Decimal('0')
+        my_tc = Decimal('0')
+        for subj in subject_scores:
+            c = Decimal(str(subj.get('coefficient', 1)))
+            sc = subj.get('score')
+            if sc is not None:
+                my_avg += Decimal(str(sc)) * c
+                my_tc += c
+        my_avg = (my_avg / my_tc) if my_tc > 0 else Decimal('0')
+
+        # Class stats (rank, class average, best average)
+        classmates = Student.objects.filter(
+            tenant=tenant,
+            current_class=student.current_class,
+            status__in=['active', 'registered'],
+        ).exclude(id=student.id)
+        all_avgs = [float(my_avg)]
+        for classmate in classmates:
+            cs = _get_subject_scores(classmate, term, tenant)
+            if cs:
+                cm_avg = Decimal('0')
+                cm_tc = Decimal('0')
+                for subj in cs:
+                    c = Decimal(str(subj.get('coefficient', 1)))
+                    sc = subj.get('score')
+                    if sc is not None:
+                        cm_avg += Decimal(str(sc)) * c
+                        cm_tc += c
+                cm_avg = (cm_avg / cm_tc) if cm_tc > 0 else Decimal('0')
+                all_avgs.append(float(cm_avg))
+
+        all_avgs.sort(reverse=True)
+        class_size = len(all_avgs)
+        class_avg = sum(all_avgs) / class_size if class_size > 0 else None
+        rank = (all_avgs.index(float(my_avg)) + 1) if class_size > 0 else None
+
+        max_scale = Decimal('100') if tenant.education_type == 'anglophone' else Decimal('20')
+        decision = _decision(float(my_avg), max_scale)
+
+        # Attendance absences for the term
+        sessions = AttendanceSession.objects.filter(tenant=tenant, term=term)
+        absences = AttendanceRecord.objects.filter(
+            student=student,
+            session__in=sessions,
+            status__in=[AttendanceRecord.Status.ABSENT, AttendanceRecord.Status.LATE],
+        ).count()
+        discipline_count = student.discipline_records.count()
+
+        serialized_scores = [
+            {k: (float(v) if isinstance(v, Decimal) else v) for k, v in s.items()}
+            for s in subject_scores
+        ]
+
+        return Response({
+            'student': {
+                'id': str(student.id),
+                'full_name': student.full_name,
+                'admission_number': student.admission_number,
+                'class_name': student.current_class.name if student.current_class else 'N/A',
+                'date_of_birth': student.date_of_birth.strftime('%d/%m/%Y') if student.date_of_birth else None,
+                'gender': student.gender,
+            },
+            'term_name': term.name,
+            'academic_year_name': academic_year.name,
+            'education_type': tenant.education_type,
+            'subject_scores': serialized_scores,
+            'total_coefficient': float(my_tc),
+            'average': float(round(my_avg, 2)),
+            'max_scale': float(max_scale),
+            'class_average': float(round(class_avg, 2)) if class_avg is not None else None,
+            'best_average': all_avgs[0] if all_avgs else None,
+            'rank': rank,
+            'class_size': class_size,
+            'decision': decision,
+            'absences': absences,
+            'discipline_count': discipline_count,
+        })
 
     @action(detail=False, methods=['get'], url_path='list')
     def list_report_cards(self, request):

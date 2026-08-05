@@ -65,6 +65,10 @@ class Student(models.Model):
     class Meta:
         db_table = 'students'
         unique_together = ['tenant', 'admission_number']
+        indexes = [
+            models.Index(fields=['tenant', 'current_class'], name='idx_student_class'),
+            models.Index(fields=['tenant', 'status'], name='idx_student_status'),
+        ]
         ordering = ['last_name', 'first_name']
 
     def __str__(self):

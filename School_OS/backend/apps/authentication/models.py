@@ -53,6 +53,19 @@ class User(AbstractUser):
         null=True,
         help_text="If set, limits oversight to this specific region (e.g., 'Littoral'). If blank, grants national oversight.",
     )
+    failed_login_attempts = models.PositiveIntegerField(
+        default=0,
+        help_text="Consecutive failed login attempts. Reset on successful login.",
+    )
+    locked_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="If set, the account cannot log in until this time.",
+    )
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="If True, the user must change their password on next login (e.g. after admin sets a temporary password).",
+    )
 
     # Use email as the login field
     USERNAME_FIELD = 'email'

@@ -72,7 +72,7 @@ class Command(BaseCommand):
     def seed_saint_joseph(self):
         from apps.tenants.models import Tenant, TenantConfig
         from apps.authentication.models import User, UserRoleMapping
-        from apps.academic.models import AcademicYear, Term, Cycle, Section, Series, Class, Subject, ClassSubject
+        from apps.academic.models import AcademicYear, Term, Cycle, Section, Series, Class, Subject, ClassSubject, SectionSubject
         from apps.students.models import Student
         from apps.staff.models import Teacher, TeachingAssignment
 
@@ -230,6 +230,21 @@ class Command(BaseCommand):
         for subj in [maths, french_subj, english, physics, chemistry]:
             ClassSubject.objects.get_or_create(
                 academic_class=seconde, subject=subj, series=series_c,
+                defaults={'coefficient': subj.default_coefficient},
+            )
+
+        for subj in [maths, english, french_subj]:
+            SectionSubject.objects.get_or_create(
+                section=anglo_section, subject=subj,
+                defaults={'coefficient': subj.default_coefficient},
+            )
+            SectionSubject.objects.get_or_create(
+                section=franco_section, subject=subj,
+                defaults={'coefficient': subj.default_coefficient},
+            )
+        for subj in [physics, chemistry]:
+            SectionSubject.objects.get_or_create(
+                section=anglo_section, subject=subj,
                 defaults={'coefficient': subj.default_coefficient},
             )
 

@@ -12,28 +12,6 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-function getDeviceInfo() {
-  const ua = navigator.userAgent;
-  let deviceType = 'desktop';
-  if (/mobile|android|iphone/i.test(ua)) deviceType = 'mobile';
-  else if (/tablet|ipad/i.test(ua)) deviceType = 'tablet';
-
-  let browser = 'Unknown';
-  if (/edg/i.test(ua)) browser = 'Edge';
-  else if (/chrome/i.test(ua) && !/opr/i.test(ua)) browser = 'Chrome';
-  else if (/firefox/i.test(ua)) browser = 'Firefox';
-  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
-
-  let os = 'Unknown';
-  if (/windows/i.test(ua)) os = 'Windows';
-  else if (/mac/i.test(ua) && !/iphone|ipad/i.test(ua)) os = 'macOS';
-  else if (/linux/i.test(ua) && !/android/i.test(ua)) os = 'Linux';
-  else if (/android/i.test(ua)) os = 'Android';
-  else if (/iphone|ipad/i.test(ua)) os = 'iOS';
-
-  return { device_name: `${browser} on ${os}`, device_type: deviceType, browser, os };
-}
-
 api.interceptors.request.use(
   (config) => {
     const { token, sessionId } = useAuthStore.getState();
@@ -97,7 +75,6 @@ api.interceptors.response.use(
           withCredentials: true,
         });
         const { access } = res.data;
-        const { user, tenants, roles } = useAuthStore.getState();
         useAuthStore.getState().setToken(access);
         processQueue(null, access);
         originalRequest.headers.Authorization = `Bearer ${access}`;

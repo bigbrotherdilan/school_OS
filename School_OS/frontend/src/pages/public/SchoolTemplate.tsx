@@ -73,14 +73,11 @@ export default function SchoolTemplate() {
             </div>
             <div className="flex gap-3 shrink-0">
               <Link
-                to="/login"
-                className="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all"
+                to="/schools"
+                className="bg-secondary text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
               >
-                Student Portal
+                Browse Schools
               </Link>
-              <button className="bg-secondary text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all">
-                Enquire Now
-              </button>
             </div>
           </div>
         </div>

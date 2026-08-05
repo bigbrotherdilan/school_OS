@@ -103,6 +103,10 @@ class TeachingAssignment(models.Model):
     class Meta:
         db_table = 'staff_assignments'
         unique_together = ['teacher', 'subject', 'academic_class', 'series', 'academic_year']
+        indexes = [
+            models.Index(fields=['teacher', 'academic_year'], name='idx_assignment_teacher'),
+            models.Index(fields=['tenant', 'academic_class'], name='idx_assignment_class'),
+        ]
 
     def __str__(self):
         return f"{self.teacher.employee_id} - {self.subject.name if self.subject else 'Subject'}"

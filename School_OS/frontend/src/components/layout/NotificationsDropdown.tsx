@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
@@ -25,9 +25,23 @@ interface DirectMessage {
   created_at: string;
 }
 
+interface UserNotification {
+  id: string;
+  category: string;
+  category_display: string;
+  title: string;
+  body: string;
+  link: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 type NotificationItem =
   | { type: 'announcement'; data: Announcement; id: string; timestamp: string }
-  | { type: 'message'; data: DirectMessage; id: string; timestamp: string };
+  | { type: 'message'; data: DirectMessage; id: string; timestamp: string }
+  | { type: 'notification'; data: UserNotification; id: string; timestamp: string };
+
+const POLL_INTERVAL_MS = 45000;
 
 export default function NotificationsDropdown() {
   const navigate = useNavigate();
@@ -38,6 +52,23 @@ export default function NotificationsDropdown() {
   const [readAnnouncementIds, setReadAnnouncementIds] = useState<string[]>([]);
   const [selectedItem, setSelectedItem] = useState<NotificationItem | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Current role set for the active tenant (client-side safety net on top of
+  // the backend audience filter, so teachers never see parent-only items).
+  const rolesRef = useRef(roles || []);
+  rolesRef.current = roles || [];
+
+  const isAnnouncementVisible = useCallback((a: Announcement): boolean => {
+    const activeRoles = new Set(rolesRef.current.map((r) => r.role));
+    const isAdmin = activeRoles.has('admin') || activeRoles.has('super_admin');
+    if (isAdmin) return true;
+    if (a.audience === 'all') return true;
+    if (a.audience === 'parents' && activeRoles.has('parent')) return true;
+    if (a.audience === 'teachers' && activeRoles.has('teacher')) return true;
+    if (a.audience === 'students' && activeRoles.has('student')) return true;
+    if (a.audience === 'staff' && (activeRoles.has('admin') || activeRoles.has('bursar') || activeRoles.has('teacher'))) return true;
+    return false;
+  }, []);
 
   // Load read announcements from localStorage on mount
   useEffect(() => {
@@ -54,8 +85,9 @@ export default function NotificationsDropdown() {
   }, [user?.id]);
 
   const unreadMessages = items.filter((n) => n.type === 'message' && !n.data.is_read).length;
+  const unreadNotifications = items.filter((n) => n.type === 'notification' && !n.data.is_read).length;
   const unreadAnnouncements = items.filter((n) => n.type === 'announcement' && !readAnnouncementIds.includes(n.data.id)).length;
-  const badgeCount = unreadMessages + unreadAnnouncements;
+  const badgeCount = unreadMessages + unreadNotifications + unreadAnnouncements;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -65,40 +97,90 @@ export default function NotificationsDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchItems = () => {
+  const fetchItems = useCallback(() => {
     return Promise.all([
+      api.get('/notifications/notifications/?limit=10').catch(() => ({ data: { results: [] } })),
       api.get('/notifications/announcements/?published=true&ordering=-created_at&limit=10').catch(() => ({ data: { results: [] } })),
       api.get('/notifications/messages/?ordering=-created_at&limit=10').catch(() => ({ data: { results: [] } })),
-    ]).then(([annRes, msgRes]) => {
-      const anns: NotificationItem[] = (annRes.data.results || annRes.data || []).map((a: Announcement) => ({
-        type: 'announcement' as const,
-        data: a,
-        id: a.id,
-        timestamp: a.created_at,
+    ]).then(([notifRes, annRes, msgRes]) => {
+      const notifs: NotificationItem[] = (notifRes.data.results || notifRes.data || []).map((n: UserNotification) => ({
+        type: 'notification' as const,
+        data: n,
+        id: `n_${n.id}`,
+        timestamp: n.created_at,
       }));
+      const anns: NotificationItem[] = (annRes.data.results || annRes.data || [])
+        .filter((a: Announcement) => isAnnouncementVisible(a))
+        .map((a: Announcement) => ({
+          type: 'announcement' as const,
+          data: a,
+          id: `a_${a.id}`,
+          timestamp: a.created_at,
+        }));
       const msgs: NotificationItem[] = (msgRes.data.results || msgRes.data || []).map((m: DirectMessage) => ({
         type: 'message' as const,
         data: m,
-        id: m.id,
+        id: `m_${m.id}`,
         timestamp: m.created_at,
       }));
-      const sorted = [...anns, ...msgs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const sorted = [...notifs, ...anns, ...msgs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setItems(sorted);
       return sorted;
     });
-  };
+  }, [isAnnouncementVisible]);
 
-  // Fetch badge count on mount
+  // Fetch on mount + poll so the badge reappears only for genuinely new items
   useEffect(() => {
     fetchItems();
-  }, []);
+    const interval = setInterval(fetchItems, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [fetchItems]);
 
   // Fetch full list when dropdown opens
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     fetchItems().finally(() => setLoading(false));
-  }, [open]);
+  }, [open, fetchItems]);
+
+  // Mark all announcements as read (localStorage) for this user
+  const markAnnouncementsRead = useCallback(() => {
+    const announcementIds = items
+      .filter((n) => n.type === 'announcement')
+      .map((n) => n.id);
+    if (announcementIds.length > 0 && user?.id) {
+      setReadAnnouncementIds((prev) => {
+        const next = Array.from(new Set([...prev, ...announcementIds]));
+        localStorage.setItem(`read_announcements_${user.id}`, JSON.stringify(next));
+        return next;
+      });
+    }
+  }, [items, user?.id]);
+
+  // Mark everything read when the bell is clicked: opening the dropdown
+  // counts as "seen", so the red badge clears until a new item arrives.
+  const handleBellClick = () => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        markAnnouncementsRead();
+        try {
+          api.post('/notifications/notifications/mark-all-read/');
+          api.post('/notifications/messages/mark-all-read/');
+        } catch {
+          /* silent */
+        }
+        setItems((prevItems) =>
+          prevItems.map((n) => {
+            if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
+            if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
+            return n;
+          })
+        );
+      }
+      return next;
+    });
+  };
 
   const markMessageRead = async (msgId: string) => {
     try {
@@ -111,14 +193,29 @@ export default function NotificationsDropdown() {
     } catch { /* silent */ }
   };
 
+  const markNotificationRead = async (notifId: string) => {
+    try {
+      await api.patch(`/notifications/notifications/${notifId}/`, { is_read: true });
+      setItems((prev) =>
+        prev.map((n) =>
+          n.type === 'notification' && n.data.id === notifId ? { ...n, data: { ...n.data, is_read: true } } : n
+        )
+      );
+    } catch { /* silent */ }
+  };
+
   const handleItemClick = (item: NotificationItem) => {
-    setSelectedItem(item);
     setOpen(false);
 
-    if (item.type === 'message') {
-      if (!item.data.is_read) {
-        markMessageRead(item.data.id);
+    if (item.type === 'notification') {
+      if (!item.data.is_read) markNotificationRead(item.data.id);
+      // Navigate when the notification carries a destination link
+      if (item.data.link) {
+        navigate(item.data.link);
+        return;
       }
+    } else if (item.type === 'message') {
+      if (!item.data.is_read) markMessageRead(item.data.id);
     } else {
       if (!readAnnouncementIds.includes(item.data.id)) {
         const nextIds = [...readAnnouncementIds, item.data.id];
@@ -128,47 +225,33 @@ export default function NotificationsDropdown() {
         }
       }
     }
+    setSelectedItem(item);
   };
 
   const handleViewAll = async () => {
     setOpen(false);
+    markAnnouncementsRead();
 
-    // 1. Mark all current announcements as read
-    const announcementIds = items
-      .filter((n) => n.type === 'announcement')
-      .map((n) => n.id);
-
-    if (announcementIds.length > 0) {
-      const nextIds = Array.from(new Set([...readAnnouncementIds, ...announcementIds]));
-      setReadAnnouncementIds(nextIds);
-      if (user?.id) {
-        localStorage.setItem(`read_announcements_${user.id}`, JSON.stringify(nextIds));
-      }
-    }
-
-    // 2. Mark all messages as read via backend endpoint
     try {
+      await api.post('/notifications/notifications/mark-all-read/');
       await api.post('/notifications/messages/mark-all-read/');
-      // Update local message read status so badge count drops instantly
       setItems((prev) =>
-        prev.map((n) =>
-          n.type === 'message' ? { ...n, data: { ...n.data, is_read: true } } : n
-        )
+        prev.map((n) => {
+          if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
+          if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
+          return n;
+        })
       );
     } catch {
       /* silent */
     }
 
-    // 3. Navigate based on role
-    const hasAdminRole = roles?.some((r) => r.role === 'admin' || r.role === 'super_admin');
-    const hasTeacherRole = roles?.some((r) => r.role === 'teacher');
-    const hasParentRole = roles?.some((r) => r.role === 'parent');
-
-    if (hasAdminRole) {
+    const activeRoles = new Set(rolesRef.current.map((r) => r.role));
+    if (activeRoles.has('admin') || activeRoles.has('super_admin')) {
       navigate('/admin/community/communications');
-    } else if (hasTeacherRole) {
+    } else if (activeRoles.has('teacher')) {
       navigate('/teacher');
-    } else if (hasParentRole) {
+    } else if (activeRoles.has('parent')) {
       navigate('/parent');
     } else {
       navigate('/');
@@ -191,11 +274,56 @@ export default function NotificationsDropdown() {
     }
   };
 
+  const categoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'fee_invoice':
+        return 'receipt_long';
+      case 'payment':
+        return 'payments';
+      case 'fee_reminder':
+        return 'notification_important';
+      case 'marks':
+        return 'fact_check';
+      case 'announcement':
+        return 'campaign';
+      default:
+        return 'info';
+    }
+  };
+
+  const categoryColor = (cat: string) => {
+    switch (cat) {
+      case 'payment':
+        return 'bg-emerald-50 text-emerald-600';
+      case 'fee_reminder':
+        return 'bg-error/10 text-error';
+      case 'fee_invoice':
+        return 'bg-amber-50 text-amber-600';
+      case 'marks':
+        return 'bg-violet-50 text-violet-600';
+      default:
+        return 'bg-blue-50 text-blue-600';
+    }
+  };
+
+  const itemMeta = (item: NotificationItem) => {
+    if (item.type === 'notification') return item.data.category_display;
+    if (item.type === 'announcement') return `By ${item.data.created_by_name} • ${item.data.audience_display}`;
+    return `From ${item.data.sender_name}`;
+  };
+
+  const itemTitle = (item: NotificationItem) => {
+    if (item.type === 'announcement') return item.data.title;
+    if (item.type === 'message') return item.data.subject || 'Direct Message';
+    return item.data.title;
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={handleBellClick}
         className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+        title="Notifications"
       >
         <span className="material-symbols-outlined">notifications</span>
         {badgeCount > 0 && (
@@ -232,7 +360,10 @@ export default function NotificationsDropdown() {
 
             {!loading &&
               items.map((item) => {
-                const isUnread = item.type === 'message' ? !item.data.is_read : !readAnnouncementIds.includes(item.data.id);
+                const isUnread =
+                  item.type === 'message' ? !item.data.is_read :
+                  item.type === 'notification' ? !item.data.is_read :
+                  !readAnnouncementIds.includes(item.data.id);
                 const isUrgent = item.type === 'announcement' && item.data.is_urgent;
 
                 return (
@@ -246,7 +377,9 @@ export default function NotificationsDropdown() {
                     <div className="flex items-start gap-3">
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                          isUrgent
+                          item.type === 'notification'
+                            ? categoryColor(item.data.category)
+                            : isUrgent
                             ? 'bg-error/10 text-error'
                             : item.type === 'announcement'
                             ? 'bg-blue-50 text-blue-600'
@@ -254,21 +387,23 @@ export default function NotificationsDropdown() {
                         }`}
                       >
                         <span className="material-symbols-outlined text-lg">
-                          {isUrgent ? 'priority_high' : item.type === 'announcement' ? 'campaign' : 'mail'}
+                          {item.type === 'notification'
+                            ? categoryIcon(item.data.category)
+                            : isUrgent
+                            ? 'priority_high'
+                            : item.type === 'announcement'
+                            ? 'campaign'
+                            : 'mail'}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 justify-between">
                           <p className={`text-sm truncate ${isUnread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
-                            {item.type === 'announcement' ? item.data.title : item.data.subject || 'Direct Message'}
+                            {itemTitle(item)}
                           </p>
                           {isUnread && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />}
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
-                          {item.type === 'announcement'
-                            ? `By ${item.data.created_by_name} • ${item.data.audience_display}`
-                            : `From ${item.data.sender_name}`}
-                        </p>
+                        <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{itemMeta(item)}</p>
                         <p className="text-[11px] text-slate-400 mt-1">{timeAgo(item.timestamp)}</p>
                       </div>
                     </div>
@@ -297,8 +432,12 @@ export default function NotificationsDropdown() {
           <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             {/* Header banner */}
             <div className={`p-6 text-white bg-gradient-to-br ${
-              selectedItem.type === 'announcement' && selectedItem.data.is_urgent
+              selectedItem.type === 'notification' && selectedItem.data.category === 'fee_reminder'
                 ? 'from-error to-error/80'
+                : selectedItem.type === 'announcement' && selectedItem.data.is_urgent
+                ? 'from-error to-error/80'
+                : selectedItem.type === 'notification'
+                ? 'from-blue-600 to-blue-500'
                 : selectedItem.type === 'announcement'
                 ? 'from-blue-600 to-blue-500'
                 : 'from-emerald-600 to-emerald-500'
@@ -306,7 +445,9 @@ export default function NotificationsDropdown() {
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
                   <span className="material-symbols-outlined text-2xl">
-                    {selectedItem.type === 'announcement' && selectedItem.data.is_urgent
+                    {selectedItem.type === 'notification'
+                      ? categoryIcon(selectedItem.data.category)
+                      : selectedItem.type === 'announcement' && selectedItem.data.is_urgent
                       ? 'priority_high'
                       : selectedItem.type === 'announcement'
                       ? 'campaign'
@@ -315,14 +456,16 @@ export default function NotificationsDropdown() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-white/25 px-2 py-0.5 rounded-md">
-                    {selectedItem.type === 'announcement'
+                    {selectedItem.type === 'notification'
+                      ? selectedItem.data.category_display
+                      : selectedItem.type === 'announcement'
                       ? selectedItem.data.is_urgent
                         ? 'Urgent Announcement'
                         : 'Announcement'
                       : 'Direct Message'}
                   </span>
                   <h2 className="text-xl font-bold tracking-tight mt-1 leading-snug">
-                    {selectedItem.type === 'announcement' ? selectedItem.data.title : selectedItem.data.subject || 'No Subject'}
+                    {itemTitle(selectedItem)}
                   </h2>
                 </div>
               </div>
@@ -335,7 +478,9 @@ export default function NotificationsDropdown() {
                   <span className="font-semibold text-slate-700">
                     {selectedItem.type === 'announcement'
                       ? `Author: ${selectedItem.data.created_by_name}`
-                      : `From: ${selectedItem.data.sender_name}`}
+                      : selectedItem.type === 'message'
+                      ? `From: ${selectedItem.data.sender_name}`
+                      : 'School OS'}
                   </span>
                   {selectedItem.type === 'announcement' && (
                     <span className="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">
@@ -347,11 +492,23 @@ export default function NotificationsDropdown() {
               </div>
 
               <div className="max-h-60 overflow-y-auto whitespace-pre-wrap text-sm text-slate-600 leading-relaxed font-sans bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                {selectedItem.type === 'announcement' ? selectedItem.data.body : selectedItem.data.body}
+                {selectedItem.data.body || (selectedItem.type === 'message' ? selectedItem.data.body : '')}
               </div>
 
               {/* Close Action */}
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-end gap-2">
+                {selectedItem.type === 'notification' && selectedItem.data.link && (
+                  <button
+                    onClick={() => {
+                      const link = selectedItem.data.link;
+                      setSelectedItem(null);
+                      navigate(link);
+                    }}
+                    className="px-5 py-2.5 rounded-xl font-semibold bg-primary text-white hover:bg-primary/90 active:scale-95 transition-all text-sm"
+                  >
+                    View details
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedItem(null)}
                   className="px-5 py-2.5 rounded-xl font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all text-sm"

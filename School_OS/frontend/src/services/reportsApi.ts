@@ -2,7 +2,51 @@
 
 const BASE = '/reports';
 
+export interface ReportCardSubjectScore {
+  subject_name: string;
+  coefficient: number;
+  score: number | null;
+  max_score: number;
+  grade: string;
+  grade_label: string;
+  remarks: string;
+}
+
+export interface ReportCardPreviewData {
+  student: {
+    id: string;
+    full_name: string;
+    admission_number: string;
+    class_name: string;
+    date_of_birth: string | null;
+    gender: string;
+  };
+  term_name: string;
+  academic_year_name: string;
+  education_type: string;
+  subject_scores: ReportCardSubjectScore[];
+  total_coefficient: number;
+  average: number;
+  max_scale: number;
+  class_average: number | null;
+  best_average: number | null;
+  rank: number | null;
+  class_size: number;
+  decision: string;
+  absences: number;
+  discipline_count: number;
+}
+
 export const reportsApi = {
+  fetchReportCardPreview: async (data: {
+    student_id: string;
+    term_id: string;
+    academic_year_id: string;
+  }): Promise<ReportCardPreviewData> => {
+    const response = await api.post(`${BASE}/report-cards/preview/`, data);
+    return response.data;
+  },
+
   generateSingle: async (data: {
     student_id: string;
     term_id: string;

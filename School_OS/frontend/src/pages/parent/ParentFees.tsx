@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import { parentApi } from '../../services/parentApi';
 import { useParentStore } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
@@ -13,6 +13,16 @@ interface Invoice {
     due_date: string | null;
     academic_year?: string;
     student_name?: string;
+    student_id?: string;
+}
+
+interface ChildFeeGroup {
+    student_id: string;
+    student_name: string;
+    invoices: Invoice[];
+    totalBalance: number;
+    totalBilled: number;
+    totalPaid: number;
 }
 
 interface PaymentModalProps {
@@ -28,6 +38,7 @@ const ParentFees: React.FC = () => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
+    const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
     const fetchFees = async () => {
         try {
@@ -44,9 +55,40 @@ const ParentFees: React.FC = () => {
         fetchFees();
     }, []);
 
-    const totalPaid = invoices.reduce((sum, i) => sum + parseFloat(i.amount_paid || '0'), 0);
-    const totalBilled = invoices.reduce((sum, i) => sum + parseFloat(i.total_amount || '0'), 0);
-    const totalBalance = invoices.reduce((sum, i) => sum + parseFloat(i.balance || '0'), 0);
+    const childGroups = useMemo(() => {
+        const map = new Map<string, ChildFeeGroup>();
+        invoices.forEach(inv => {
+            const sid = inv.student_id || 'unknown';
+            if (!map.has(sid)) {
+                map.set(sid, {
+                    student_id: sid,
+                    student_name: inv.student_name || 'Unknown',
+                    invoices: [],
+                    totalBalance: 0,
+                    totalBilled: 0,
+                    totalPaid: 0,
+                });
+            }
+            const group = map.get(sid)!;
+            group.invoices.push(inv);
+            group.totalBalance += parseFloat(inv.balance || '0');
+            group.totalBilled += parseFloat(inv.total_amount || '0');
+            group.totalPaid += parseFloat(inv.amount_paid || '0');
+        });
+        return Array.from(map.values()).sort((a, b) => a.student_name.localeCompare(b.student_name));
+    }, [invoices]);
+
+    const selectedGroup = childGroups.find(g => g.student_id === selectedChildId) || childGroups[0];
+
+    useEffect(() => {
+        if (!selectedChildId && childGroups.length > 0) {
+            setSelectedChildId(childGroups[0].student_id);
+        }
+    }, [childGroups, selectedChildId]);
+
+    const totalBalance = childGroups.reduce((s, g) => s + g.totalBalance, 0);
+    const totalBilled = childGroups.reduce((s, g) => s + g.totalBilled, 0);
+    const totalPaid = childGroups.reduce((s, g) => s + g.totalPaid, 0);
     const unpaidCount = invoices.filter(i => i.status !== 'paid').length;
 
     if (loading) {
@@ -71,7 +113,7 @@ const ParentFees: React.FC = () => {
                 </p>
             </header>
 
-            {/* Summary Cards */}
+            {/* Overall Summary Cards */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                     <span className="material-symbols-outlined text-red-500 text-xl mb-2 block">account_balance_wallet</span>
@@ -89,48 +131,88 @@ const ParentFees: React.FC = () => {
                 </div>
             </div>
 
-            {/* Big Pay Button (if outstanding) */}
-            {totalBalance > 0 && (
-                <button
-                    onClick={() => {
-                        const firstUnpaid = invoices.find(i => i.status !== 'paid');
-                        if (firstUnpaid) setPayingInvoice(firstUnpaid);
-                    }}
-                    className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-red-500/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-                >
-                    <span className="material-symbols-outlined text-xl">smartphone</span>
-                    Pay {totalBalance.toLocaleString()} {schoolConfig.currency_symbol} Now
-                </button>
-            )}
-
-            {totalBalance <= 0 && invoices.length > 0 && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center">
-                    <span className="material-symbols-outlined text-emerald-500 text-3xl mb-1 block">check_circle</span>
-                    <p className="font-bold text-emerald-900">All Fees Paid</p>
-                    <p className="text-sm text-emerald-600">No outstanding balance</p>
+            {/* Child Tabs */}
+            {childGroups.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                    {childGroups.map(group => {
+                        const isSelected = group.student_id === selectedGroup?.student_id;
+                        const hasBalance = group.totalBalance > 0;
+                        return (
+                            <button
+                                key={group.student_id}
+                                onClick={() => setSelectedChildId(group.student_id)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border ${
+                                    isSelected
+                                        ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
+                                        : hasBalance
+                                            ? 'bg-red-50 text-red-700 border-red-200'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                {group.student_name.split(' ')[0]}
+                                {hasBalance && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 
-            {/* Fee Bills List */}
-            <section>
-                <h2 className="text-lg font-bold text-slate-900 mb-3">Fee Bills</h2>
-                {invoices.length === 0 ? (
-                    <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
-                        <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">receipt</span>
-                        <p className="text-slate-500 font-medium">No fee bills found</p>
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-2">
-                        {invoices.map((inv) => (
-                            <InvoiceCard
-                                key={inv.id}
-                                invoice={inv}
-                                onPay={() => setPayingInvoice(inv)}
-                            />
-                        ))}
-                    </div>
-                )}
-            </section>
+            {/* Selected Child Section */}
+            {selectedGroup && (
+                <>
+                    {/* Child Summary */}
+                    {selectedGroup.totalBalance > 0 ? (
+                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-lg shadow-red-500/20">
+                            <p className="text-sm text-red-100 font-medium">{selectedGroup.student_name}</p>
+                            <p className="text-2xl font-black tracking-tight mt-1">
+                                {selectedGroup.totalBalance.toLocaleString()} <span className="text-base font-bold text-red-200">{schoolConfig.currency_symbol}</span>
+                            </p>
+                            <p className="text-xs text-red-100 mt-0.5">{selectedGroup.invoices.length} invoice{selectedGroup.invoices.length > 1 ? 's' : ''} outstanding</p>
+                            <button
+                                onClick={() => {
+                                    const firstUnpaid = selectedGroup.invoices.find(i => i.status !== 'paid');
+                                    if (firstUnpaid) setPayingInvoice(firstUnpaid);
+                                }}
+                                className="mt-4 w-full py-3 bg-white text-red-700 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg"
+                            >
+                                <span className="material-symbols-outlined text-lg">smartphone</span>
+                                Pay {selectedGroup.totalBalance.toLocaleString()} {schoolConfig.currency_symbol} Now
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-2xl">check_circle</span>
+                                <div>
+                                    <p className="font-bold text-lg">{selectedGroup.student_name}</p>
+                                    <p className="text-sm text-white/80">All fees paid</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Invoices for this child */}
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-900 mb-3">Invoices</h2>
+                        <div className="flex flex-col gap-2">
+                            {selectedGroup.invoices.map((inv) => (
+                                <InvoiceCard
+                                    key={inv.id}
+                                    invoice={inv}
+                                    onPay={() => setPayingInvoice(inv)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                </>
+            )}
+
+            {childGroups.length === 0 && (
+                <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
+                    <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">receipt</span>
+                    <p className="text-slate-500 font-medium">No fee bills found</p>
+                </div>
+            )}
 
             {/* Payment Modal */}
             {payingInvoice && (
@@ -159,8 +241,8 @@ function InvoiceCard({ invoice, onPay }: { invoice: Invoice; onPay: () => void }
             <div className="flex items-start justify-between mb-3">
                 <div>
                     <p className="font-bold text-slate-900">{invoice.invoice_number}</p>
-                    {invoice.student_name && (
-                        <p className="text-xs text-slate-500 mt-0.5">{invoice.student_name}</p>
+                    {invoice.academic_year && (
+                        <p className="text-xs text-slate-400 mt-0.5">{invoice.academic_year}</p>
                     )}
                 </div>
                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${

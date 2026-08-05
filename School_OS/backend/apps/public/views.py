@@ -5,6 +5,7 @@ Uses a different prefix (/pub/v1/) and response format than private APIs
 so attackers cannot identify the backend technology.
 """
 import re
+import json
 import logging
 from datetime import timedelta
 
@@ -16,6 +17,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.db.models import Q, Count
 from django.utils import timezone
 from django.conf import settings
+from django.core.cache import cache
 
 from apps.tenants.models import Tenant
 from apps.students.models import Student
@@ -23,6 +25,18 @@ from apps.staff.models import Teacher
 from .serializers import PublicSchoolListSerializer, PublicSchoolProfileSerializer
 
 logger = logging.getLogger(__name__)
+
+PUBLIC_CACHE_TTL = 300
+
+
+def _school_list_cache_key(request):
+    """Cache key for directory queries — versioned so tenant changes bust it."""
+    parts = [
+        _sanitize_input(request.query_params.get(p, ''))
+        for p in ('q', 'region', 'education_type', 'school_type')
+    ]
+    version = int(cache.get('public_schools_version', 0) or 0)
+    return f'public:schools:{version}:{":".join(parts)}'
 
 
 class PublicRateThrottle(AnonRateThrottle):
@@ -32,6 +46,24 @@ class PublicRateThrottle(AnonRateThrottle):
     def get_cache_key(self, request, view):
         ident = self.get_ident(request)
         return self.cache_format % {'scope': self.scope, 'ident': ident}
+
+
+class EnrollmentRateThrottle(AnonRateThrottle):
+    """
+    Per-school rate limiting for enrollment inquiries — 5 per minute per
+    school, so a spammer with rotating IPs can't flood one school's feed.
+    """
+    scope = 'enrollment_per_school'
+
+    def get_cache_key(self, request, view):
+        try:
+            school_id = request.data.get('school_id', '') or ''
+        except Exception:
+            school_id = ''
+        if not school_id:
+            return None
+        ident = self.get_ident(request)
+        return self.cache_format % {'scope': self.scope, 'ident': f'{school_id}:{ident}'}
 
 
 def _sanitize_input(value):
@@ -52,12 +84,12 @@ def _check_honeypot(request):
     return False
 
 
-def _wrap_response(data, meta=None):
+def _wrap_response(data, meta=None, status=status.HTTP_200_OK):
     """Wrap public API responses in a non-standard format."""
     response = {'data': data}
     if meta:
         response['meta'] = meta
-    return Response(response)
+    return Response(response, status=status)
 
 
 def _get_client_ip(request):
@@ -113,9 +145,15 @@ class PublicSchoolListView(generics.ListAPIView):
         return qs.order_by('school_name')
 
     def list(self, request, *args, **kwargs):
+        cache_key = _school_list_cache_key(request)
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return _wrap_response(cached['data'], meta=cached['meta'])
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        return _wrap_response(serializer.data, meta={'total': len(serializer.data)})
+        payload = {'data': serializer.data, 'meta': {'total': len(serializer.data)}}
+        cache.set(cache_key, payload, PUBLIC_CACHE_TTL)
+        return _wrap_response(payload['data'], meta=payload['meta'])
 
 
 class PublicSchoolProfileView(generics.RetrieveAPIView):
@@ -132,14 +170,20 @@ class PublicSchoolProfileView(generics.RetrieveAPIView):
         return Tenant.objects.filter(status=Tenant.Status.ACTIVE)
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return _wrap_response(serializer.data)
+        slug = self.kwargs.get('slug', '')
+        cache_key = f'public:school:{slug}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return _wrap_response(cached)
+        serializer = self.get_serializer(self.get_object())
+        data = serializer.data
+        cache.set(cache_key, data, PUBLIC_CACHE_TTL)
+        return _wrap_response(data)
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@throttle_classes([PublicRateThrottle])
+@throttle_classes([PublicRateThrottle, EnrollmentRateThrottle])
 def submit_enrollment_inquiry(request):
     """
     POST /pub/v1/enrollment/
@@ -153,7 +197,14 @@ def submit_enrollment_inquiry(request):
         )
 
     MAX_PAYLOAD_SIZE = 10240
-    if request.body and len(request.body) > MAX_PAYLOAD_SIZE:
+    try:
+        payload = request.data
+    except Exception:
+        return _wrap_response(
+            {'error': 'Invalid request body.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if len(json.dumps(payload, default=str)) > MAX_PAYLOAD_SIZE:
         return _wrap_response(
             {'error': 'Payload too large.'},
             status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -228,6 +279,12 @@ def school_regions(request):
     GET /pub/v1/regions/
     List all distinct regions with school counts.
     """
+    version = int(cache.get('public_schools_version', 0) or 0)
+    cache_key = f'public:regions:{version}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return _wrap_response(cached['data'], meta=cached['meta'])
+
     regions = (
         Tenant.objects.filter(status=Tenant.Status.ACTIVE)
         .values_list('region', flat=True)
@@ -238,6 +295,7 @@ def school_regions(request):
         {'name': r, 'count': Tenant.objects.filter(region=r, status=Tenant.Status.ACTIVE).count()}
         for r in regions if r
     ]
+    cache.set(cache_key, {'data': data, 'meta': {'total': len(data)}}, PUBLIC_CACHE_TTL)
     return _wrap_response(data, meta={'total': len(data)})
 
 

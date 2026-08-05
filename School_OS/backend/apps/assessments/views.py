@@ -7,10 +7,17 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
+from django.db import IntegrityError, transaction
 from .models import MarkEntryWindow, Exam, ExamResult
 from .serializers import MarkEntryWindowSerializer, ExamSerializer, ExamResultSerializer
 from apps.authentication.permissions import IsSchoolMember, IsSchoolAdmin, IsAdminOrTeacher
 from apps.notifications.utils import announce_mark_window_opened, announce_mark_window_closed
+
+
+class MarkEntryRateThrottle(ScopedRateThrottle):
+    """Higher hourly cap for the mark auto-save burst window."""
+    scope = 'mark_entry'
 
 
 class MarkEntryWindowViewSet(viewsets.ModelViewSet):
@@ -325,7 +332,14 @@ class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsSchoolMember]
 
     def perform_create(self, serializer):
-        serializer.save(tenant_id=self.request.tenant_id)
+        from django.db import IntegrityError
+        from rest_framework.exceptions import ValidationError
+        try:
+            serializer.save(tenant_id=self.request.tenant_id)
+        except IntegrityError:
+            raise ValidationError(
+                {'detail': 'An exam already exists for this term in this school.'}
+            )
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
@@ -350,7 +364,7 @@ class ExamViewSet(viewsets.ModelViewSet):
             try:
                 seq = Sequence.objects.select_related('term').get(id=sequence_id)  # type: ignore
                 qs = qs.filter(term_id=seq.term_id)
-            except Sequence.DoesNotExist:  # type: ignore
+            except (Sequence.DoesNotExist, ValueError):  # type: ignore
                 qs = qs.none()
 
         return qs
@@ -383,7 +397,7 @@ class ExamViewSet(viewsets.ModelViewSet):
                     }
                 )
                 return super().list(request, *args, **kwargs)
-            except Sequence.DoesNotExist:  # type: ignore
+            except (Sequence.DoesNotExist, ValueError):  # type: ignore
                 pass
 
         return response
@@ -461,7 +475,8 @@ class ExamResultViewSet(viewsets.ModelViewSet):
 
         return qs
 
-    @action(detail=False, methods=['post'], url_path='bulk-update')
+    @action(detail=False, methods=['post'], url_path='bulk-update',
+            throttle_classes=[MarkEntryRateThrottle, UserRateThrottle])
     def bulk_update(self, request):
         """
         POST /assessments/results/bulk-update/
@@ -500,6 +515,8 @@ class ExamResultViewSet(viewsets.ModelViewSet):
         updated_count = 0
         errors = []
 
+        # First pass — resolve exams (incl. synthetic IDs) and dedupe by lookup key.
+        entries_by_key = {}
         for entry in results_data:
             exam_id = entry.get('exam')
             student_id = entry.get('student')
@@ -537,29 +554,90 @@ class ExamResultViewSet(viewsets.ModelViewSet):
                 errors.append({'entry': entry, 'error': 'Invalid or missing exam.'})
                 continue
 
-            try:
-                lookup = {
-                    'exam_id': exam_id,
-                    'student_id': student_id,
-                    'subject_id': subject_id,
+            key = (
+                str(exam_id),
+                str(student_id),
+                str(subject_id),
+                str(sequence_id) if sequence_id else None,
+            )
+            entries_by_key[key] = entry  # last entry wins for duplicates
+
+        if not entries_by_key:
+            return Response({
+                'created': 0,
+                'updated': 0,
+                'errors': errors,
+                'message': 'Processed 0 results successfully.'
+            }, status=status.HTTP_200_OK)
+
+        exam_ids = {key[0] for key in entries_by_key}
+        student_ids = {key[1] for key in entries_by_key}
+        subject_ids = {key[2] for key in entries_by_key}
+
+        with transaction.atomic():
+            from apps.students.models import Student  # type: ignore
+            from apps.academic.models import Subject  # type: ignore
+
+            # Validate students/subjects belong to this tenant — 2 bulk queries
+            valid_students = {str(s) for s in Student.objects.filter(  # type: ignore
+                id__in=student_ids, tenant_id=tenant_id
+            ).values_list('id', flat=True)} if tenant_id else None
+            valid_subjects = {str(s) for s in Subject.objects.filter(  # type: ignore
+                id__in=subject_ids, tenant_id=tenant_id
+            ).values_list('id', flat=True)} if tenant_id else None
+
+            # Fetch all existing results in a single query
+            existing_results = ExamResult.objects.filter(  # type: ignore
+                exam_id__in=exam_ids, student_id__in=student_ids
+            )
+            existing_by_key = {}
+            for result in existing_results:
+                existing_by_key[(  # type: ignore
+                    str(result.exam_id),
+                    str(result.student_id),
+                    str(result.subject_id),
+                    str(result.sequence_id) if result.sequence_id else None,
+                )] = result
+
+            to_create = []
+            to_update = []
+            for key, entry in entries_by_key.items():
+                exam_id, student_id, subject_id, sequence_id = key
+
+                if valid_students is not None and student_id not in valid_students:
+                    errors.append({'entry': entry, 'error': 'Student not found in this tenant.'})
+                    continue
+                if valid_subjects is not None and subject_id not in valid_subjects:
+                    errors.append({'entry': entry, 'error': 'Subject not found in this tenant.'})
+                    continue
+
+                payload = {
+                    'score': entry.get('score'),
+                    'comments': entry.get('comments', ''),
                 }
-                if sequence_id:
-                    lookup['sequence_id'] = sequence_id
-                result, created = ExamResult.objects.update_or_create(  # type: ignore
-                    **lookup,
-                    defaults={
-                        'score': score,
-                        'comments': entry.get('comments', ''),
-                    }
-                )
-                if created:
-                    created_count += 1
-                else:
+                existing = existing_by_key.get(key)
+                if existing:
+                    existing.score = payload['score']
+                    existing.comments = payload['comments']
+                    to_update.append(existing)
                     updated_count += 1
-            except Exam.DoesNotExist:  # type: ignore
-                errors.append({'entry': entry, 'error': 'Exam not found in this tenant.'})
-            except Exception as e:
-                errors.append({'entry': entry, 'error': str(e)})
+                else:
+                    to_create.append(ExamResult(  # type: ignore
+                        exam_id=exam_id,
+                        student_id=student_id,
+                        subject_id=subject_id,
+                        sequence_id=sequence_id,
+                        **payload
+                    ))
+                    created_count += 1
+
+            if to_create:
+                try:
+                    ExamResult.objects.bulk_create(to_create)  # type: ignore
+                except IntegrityError:
+                    errors.append({'entry': None, 'error': 'Bulk create failed: conflicting results.'})
+            if to_update:
+                ExamResult.objects.bulk_update(to_update, ['score', 'comments'])  # type: ignore
 
         return Response({
             'created': created_count,

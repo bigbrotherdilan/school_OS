@@ -1,17 +1,21 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { useParentStore, type WardSummary, type AlertSummary, type ChildComparison } from '../../stores/parentStore';
+import { useParentStore, type WardSummary, type AlertSummary } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
-import { parentApi } from '../../services/parentApi';
+import { parentApi, type ChildSummary } from '../../services/parentApi';
 import { api } from '../../services/api';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const ParentDashboard: React.FC = () => {
-    const { dashboardData, isLoading, error, setDashboardData, setLoading, setError, comparisonChildren, setComparisonChildren, comparisonLoading, setComparisonLoading } = useParentStore();
+    const { dashboardData, isLoading, error, setDashboardData, setLoading, setError, comparisonChildren, setComparisonChildren, setComparisonLoading } = useParentStore();
     const { schoolConfig } = useTenantStore();
     const [refreshing, setRefreshing] = useState(false);
-    const navigate = useNavigate();
     const [academicInfo, setAcademicInfo] = useState<any>(null);
     const [announcements, setAnnouncements] = useState<any[]>([]);
+    const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+    const [childSummary, setChildSummary] = useState<ChildSummary | null>(null);
+    const [childSummaryLoading, setChildSummaryLoading] = useState(false);
+    const [selectedTerm, setSelectedTerm] = useState(0);
+    const [selectedSequence, setSelectedSequence] = useState(0);
 
     const fetchDashboard = async (showRefresh = false) => {
         if (showRefresh) setRefreshing(true);
@@ -55,9 +59,44 @@ const ParentDashboard: React.FC = () => {
         }
     }, [dashboardData]);
 
+    useEffect(() => {
+        if (!selectedChildId) {
+            setChildSummary(null);
+            return;
+        }
+        setChildSummaryLoading(true);
+        setSelectedTerm(0);
+        setSelectedSequence(0);
+        parentApi.getChildSummary(selectedChildId)
+            .then(data => {
+                setChildSummary(data);
+                if (data.terms.length > 0) {
+                    const lastTermIdx = data.terms.length - 1;
+                    setSelectedTerm(lastTermIdx);
+                    const lastTerm = data.terms[lastTermIdx];
+                    if (lastTerm.sequences.length > 0) {
+                        setSelectedSequence(lastTerm.sequences.length - 1);
+                    }
+                }
+            })
+            .catch(() => setChildSummary(null))
+            .finally(() => setChildSummaryLoading(false));
+    }, [selectedChildId]);
+
     const financialAlerts = dashboardData?.alerts.filter(a => a.type === 'financial') || [];
     const otherAlerts = dashboardData?.alerts.filter(a => a.type !== 'financial') || [];
-    const totalOwed = financialAlerts.reduce((sum, a) => sum + (a.amount || 0), 0);
+
+    const childFeeMap = new Map<string, { name: string; amount: number; alerts: AlertSummary[] }>();
+    financialAlerts.forEach(a => {
+        const sid = a.student_id || 'unknown';
+        if (!childFeeMap.has(sid)) {
+            childFeeMap.set(sid, { name: `${a.student_first_name || ''} ${a.student_last_name || ''}`.trim() || 'Your child', amount: 0, alerts: [] });
+        }
+        const entry = childFeeMap.get(sid)!;
+        entry.amount += (a.amount || 0);
+        entry.alerts.push(a);
+    });
+    const childFees = Array.from(childFeeMap.values());
 
     if (isLoading && !refreshing) {
         return (
@@ -91,64 +130,99 @@ const ParentDashboard: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-5 pb-6">
-            {/* Greeting Header */}
-            <header className="flex items-start justify-between">
-                <div>
-                    <p className="text-sm font-medium text-slate-500 mb-0.5">
-                        {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'},
-                    </p>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                        {dashboardData.parent_name}
-                    </h1>
-                    {dashboardData.wards.length > 0 && (
-                        <p className="text-sm text-slate-500 mt-1">
-                            {dashboardData.wards[0].campus}
-                        </p>
-                    )}
-                </div>
-                <button
-                    onClick={() => fetchDashboard(true)}
-                    disabled={refreshing}
-                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 transition-all disabled:opacity-50"
-                >
-                    <span className={`material-symbols-outlined text-xl ${refreshing ? 'animate-spin' : ''}`}>
-                        refresh
-                    </span>
-                </button>
-            </header>
-
-            {/* Fee Alert Card */}
-            {totalOwed > 0 ? (
-                <Link
-                    to="/parent/fees"
-                    className="block bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-lg shadow-red-500/20 active:scale-[0.98] transition-transform"
-                >
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-white/90">payments</span>
-                            <span className="text-sm font-semibold text-white/90">Fees Owed</span>
-                        </div>
-                        <span className="material-symbols-outlined text-white/70">arrow_forward</span>
-                    </div>
-                    <p className="text-3xl font-extrabold tracking-tight">
-                        {totalOwed.toLocaleString()} <span className="text-lg font-semibold text-white/80">{schoolConfig.currency_symbol}</span>
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2.5 w-fit">
-                        <span className="material-symbols-outlined text-lg">smartphone</span>
-                        <span className="text-sm font-bold">Pay with Mobile Money</span>
-                    </div>
-                </Link>
-            ) : dashboardData.wards.length > 0 ? (
-                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20">
-                    <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-2xl">check_circle</span>
+            {/* Fee Owed — Per-Child Red Alert Banners */}
+            {childFees.length > 0 ? (
+                <>
+                    {/* Top bar with greeting + refresh */}
+                    <div className="flex items-start justify-between mb-1">
                         <div>
-                            <p className="font-bold text-lg">All Fees Paid</p>
-                            <p className="text-sm text-white/80">No outstanding balance</p>
+                            <p className="text-sm font-medium text-slate-500 mb-0.5">
+                                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'},
+                            </p>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                                {dashboardData.parent_name}
+                            </h1>
+                            {dashboardData.wards.length > 0 && (
+                                <p className="text-sm text-slate-500 mt-1">{dashboardData.wards[0].campus}</p>
+                            )}
                         </div>
+                        <button
+                            onClick={() => fetchDashboard(true)}
+                            disabled={refreshing}
+                            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            <span className={`material-symbols-outlined text-xl ${refreshing ? 'animate-spin' : ''}`}>
+                                refresh
+                            </span>
+                        </button>
                     </div>
-                </div>
-            ) : null}
+
+                    {childFees.map((child, idx) => (
+                        <div key={idx} className="bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-5 text-white shadow-lg shadow-red-500/30 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-xl text-red-100">warning</span>
+                                <span className="text-sm font-bold text-red-100 uppercase tracking-wider">Fee Balance Due</span>
+                            </div>
+                            <p className="text-lg font-bold mb-1">{child.name}</p>
+                            <p className="text-3xl sm:text-4xl font-black tracking-tight mb-3">
+                                {child.amount.toLocaleString()} <span className="text-xl font-bold text-red-200">{schoolConfig.currency_symbol}</span>
+                            </p>
+                            {child.alerts.map((a, i) => (
+                                <p key={i} className="text-sm text-red-100">{a.message}</p>
+                            ))}
+                            <Link
+                                to="/parent/fees"
+                                className="mt-4 inline-flex items-center gap-2 bg-white text-red-700 rounded-xl px-6 py-3 font-bold text-sm active:scale-95 transition-transform shadow-lg"
+                            >
+                                <span className="material-symbols-outlined text-lg">payments</span>
+                                Pay Now with Mobile Money
+                                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                            </Link>
+                        </div>
+                    ))}
+                </>
+            ) : (
+                <>
+                    {/* Greeting Header — Normal State */}
+                    <header className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-slate-500 mb-0.5">
+                                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'},
+                            </p>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                                {dashboardData.parent_name}
+                            </h1>
+                            {dashboardData.wards.length > 0 && (
+                                <p className="text-sm text-slate-500 mt-1">
+                                    {dashboardData.wards[0].campus}
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => fetchDashboard(true)}
+                            disabled={refreshing}
+                            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            <span className={`material-symbols-outlined text-xl ${refreshing ? 'animate-spin' : ''}`}>
+                                refresh
+                            </span>
+                        </button>
+                    </header>
+
+                    {/* All Paid — Green Card */}
+                    {dashboardData.wards.length > 0 && (
+                        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-2xl">check_circle</span>
+                                <div>
+                                    <p className="font-bold text-lg">All Fees Paid</p>
+                                    <p className="text-sm text-white/80">No outstanding balance</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* Academic Year / Term Status */}
             {academicInfo && academicInfo.academicYear && (
@@ -191,8 +265,10 @@ const ParentDashboard: React.FC = () => {
                         {comparisonChildren.map(child => (
                             <button
                                 key={child.id}
-                                onClick={() => navigate(`/parent/child/${child.id}`)}
-                                className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-blue-200 hover:shadow-md transition-all text-left flex-shrink-0 w-56 active:scale-[0.98]"
+                                onClick={() => setSelectedChildId(child.id)}
+                                className={`bg-white rounded-2xl p-4 border shadow-sm transition-all text-left flex-shrink-0 w-56 active:scale-[0.98] ${
+                                    selectedChildId === child.id ? 'border-blue-400 ring-2 ring-blue-200' : 'border-slate-100 hover:border-blue-200 hover:shadow-md'
+                                }`}
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     {child.photo_url && child.photo_url.startsWith('http') && !child.photo_url.includes('aida-public') ? (
@@ -252,7 +328,7 @@ const ParentDashboard: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-3">
                         {dashboardData.wards.map((ward: WardSummary) => (
-                            <WardCard key={ward.id} ward={ward} />
+                            <WardCard key={ward.id} ward={ward} onSelect={(id) => setSelectedChildId(id)} />
                         ))}
                     </div>
                 </section>
@@ -300,11 +376,42 @@ const ParentDashboard: React.FC = () => {
                     </div>
                 </section>
             )}
+
+            {/* Inline Child Detail */}
+            {selectedChildId && (
+                <section>
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-lg font-bold text-slate-900">Child Details</h2>
+                        <button
+                            onClick={() => setSelectedChildId(null)}
+                            className="text-sm font-semibold text-blue-900 hover:underline"
+                        >
+                            Close
+                        </button>
+                    </div>
+                    {childSummaryLoading ? (
+                        <div className="flex flex-col gap-4 animate-pulse">
+                            <div className="h-32 bg-slate-200 rounded-2xl" />
+                            <div className="h-12 bg-slate-200 rounded-xl" />
+                            <div className="h-64 bg-slate-200 rounded-2xl" />
+                        </div>
+                    ) : childSummary ? (
+                        <ChildDetailPanel
+                            summary={childSummary}
+                            schoolConfig={schoolConfig}
+                            selectedTerm={selectedTerm}
+                            selectedSequence={selectedSequence}
+                            onTermChange={setSelectedTerm}
+                            onSequenceChange={setSelectedSequence}
+                        />
+                    ) : null}
+                </section>
+            )}
         </div>
     );
 };
 
-function WardCard({ ward }: { ward: WardSummary }) {
+function WardCard({ ward, onSelect }: { ward: WardSummary; onSelect: (id: string) => void }) {
     const initials = `${ward.first_name[0]}${ward.last_name[0]}`.toUpperCase();
     const hasAttendance = ward.attendance_percentage !== null && ward.attendance_percentage !== undefined;
     return (
@@ -358,12 +465,12 @@ function WardCard({ ward }: { ward: WardSummary }) {
             </div>
 
             <div className="flex gap-2">
-                <Link
-                    to={`/parent/child/${ward.id}`}
+                <button
+                    onClick={() => onSelect(ward.id)}
                     className="flex-1 py-2.5 bg-blue-900 text-white text-center rounded-xl text-sm font-bold active:scale-[0.98] transition-transform"
                 >
                     See Grades
-                </Link>
+                </button>
                 <Link
                     to="/parent/reports"
                     className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 text-center rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors"
@@ -388,6 +495,173 @@ function AlertCard({ alert }: { alert: AlertSummary }) {
             <div className="flex-1 min-w-0">
                 <h4 className={`font-bold text-sm ${config.textColor}`}>{alert.title}</h4>
                 <p className="text-sm text-slate-600 mt-0.5 line-clamp-2">{alert.message}</p>
+            </div>
+        </div>
+    );
+}
+
+function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequence, onTermChange, onSequenceChange }: {
+    summary: ChildSummary;
+    schoolConfig: any;
+    selectedTerm: number;
+    selectedSequence: number;
+    onTermChange: (idx: number) => void;
+    onSequenceChange: (idx: number) => void;
+}) {
+    const currentTerm = summary.terms[selectedTerm];
+    const currentSequence = currentTerm?.sequences[selectedSequence];
+    const scaleMax = currentSequence?.subjects[0]?.out_of || schoolConfig.grading_scale_max;
+
+    return (
+        <div className="flex flex-col gap-4">
+            {/* Child Header */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                    {summary.student.photo_url && summary.student.photo_url.startsWith('http') && !summary.student.photo_url.includes('aida-public') ? (
+                        <img src={summary.student.photo_url} alt={summary.student.first_name} className="w-16 h-16 rounded-full object-cover border-2 border-slate-100" />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center font-bold text-xl">
+                            {summary.student.first_name[0]}{summary.student.last_name[0]}
+                        </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-xl font-bold text-slate-900">{summary.student.first_name} {summary.student.last_name}</h1>
+                        <p className="text-sm text-slate-500">{summary.student.grade} · {summary.student.campus}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">#{summary.student.admission_number}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 bg-slate-50 rounded-xl p-4">
+                    <div className="relative w-16 h-16 flex-shrink-0">
+                        <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                            <circle cx="32" cy="32" r="28" fill="none" stroke="#e2e8f0" strokeWidth="6" />
+                            <circle
+                                cx="32" cy="32" r="28" fill="none"
+                                stroke={summary.attendance.percentage !== null && summary.attendance.percentage >= 80 ? '#10b981' : summary.attendance.percentage !== null && summary.attendance.percentage >= 60 ? '#f59e0b' : '#ef4444'}
+                                strokeWidth="6"
+                                strokeLinecap="round"
+                                strokeDasharray={`${(summary.attendance.percentage || 0) * 1.759} 175.9`}
+                            />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-900">
+                            {summary.attendance.percentage !== null ? `${summary.attendance.percentage}%` : '-'}
+                        </span>
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-slate-900">Attendance</p>
+                        <p className="text-xs text-slate-500">
+                            {summary.attendance.present_days} / {summary.attendance.total_days} days present
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Term Tabs */}
+            {summary.terms.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                    {summary.terms.map((term, idx) => (
+                        <button
+                            key={term.term_id}
+                            onClick={() => {
+                                onTermChange(idx);
+                                onSequenceChange(Math.min(selectedSequence, term.sequences.length - 1));
+                            }}
+                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${idx === selectedTerm ? 'bg-blue-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'}`}
+                        >
+                            {term.term_name}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Sequence Tabs */}
+            {currentTerm && currentTerm.sequences.length > 0 && (
+                <div className="flex gap-2">
+                    {currentTerm.sequences.map((seq, idx) => (
+                        <button
+                            key={seq.sequence_id}
+                            onClick={() => onSequenceChange(idx)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${idx === selectedSequence ? 'bg-blue-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'}`}
+                        >
+                            {seq.sequence_name}
+                            {!seq.is_locked && <span className="w-2 h-2 rounded-full bg-amber-400" title="Not yet finalised" />}
+                            {seq.is_locked && !seq.is_shared && <span className="w-2 h-2 rounded-full bg-slate-300" title="Marks finalised - not yet shared" />}
+                            {seq.is_locked && seq.is_shared && <span className="w-2 h-2 rounded-full bg-emerald-400" title="Results visible" />}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Subject Marks Table */}
+            {currentSequence ? (
+                currentSequence.is_locked && currentSequence.is_shared ? (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-slate-100">
+                            <h2 className="font-bold text-slate-900">{currentSequence.sequence_name} - {currentTerm.term_name}</h2>
+                            <p className="text-xs text-slate-500 mt-0.5">Subject scores (out of {scaleMax})</p>
+                        </div>
+                        {currentSequence.subjects.length === 0 ? (
+                            <div className="p-8 text-center">
+                                <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">analytics</span>
+                                <p className="text-sm text-slate-500">No results available for this sequence.</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-slate-100">
+                                {currentSequence.subjects.map((subj, i) => {
+                                    const pct = (subj.score / subj.out_of) * 100;
+                                    const barColor = pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-500' : pct >= 50 ? 'bg-orange-500' : 'bg-red-500';
+                                    return (
+                                        <div key={`${subj.name}-${i}`} className="px-5 py-4 flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                                <span className="text-xs font-bold text-blue-900">{i + 1}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-sm font-semibold text-slate-800 truncate">{subj.name}</span>
+                                                    <span className="text-sm font-bold text-blue-900 ml-2">{subj.score} / {subj.out_of}</span>
+                                                </div>
+                                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                                                </div>
+                                                {subj.coefficient !== 1 && (
+                                                    <p className="text-[10px] text-slate-400 mt-1">Coefficient: {subj.coefficient}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm text-center">
+                        <span className="material-symbols-outlined text-4xl text-amber-300 mb-3 block">
+                            {currentSequence.is_locked ? 'visibility_off' : 'lock_open'}
+                        </span>
+                        <p className="text-sm font-bold text-slate-900 mb-1">
+                            {currentSequence.is_locked ? 'Results not yet shared' : 'Results pending'}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                            {currentSequence.is_locked
+                                ? 'Marks have been finalised but are not yet visible to parents. The school admin will share them soon.'
+                                : 'Results will appear here once the exam session closes and marks are finalised by the admin.'}
+                        </p>
+                    </div>
+                )
+            ) : (
+                <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm text-center">
+                    <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">school</span>
+                    <p className="text-sm text-slate-500">No sequences available for this term.</p>
+                </div>
+            )}
+
+            {/* Quick Nav */}
+            <div className="flex gap-3">
+                <Link to="/parent/analytics" className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 text-center hover:bg-slate-50 transition-colors">
+                    View All Grades
+                </Link>
+                <Link to="/parent/reports" className="flex-1 py-3 bg-blue-900 rounded-xl text-sm font-bold text-white text-center active:scale-[0.98] transition-transform">
+                    Report Cards
+                </Link>
             </div>
         </div>
     );

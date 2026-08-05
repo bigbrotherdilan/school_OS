@@ -6,24 +6,10 @@ Also links 2 students from this school to the existing parent (Paul Essomba).
 import os
 import sys
 import django
-import secrets
-import string
 from datetime import date, timedelta
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
-
-def generate_secure_password(length=16):
-    """Generate a cryptographically secure random password."""
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-    while True:
-        password = ''.join(secrets.choice(alphabet) for _ in range(length))
-        # Ensure it has at least one of each character type
-        if (any(c.islower() for c in password) and
-            any(c.isupper() for c in password) and
-            any(c.isdigit() for c in password) and
-            any(c in "!@#$%^&*" for c in password)):
-            return password
 
 from apps.authentication.models import User, UserRoleMapping
 from apps.tenants.models import Tenant, TenantConfig
@@ -74,104 +60,104 @@ else:
 print("\nCreating users...")
 
 # Admin for Greenfield
-        admin_user, created = User.objects.get_or_create(
-            email='admin@greenfield.edu.cm',
-            defaults={
-                'username': 'admin_greenfield',
-                'first_name': 'Grace',
-                'last_name': 'Mbih',
-                'phone': '+237 677 111 222',
-                'default_language': 'en',
-            }
-        )
-        if created:
-            password = generate_secure_password()
-            admin_user.set_password(password)
-            admin_user.save()
-            print(f"  Admin: {admin_user.email} / {password}")
-        UserRoleMapping.objects.get_or_create(
-            user=admin_user, tenant=tenant, role='admin',
-            defaults={'assigned_by': admin_user}
-        )
+admin_user, created = User.objects.get_or_create(
+    email='admin@greenfield.edu.cm',
+    defaults={
+        'username': 'admin_greenfield',
+        'first_name': 'Grace',
+        'last_name': 'Mbih',
+        'phone': '+237 677 111 222',
+        'default_language': 'en',
+    }
+)
+admin_password = 'admin123456'
+if created or not admin_user.check_password(admin_password):
+    admin_user.set_password(admin_password)
+    admin_user.save()
+    print(f"  Admin: {admin_user.email} / {admin_password}")
+UserRoleMapping.objects.get_or_create(
+    user=admin_user, tenant=tenant, role='admin',
+    defaults={'assigned_by': admin_user}
+)
 
 # Teachers for Greenfield
-        teacher_data = [
-            {
-                'email': 'james.ashi@greenfield.edu.cm',
-                'first_name': 'James',
-                'last_name': 'Ashi',
-                'phone': '+237 677 222 333',
-                'qualification': 'MSc Mathematics',
-                'subjects': ['Mathematics', 'Further Mathematics'],
-            },
-            {
-                'email': 'fatima.ngwa@greenfield.edu.cm',
-                'first_name': 'Fatima',
-                'last_name': 'Ngwa',
-                'phone': '+237 677 333 444',
-                'qualification': 'BA English Literature',
-                'subjects': ['English Language', 'Literature in English'],
-            },
-            {
-                'email': 'pierre.tamba@greenfield.edu.cm',
-                'first_name': 'Pierre',
-                'last_name': 'Tamba',
-                'phone': '+237 677 444 555',
-                'qualification': 'MSc Physics',
-                'subjects': ['Physics', 'Chemistry'],
-            },
-        ]
+teacher_data = [
+    {
+        'email': 'james.ashi@greenfield.edu.cm',
+        'first_name': 'James',
+        'last_name': 'Ashi',
+        'phone': '+237 677 222 333',
+        'qualification': 'MSc Mathematics',
+        'subjects': ['Mathematics', 'Further Mathematics'],
+    },
+    {
+        'email': 'fatima.ngwa@greenfield.edu.cm',
+        'first_name': 'Fatima',
+        'last_name': 'Ngwa',
+        'phone': '+237 677 333 444',
+        'qualification': 'BA English Literature',
+        'subjects': ['English Language', 'Literature in English'],
+    },
+    {
+        'email': 'pierre.tamba@greenfield.edu.cm',
+        'first_name': 'Pierre',
+        'last_name': 'Tamba',
+        'phone': '+237 677 444 555',
+        'qualification': 'MSc Physics',
+        'subjects': ['Physics', 'Chemistry'],
+    },
+]
 
-        teachers = []
-        teacher_passwords = {}
-        for td in teacher_data:
-            user, created = User.objects.get_or_create(
-                email=td['email'],
-                defaults={
-                    'username': td['email'].split('@')[0],
-                    'first_name': td['first_name'],
-                    'last_name': td['last_name'],
-                    'phone': td['phone'],
-                    'default_language': 'en',
-                }
-            )
-            if created:
-                password = generate_secure_password()
-                user.set_password(password)
-                user.save()
-                teacher_passwords[td['email']] = password
-            UserRoleMapping.objects.get_or_create(
-                user=user, tenant=tenant, role='teacher',
-                defaults={'assigned_by': admin_user}
-            )
-            # Create teacher profile
-            teacher_profile, created = Teacher.objects.get_or_create(
-                user=user, tenant=tenant,
-                defaults={'qualification': td['qualification'], 'employee_id': f'GIA-{td["first_name"][0]}{td["last_name"][:4]}'.upper()}
-            )
-            teachers.append({'user': user, 'profile': teacher_profile, 'subjects': td['subjects']})
-            print(f"  Teacher: {user.email} / {teacher_passwords[td['email']]}")
+teachers = []
+teacher_passwords = {}
+for td in teacher_data:
+    user, created = User.objects.get_or_create(
+        email=td['email'],
+        defaults={
+            'username': td['email'].split('@')[0],
+            'first_name': td['first_name'],
+            'last_name': td['last_name'],
+            'phone': td['phone'],
+            'default_language': 'en',
+        }
+    )
+    password = 'teacher123'
+    if created or not user.check_password(password):
+        user.set_password(password)
+        user.save()
+    teacher_passwords[td['email']] = password
+    UserRoleMapping.objects.get_or_create(
+        user=user, tenant=tenant, role='teacher',
+        defaults={'assigned_by': admin_user}
+    )
+    # Create teacher profile
+    teacher_profile, created = Teacher.objects.get_or_create(
+        user=user, tenant=tenant,
+        defaults={'qualification': td['qualification'], 'employee_id': f'GIA-{td["first_name"][0]}{td["last_name"][:4]}'.upper()}
+    )
+    teachers.append({'user': user, 'profile': teacher_profile, 'subjects': td['subjects']})
+    print(f"  Teacher: {user.email} / {teacher_passwords[td['email']]}")
 
 # Parent for Greenfield (new parent, not Paul Essomba)
-        parent_user, created = User.objects.get_or_create(
-            email='grace.foncha@greenfield.edu.cm',
-            defaults={
-                'username': 'grace_foncha',
-                'first_name': 'Grace',
-                'last_name': 'Foncha',
-                'phone': '+237 677 555 666',
-                'default_language': 'en',
-            }
-        )
-        if created:
-            password = generate_secure_password()
-            parent_user.set_password(password)
-            parent_user.save()
-            print(f"  Parent: {parent_user.email} / {password}")
-        UserRoleMapping.objects.get_or_create(
-            user=parent_user, tenant=tenant, role='parent',
-            defaults={'assigned_by': admin_user}
-        )
+parent_user, created = User.objects.get_or_create(
+    email='grace.foncha@greenfield.edu.cm',
+    defaults={
+        'username': 'grace_foncha',
+        'first_name': 'Grace',
+        'last_name': 'Foncha',
+        'phone': '+237 677 555 666',
+        'default_language': 'en',
+    }
+)
+parent_password = 'parent123456'
+if created or not parent_user.check_password(parent_password):
+    parent_user.set_password(parent_password)
+    parent_user.save()
+    print(f"  Parent: {parent_user.email} / {parent_password}")
+UserRoleMapping.objects.get_or_create(
+    user=parent_user, tenant=tenant, role='parent',
+    defaults={'assigned_by': admin_user}
+)
 
 # ============================================================
 # 3. ACADEMIC STRUCTURE

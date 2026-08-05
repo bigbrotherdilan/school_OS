@@ -55,4 +55,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # NOTE: seed_all is NOT run in production. Run it manually once during initial setup.
 # Run database migrations on startup (safe to run every time, they're idempotent)
 # but do NOT run seed scripts — they would re-create default accounts.
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
+# 2 workers × 8 threads → 16 concurrent requests; threads are the right
+# fit for the IO-bound mark-entry burst. --max-requests rotates workers so
+# persistent DB connections (CONN_MAX_AGE) don't go stale.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --threads 8 --timeout 120 --max-requests 1000 --max-requests-jitter 100"]

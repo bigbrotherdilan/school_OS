@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useToastStore } from '../../../stores/toastStore';
 import { useAuthStore } from '../../../stores/authStore';
+import { useSectionStore } from '../../../stores/sectionStore';
 import { api } from '../../../services/api';
 import SetupProgressBar from '../../../components/admin/SetupProgressBar';
 
@@ -120,6 +121,7 @@ export default function DashboardHome() {
   const navigate = useNavigate();
   const { addToast } = useToastStore();
   const { user, tenants } = useAuthStore();
+  const { activeSectionId } = useSectionStore();
 
   const schoolName = tenants?.[0]?.school_name ?? 'Your School';
   const userName = user?.first_name ?? user?.full_name?.split(' ')[0] ?? 'Admin';
@@ -127,6 +129,7 @@ export default function DashboardHome() {
   const [studentCount, setStudentCount] = useState<number | null>(null);
   const [teacherCount, setTeacherCount] = useState<number | null>(null);
   const [classCount, setClassCount] = useState<number | null>(null);
+  const [sectionCount, setSectionCount] = useState<number | null>(null);
   const [feesCollected, setFeesCollected] = useState<number | null>(null);
   const [outstanding, setOutstanding] = useState<number | null>(null);
   const [attendanceRate, setAttendanceRate] = useState<number | null>(null);
@@ -142,12 +145,13 @@ export default function DashboardHome() {
   useEffect(() => {
     const fetchKpis = async () => {
       try {
-        const [studentsRes, teachersRes, classesRes, financeRes, attendanceRes] = await Promise.allSettled([
-          api.get('/students/students/'),
+        const [studentsRes, teachersRes, classesRes, financeRes, attendanceRes, sectionsRes] = await Promise.allSettled([
+          api.get('/students/students/', { params: activeSectionId ? { stream: activeSectionId } : undefined }),
           api.get('/staff/teachers/'),
-          api.get('/academic/classes/'),
+          api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }),
           api.get('/finance/summary/'),
           api.get('/attendance/sessions/dashboard-stats/'),
+          api.get('/academic/sections/'),
         ]);
 
         if (studentsRes.status === 'fulfilled') {
@@ -171,10 +175,17 @@ export default function DashboardHome() {
           setClassCount(0);
         }
 
+        if (sectionsRes.status === 'fulfilled') {
+          const d = sectionsRes.value.data;
+          setSectionCount(d.count ?? d.results?.length ?? 0);
+        } else {
+          setSectionCount(0);
+        }
+
         if (financeRes.status === 'fulfilled') {
           const d = financeRes.value.data;
-          setFeesCollected(d.total_collected ?? 0);
-          setOutstanding(d.outstanding ?? 0);
+          setFeesCollected(d.total_revenue ?? 0);
+          setOutstanding(d.total_arrears ?? 0);
           setHasFinance(true);
         }
 
@@ -190,7 +201,7 @@ export default function DashboardHome() {
     };
 
     fetchKpis();
-  }, []);
+  }, [activeSectionId]);
 
   useEffect(() => {
     const stored = localStorage.getItem('sos-time-saved-minutes');
@@ -262,6 +273,17 @@ export default function DashboardHome() {
   const quickActions = useMemo(() => {
     const actions: { label: string; detail: string; icon: string; path: string; color: string; urgent: boolean }[] = [];
 
+    if ((sectionCount ?? 0) === 0) {
+      actions.push({
+        label: 'Create your first section',
+        detail: 'Required before classes, subjects, or students can be set up',
+        icon: 'layers',
+        path: '/admin/academic/setup',
+        color: 'bg-purple-500',
+        urgent: true,
+      });
+    }
+
     if (hasFinance && (outstanding ?? 0) > 0) {
       actions.push({
         label: 'Send fee reminders',
@@ -329,7 +351,7 @@ export default function DashboardHome() {
     }
 
     return actions;
-  }, [studentCount, classCount, hasFinance, outstanding, attendanceRate]);
+  }, [studentCount, classCount, sectionCount, hasFinance, outstanding, attendanceRate]);
 
   const urgentActions = useMemo(() => quickActions.filter(a => a.urgent), [quickActions]);
   const nonUrgentActions = useMemo(() => quickActions.filter(a => !a.urgent), [quickActions]);
@@ -353,6 +375,7 @@ export default function DashboardHome() {
       <SetupProgressBar
         studentCount={studentCount}
         classCount={classCount}
+        sectionCount={sectionCount}
         hasFinance={hasFinance}
       />
 

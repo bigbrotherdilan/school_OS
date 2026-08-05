@@ -23,8 +23,8 @@ export default function PublicFooter() {
             <h4 className="font-bold text-primary mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link to="/#features" className="hover:text-primary transition-colors">Features</Link></li>
-              <li><Link to="/trust" className="hover:text-primary transition-colors">Trust</Link></li>
-              <li><Link to="/templates/school" className="hover:text-primary transition-colors">School Template</Link></li>
+              <li><Link to="/schools" className="hover:text-primary transition-colors">Find Schools</Link></li>
+              <li><Link to="/find-teachers" className="hover:text-primary transition-colors">Teacher Marketplace</Link></li>
               <li><Link to="/login" className="hover:text-primary transition-colors">Login</Link></li>
             </ul>
           </div>
@@ -32,20 +32,18 @@ export default function PublicFooter() {
           <div>
             <h4 className="font-bold text-primary mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Press</a></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+              <li><a href="#contact" className="hover:text-primary transition-colors">Contact</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold text-primary mb-4">Support</h4>
+            <h4 className="font-bold text-primary mb-4">Get Started</h4>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
+              <li><Link to="/login" className="hover:text-primary transition-colors">School Login</Link></li>
+              <li><Link to="/login/parent" className="hover:text-primary transition-colors">Parent Login</Link></li>
+              <li><Link to="/login/teacher" className="hover:text-primary transition-colors">Teacher Login</Link></li>
+              <li><Link to="/templates/school" className="hover:text-primary transition-colors">School Template</Link></li>
             </ul>
           </div>
         </div>

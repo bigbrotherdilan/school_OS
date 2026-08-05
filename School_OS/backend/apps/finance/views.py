@@ -6,6 +6,7 @@ from django.db.models import Sum, Q
 from django.db import transaction
 from django.utils import timezone
 from apps.academic.views import BaseTenantViewSet
+from apps.authentication.permissions import IsSchoolAdminOrBursar
 from apps.finance.models import (
     FeeCategory, FeeStructure, StudentInvoice, PaymentTransaction,
     InvoiceLineItem, ExpenseCategory, Expense
@@ -18,7 +19,10 @@ from apps.finance.serializers import (
 )
 from apps.students.models import Student
 from apps.academic.models import AcademicYear
-from apps.notifications.utils import announce_invoice_created, announce_payment_received, send_fee_reminder
+from apps.notifications.utils import (
+    announce_payment_received,
+    notify_invoice_created, notify_payment_received, notify_fee_reminder,
+)
 from django.http import HttpResponse
 from django.utils.crypto import get_random_string
 
@@ -26,18 +30,21 @@ from django.utils.crypto import get_random_string
 class FeeCategoryViewSet(BaseTenantViewSet):
     queryset = FeeCategory.objects.select_related('tenant')
     serializer_class = FeeCategorySerializer
+    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
 class FeeStructureViewSet(BaseTenantViewSet):
     queryset = FeeStructure.objects.select_related('tenant', 'academic_year', 'category', 'target_class')
     serializer_class = FeeStructureSerializer
+    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
 class StudentInvoiceViewSet(BaseTenantViewSet):
     queryset = StudentInvoice.objects.select_related('tenant', 'student', 'student__current_class', 'academic_year')
     serializer_class = StudentInvoiceSerializer
+    permission_classes = [IsSchoolAdminOrBursar]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -51,6 +58,16 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
         if student_id:
             qs = qs.filter(student_id=student_id)
         return qs
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        invoice = self.get_queryset().filter(id=response.data.get('id')).select_related('student', 'academic_year').first()
+        if invoice and response.status_code in (200, 201):
+            try:
+                notify_invoice_created(invoice, created_by=request.user)
+            except Exception:
+                pass  # Don't fail invoice creation if notification fails
+        return response
 
     @action(detail=False, methods=['post'], url_path='generate')
     def generate(self, request):
@@ -112,7 +129,7 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
 
         # Notify parents about the new invoice
         try:
-            announce_invoice_created(invoice, created_by=request.user)
+            notify_invoice_created(invoice, created_by=request.user)
         except Exception:
             pass  # Don't fail invoice creation if notification fails
 
@@ -178,17 +195,13 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
                 invoice.save()
                 created.append(str(invoice.id))
 
-        # Announce to parents that invoices were generated
+        # Notify each student's parents that an invoice was generated
         if created:
             try:
-                class_name = students.first().current_class.name if students.exists() and students.first().current_class else "class"
-                from apps.notifications.utils import announce_to_parents
-                announce_to_parents(
-                    tenant=tenant,
-                    title=f"Fee Invoices Generated: {class_name}",
-                    body=f"{len(created)} fee invoices have been generated for {class_name}. Please check your Fees page for payment details.",
-                    created_by=request.user,
-                )
+                from apps.notifications.utils import notify_invoice_created
+                invoices = StudentInvoice.objects.filter(id__in=created).select_related('student', 'academic_year')
+                for inv in invoices:
+                    notify_invoice_created(inv, created_by=request.user)
             except Exception:
                 pass
 
@@ -240,17 +253,17 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
             return Response({'detail': f'Failed to generate receipt: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], url_path='send-reminder')
-    def send_reminder(self, request, pk=None):
+    def send_reminder(self, request, id=None):
         """Send a fee reminder notification to parents for this invoice."""
         invoice = self.get_object()
         if invoice.status == StudentInvoice.Status.PAID:
             return Response({'detail': 'This invoice is already fully paid.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            announcement = send_fee_reminder(invoice, created_by=request.user)
+            notifs = notify_fee_reminder(invoice, created_by=request.user)
             return Response({
                 'detail': f'Fee reminder sent to parents for {invoice.invoice_number}.',
-                'announcement_id': str(announcement.id),
+                'notified': len(notifs or []),
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'detail': f'Failed to send reminder: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -259,18 +272,31 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
 class PaymentTransactionViewSet(BaseTenantViewSet):
     queryset = PaymentTransaction.objects.select_related('tenant', 'invoice', 'recorded_by')
     serializer_class = PaymentTransactionSerializer
+    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        payment = self.get_queryset().filter(id=response.data.get('id')).select_related('invoice', 'invoice__student').first()
+        if payment and response.status_code in (200, 201):
+            try:
+                notify_payment_received(payment, created_by=request.user)
+            except Exception:
+                pass  # Don't fail payment recording if notification fails
+        return response
 
 
 class ExpenseCategoryViewSet(BaseTenantViewSet):
     queryset = ExpenseCategory.objects.select_related('tenant')
     serializer_class = ExpenseCategorySerializer
+    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
 class ExpenseViewSet(BaseTenantViewSet):
     queryset = Expense.objects.select_related('tenant', 'category', 'recorded_by')
     serializer_class = ExpenseSerializer
+    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 

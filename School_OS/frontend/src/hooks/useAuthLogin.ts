@@ -53,6 +53,22 @@ export const useAuthLogin = ({ allowedRole, allowedRoles, targetPath }: UseAuthL
         return true;
     };
 
+    const navigateForUser = (user: any, roles: any[]) => {
+        if (user?.must_change_password) {
+            navigate('/force-password-change');
+            return;
+        }
+        if (targetPath) navigate(targetPath);
+        else if (user?.is_platform_admin) navigate('/admin/system');
+        else if (roles.length > 0) {
+            if (roles.includes('government')) navigate('/gov');
+            else if (roles.includes('teacher')) navigate('/teacher');
+            else if (roles.includes('admin') || roles.includes('super_admin')) navigate('/admin');
+            else if (roles.includes('parent')) navigate('/parent');
+            else navigate('/dashboard');
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -67,15 +83,7 @@ export const useAuthLogin = ({ allowedRole, allowedRoles, targetPath }: UseAuthL
                 if (completeLogin(response.data)) {
                     const { user, roles } = response.data;
                     const rolesList = roles.map((r: any) => r.role);
-                    if (targetPath) navigate(targetPath);
-                    else if (user.is_platform_admin) navigate('/admin/system');
-                    else if (roles.length > 0) {
-                        if (rolesList.includes('government')) navigate('/gov');
-                        else if (rolesList.includes('teacher')) navigate('/teacher');
-                        else if (rolesList.includes('admin') || rolesList.includes('super_admin')) navigate('/admin');
-                        else if (rolesList.includes('parent')) navigate('/parent');
-                        else navigate('/dashboard');
-                    }
+                    navigateForUser(user, rolesList);
                 }
             }
         } catch (err: any) {
@@ -99,17 +107,9 @@ export const useAuthLogin = ({ allowedRole, allowedRoles, targetPath }: UseAuthL
         try {
             const response = await api.post('/auth/login/confirm-kill/', { login_token: loginToken });
             if (completeLogin(response.data)) {
-                const { user, roles, sessions_killed } = response.data;
+                const { user, roles } = response.data;
                 const rolesList = roles.map((r: any) => r.role);
-                if (targetPath) navigate(targetPath);
-                else if (user.is_platform_admin) navigate('/admin/system');
-                else if (roles.length > 0) {
-                    if (rolesList.includes('government')) navigate('/gov');
-                    else if (rolesList.includes('teacher')) navigate('/teacher');
-                    else if (rolesList.includes('admin') || rolesList.includes('super_admin')) navigate('/admin');
-                    else if (rolesList.includes('parent')) navigate('/parent');
-                    else navigate('/dashboard');
-                }
+                navigateForUser(user, rolesList);
             }
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Session confirmation failed. Please log in again.');

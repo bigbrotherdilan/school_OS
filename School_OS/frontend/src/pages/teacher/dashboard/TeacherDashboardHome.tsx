@@ -17,7 +17,7 @@ export default function TeacherDashboardHome() {
   const [terms, setTerms] = useState<any[]>([]);
   const [selectedTerm, setSelectedTerm] = useState('');
   const [showAllRankings, setShowAllRankings] = useState(false);
-  const [isLessonLogged, setIsLessonLogged] = useState(false);
+  const [isLessonLogged] = useState(false);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [openWindows, setOpenWindows] = useState<any[]>([]);
   const [announcementsCollapsed, setAnnouncementsCollapsed] = useState(() => {

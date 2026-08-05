@@ -3,7 +3,7 @@ import { useToastStore } from '../../stores/toastStore';
 import { api } from '../../services/api';
 import { KeyRound, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
-export default function ChangePasswordCard() {
+export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => void }) {
   const { addToast } = useToastStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOld, setShowOld] = useState(false);
@@ -41,6 +41,7 @@ export default function ChangePasswordCard() {
       setSuccess(true);
       setFormData({ old_password: '', new_password: '', confirm_password: '' });
       addToast('Password changed successfully.', 'success');
+      onSuccess?.();
     } catch (error: any) {
       const detail = error.response?.data?.detail || 'Failed to change password.';
       addToast(detail, 'error');

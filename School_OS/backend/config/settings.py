@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY environment variable is required.")
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
     # SOS Apps
@@ -108,6 +109,11 @@ if DATABASE_URL:
             'PASSWORD': url.password or '',
             'HOST': url.hostname or 'localhost',
             'PORT': url.port or '5432',
+            # Keep DB connections alive across requests. Critical for the
+            # mark-entry burst (all teachers submitting within the same days):
+            # otherwise every request pays a fresh connection + auth handshake.
+            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+            'CONN_HEALTH_CHECKS': True,
         }
     }
 else:
@@ -115,6 +121,34 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+# ──────────────────────────────────────────────
+# Caching — LocMemCache by default, Redis in production
+# Every cache miss on the hot paths (tenant resolution, analytics metadata,
+# public school pages, auto-save reads) is a DB round-trip we can avoid.
+# ──────────────────────────────────────────────
+CACHE_REDIS_URL = os.environ.get('CACHE_REDIS_URL')
+if CACHE_REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': os.environ.get(
+                'DJANGO_CACHE_BACKEND', 'django_redis.cache.RedisCache'),
+            'LOCATION': CACHE_REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PARSER_CLASS': 'redis.connection.HiredisParser',
+            },
+            'TIMEOUT': 300,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'school-os-cache',
+            'TIMEOUT': 300,
         }
     }
 
@@ -225,6 +259,10 @@ REST_FRAMEWORK = {
         'user': '1000/hour',
         'login': '10/minute',
         'public': '20/minute',
+        'enrollment_per_school': '5/minute',
+        # Mark auto-save fires ~1 request/2s while typing → 1000/hr would
+        # throttle teachers mid-entry. Dedicated high cap for that endpoint.
+        'mark_entry': '6000/hour',
     },
 }
 

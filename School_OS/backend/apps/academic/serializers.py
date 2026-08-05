@@ -3,7 +3,8 @@ Academic Serializers — School OS
 """
 from rest_framework import serializers
 from apps.academic.models import (
-    AcademicYear, Term, Sequence, Cycle, Section, Series, Class, Subject, ClassSubject
+    AcademicYear, Term, Sequence, Cycle, Section, Series, Class, Subject,
+    ClassSubject, SectionSubject,
 )
 
 
@@ -91,5 +92,23 @@ class ClassSubjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassSubject
-        fields = ['id', 'academic_class', 'subject', 'subject_name', 'series', 'series_code', 'coefficient']
+        fields = ['id', 'academic_class', 'subject', 'subject_name', 'series', 'series_code', 'coefficient', 'weekly_hours', 'is_double']
+        read_only_fields = ['id']
+
+
+class SectionSubjectSerializer(serializers.ModelSerializer):
+    section_name = serializers.CharField(source='section.name', read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    subject_code = serializers.CharField(source='subject.code', read_only=True, default=None)
+    cycle_name = serializers.CharField(source='subject.cycle.name', read_only=True, default=None)
+    default_coefficient = serializers.DecimalField(
+        source='subject.default_coefficient', max_digits=4, decimal_places=2, read_only=True
+    )
+
+    class Meta:
+        model = SectionSubject
+        fields = [
+            'id', 'section', 'section_name', 'subject', 'subject_name',
+            'subject_code', 'cycle_name', 'coefficient', 'default_coefficient',
+        ]
         read_only_fields = ['id']
