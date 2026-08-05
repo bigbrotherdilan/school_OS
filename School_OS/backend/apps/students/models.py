@@ -127,6 +127,7 @@ class DisciplineRecord(models.Model):
 
     class Meta:
         db_table = 'student_discipline'
+        ordering = ['-date', '-id']
 
 
 class TransferRequest(models.Model):
@@ -145,6 +146,7 @@ class TransferRequest(models.Model):
 
     class Meta:
         db_table = 'student_transfers'
+        ordering = ['-date', '-id']
 
     def __str__(self):
         return f"{self.student.first_name} - {self.reason} ({self.date})"

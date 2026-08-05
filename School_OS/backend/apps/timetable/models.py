@@ -52,6 +52,7 @@ class Timetable(models.Model):
     class Meta:
         db_table = 'timetables'
         unique_together = ['tenant', 'academic_year', 'term', 'class_obj']
+        ordering = ['-created_at', 'id']
 
     def __str__(self):
         return f"Timetable for {self.class_obj.name if hasattr(self, 'class_obj') else 'Class'} ({self.term.name if hasattr(self, 'term') else 'Term'})"

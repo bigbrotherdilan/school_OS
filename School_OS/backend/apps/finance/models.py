@@ -66,6 +66,7 @@ class StudentInvoice(models.Model):
 
     class Meta:
         db_table = 'finance_student_invoices'
+        ordering = ['-created_at', '-invoice_number']
 
     @property
     def balance(self):
