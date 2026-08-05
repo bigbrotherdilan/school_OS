@@ -64,12 +64,15 @@ if settings.DEBUG:
 if FRONTEND_DIST.exists():
     urlpatterns += [
         re_path(r'^assets/(?P<path>.*)$', static_serve, {'document_root': str(FRONTEND_DIST / 'assets')}),
+        # PWA root files: service worker, manifest, favicon and icons
+        re_path(r'^(?P<path>(?:icons/.*|apple-touch-icon\.png|manifest\.json|sw\.js|favicon\.svg))$',
+                static_serve, {'document_root': str(FRONTEND_DIST)}),
     ]
 
 # Catch-all: serve React index.html for any non-API, non-admin route
 if os.path.exists(FRONTEND_DIST / 'index.html'):
     urlpatterns += [
-        re_path(r'^(?!api/|admin/|media/|static/|assets/).*$', TemplateView.as_view(template_name='index.html'), name='catch-all'),
+        re_path(r'^(?!api/|pub/|admin/|media/|static/|assets/).*$', TemplateView.as_view(template_name='index.html'), name='catch-all'),
     ]
 
 # Customize Django admin
