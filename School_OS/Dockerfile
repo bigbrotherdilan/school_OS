@@ -9,15 +9,15 @@ RUN apt-get update && apt-get install -y curl && \
 WORKDIR /app
 
 # Install Python deps
-COPY backend/requirements.txt backend/requirements.txt
+COPY School_OS/backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Build frontend
-COPY frontend/ frontend/
+COPY School_OS/frontend/ frontend/
 RUN cd frontend && npm install && VITE_API_URL=/api/v1 npx vite build
 
 # Copy backend
-COPY backend/ backend/
+COPY School_OS/backend/ backend/
 
 # Copy frontend build into Django template/static dirs
 RUN mkdir -p backend/templates backend/static/frontend_assets && \
