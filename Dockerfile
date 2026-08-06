@@ -43,6 +43,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 RUN mkdir -p /app/backend/media /app/backend/staticfiles && \
     chown -R appuser:appgroup /app
 
+# appuser is created with --no-create-home so HOME=/nonexistent; gunicorn 26's
+# control server writes its socket under $HOME and would crash without a writable one
+ENV HOME=/app
+
 WORKDIR /app/backend
 
 EXPOSE 8000
