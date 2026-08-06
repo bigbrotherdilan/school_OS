@@ -39,8 +39,11 @@ class TenantMiddleware:
         request.tenant = None
         request.tenant_id = None
 
-        # Skip tenant enforcement for exempt paths
+        # Skip tenant enforcement for non-API paths (SPA shell, PWA assets,
+        # static files) and the explicitly exempt API routes
         path = request.path
+        if not path.startswith('/api/'):
+            return self.get_response(request)
         if any(path.startswith(exempt) for exempt in TENANT_EXEMPT_PATHS):
             return self.get_response(request)
 
