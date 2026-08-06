@@ -23,7 +23,7 @@ COPY School_OS/backend/ backend/
 RUN mkdir -p backend/templates backend/static/frontend_assets && \
     cp frontend/dist/index.html backend/templates/index.html && \
     cp -r frontend/dist/assets/* backend/static/frontend_assets/ && \
-    cd backend && python manage.py collectstatic --noinput
+    cd backend && DJANGO_SECRET_KEY=build-only-collectstatic python manage.py collectstatic --noinput
 
 FROM python:3.11-slim
 
