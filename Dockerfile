@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Build frontend
 COPY School_OS/frontend/ frontend/
-RUN cd frontend && npm install && VITE_API_URL=/api/v1 npx vite build
+RUN cd frontend && npm install --legacy-peer-deps && VITE_API_URL=/api/v1 npx vite build
 
 # Copy backend
 COPY School_OS/backend/ backend/
