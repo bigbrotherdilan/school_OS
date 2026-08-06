@@ -31,6 +31,23 @@ class IsSchoolAdmin(BasePermission):
         ).exists()
 
 
+class IsSchoolAdminOrBursar(BasePermission):
+    """User must be an admin or bursar for the current tenant (finance treasury access)."""
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.user.is_platform_admin:
+            return True
+        tenant_id = getattr(request, 'tenant_id', None)
+        if not tenant_id:
+            return False
+        return request.user.role_mappings.filter(
+            tenant_id=tenant_id,
+            role__in=['admin', 'super_admin', 'bursar'],
+            is_active=True,
+        ).exists()
+
+
 class IsTeacher(BasePermission):
     """User must be a teacher for the current tenant."""
     def has_permission(self, request, view):

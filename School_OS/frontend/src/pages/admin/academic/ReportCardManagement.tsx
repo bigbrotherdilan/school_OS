@@ -1,9 +1,11 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
-import { reportsApi } from '../../../services/reportsApi';
+import { useSectionStore } from '../../../stores/sectionStore';
+import { reportsApi, type ReportCardPreviewData } from '../../../services/reportsApi';
 import ReportCardPreview, { type ReportCardStyle, DEFAULT_REPORT_CARD_STYLE } from '../../../components/admin/ReportCardPreview';
 import ReportCardCustomizer from '../../../components/admin/ReportCardCustomizer';
+import PreviewFullscreenModal from '../../../components/admin/PreviewFullscreenModal';
 import ConfettiBurst from '../../../components/ui/ConfettiBurst';
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -19,6 +21,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export default function ReportCardManagement() {
   const { addToast } = useToastStore();
+  const { activeSectionId } = useSectionStore();
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
@@ -37,6 +40,9 @@ export default function ReportCardManagement() {
 
   // Preview
   const [previewStudent, setPreviewStudent] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<ReportCardPreviewData | null>(null);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   // Design customization
   const [customStyle, setCustomStyle] = useState<ReportCardStyle>(DEFAULT_REPORT_CARD_STYLE);
@@ -54,7 +60,7 @@ export default function ReportCardManagement() {
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [activeSectionId]);
 
   useEffect(() => {
     if (selectedYear) {
@@ -74,20 +80,56 @@ export default function ReportCardManagement() {
     }
   }, [selectedClass, selectedTerm, selectedStudent]);
 
-  // Load preview student when selection changes in individual mode
+  // Load preview: individual = selected student, batch = first student in class
   useEffect(() => {
     if (mode === 'individual' && selectedStudent) {
       const student = students.find(s => s.id === selectedStudent);
       if (student) setPreviewStudent(student);
+    } else if (mode === 'batch') {
+      setPreviewStudent(students[0] || null);
     } else {
       setPreviewStudent(null);
     }
   }, [selectedStudent, mode, students]);
 
+  // Fetch real report card data for the preview (marks, averages, rank, decision, absences)
+  useEffect(() => {
+    if (!previewStudent || !selectedTerm || !selectedYear) {
+      setPreviewData(null);
+      return;
+    }
+    let cancelled = false;
+    reportsApi
+      .fetchReportCardPreview({
+        student_id: previewStudent.id,
+        term_id: selectedTerm,
+        academic_year_id: selectedYear,
+      })
+      .then((data) => {
+        if (!cancelled) setPreviewData(data);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewStudent, selectedTerm, selectedYear]);
+
+  // Auto-scroll the preview into view so it is never missed
+  useEffect(() => {
+    if (previewStudent) {
+      const t = setTimeout(() => {
+        previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 120);
+      return () => clearTimeout(t);
+    }
+  }, [previewStudent, mode]);
+
   const fetchInitialData = async () => {
     try {
       const [classesRes, yearsRes] = await Promise.all([
-        api.get('/academic/classes/').catch(() => ({ data: [] })),
+        api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }).catch(() => ({ data: [] })),
         api.get('/academic/academic-years/').catch(() => ({ data: [] })),
       ]);
       setClasses(classesRes.data.results || classesRes.data || []);
@@ -599,17 +641,50 @@ export default function ReportCardManagement() {
         {/* Right Panel - Preview + History */}
         <div className="xl:col-span-2 xl:sticky xl:top-6 xl:self-start space-y-4">
           {/* Live Preview */}
-          {mode === 'individual' && previewStudent ? (
-            <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-              <h2 className="text-lg font-semibold text-on-surface mb-4">Live Preview</h2>
-              <div className="flex justify-center overflow-x-auto py-2">
+          {previewStudent ? (
+            <div ref={previewRef} className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-on-surface">Live Preview</h2>
+                <button
+                  onClick={() => setShowFullscreen(true)}
+                  className="flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                  title="Open fullscreen preview"
+                >
+                  <span className="material-symbols-outlined text-sm">fullscreen</span>
+                  Enlarge
+                </button>
+              </div>
+              {mode === 'batch' && (
+                <p className="text-xs text-on-surface-variant mb-2 -mt-2">
+                  {selectedStudent
+                    ? 'Previewing selected student'
+                    : 'Previewing first student in class'}
+                </p>
+              )}
+              <div className="flex justify-center overflow-x-auto py-2 cursor-zoom-in" onClick={() => setShowFullscreen(true)} title="Click to enlarge">
                 <ReportCardPreview
                   style={customStyle}
                   studentName={previewStudent.full_name}
-                  className={previewStudent.current_class?.name || 'N/A'}
+                  className={previewStudent.class_display || previewStudent.current_class?.name || 'N/A'}
                   admissionNumber={previewStudent.admission_number}
                   termName={selectedTermName}
                   academicYear={selectedYearName}
+                  dateOfBirth={previewData?.student.date_of_birth}
+                  subjects={(previewData?.subject_scores || []).map((s) => ({
+                    name: s.subject_name,
+                    coef: s.coefficient,
+                    score: s.score,
+                    grade: s.grade,
+                    remarks: s.remarks,
+                  }))}
+                  annualAverage={previewData?.average}
+                  classAverage={previewData?.class_average}
+                  bestAverage={previewData?.best_average}
+                  rank={previewData?.rank}
+                  maxScale={previewData?.max_scale}
+                  decision={previewData?.decision}
+                  absences={previewData?.absences}
+                  punishments={previewData && previewData.discipline_count > 0 ? String(previewData.discipline_count) : '-'}
                 />
               </div>
             </div>
@@ -660,6 +735,42 @@ export default function ReportCardManagement() {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen preview modal */}
+      <PreviewFullscreenModal
+        open={showFullscreen && !!previewStudent}
+        onClose={() => setShowFullscreen(false)}
+        title={previewStudent ? `Report Card — ${previewStudent.full_name}` : 'Report Card Preview'}
+        fit="width"
+        maxScale={4}
+      >
+        {previewStudent && (
+          <ReportCardPreview
+            style={customStyle}
+            studentName={previewStudent.full_name}
+            className={previewStudent.class_display || previewStudent.current_class?.name || 'N/A'}
+            admissionNumber={previewStudent.admission_number}
+            termName={selectedTermName}
+            academicYear={selectedYearName}
+            dateOfBirth={previewData?.student.date_of_birth}
+            subjects={(previewData?.subject_scores || []).map((s) => ({
+              name: s.subject_name,
+              coef: s.coefficient,
+              score: s.score,
+              grade: s.grade,
+              remarks: s.remarks,
+            }))}
+            annualAverage={previewData?.average}
+            classAverage={previewData?.class_average}
+            bestAverage={previewData?.best_average}
+            rank={previewData?.rank}
+            maxScale={previewData?.max_scale}
+            decision={previewData?.decision}
+            absences={previewData?.absences}
+            punishments={previewData && previewData.discipline_count > 0 ? String(previewData.discipline_count) : '-'}
+          />
+        )}
+      </PreviewFullscreenModal>
     </div>
   );
 }

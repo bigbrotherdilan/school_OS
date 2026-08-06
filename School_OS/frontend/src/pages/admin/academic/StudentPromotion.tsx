@@ -1,11 +1,13 @@
 ﻿import { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
+import { useSectionStore } from '../../../stores/sectionStore';
 
 interface PromotionResult {
   id: string;
   name: string;
-  average: number;
+  average: number | null;
   eligible: boolean;
+  terms: { term: string; average: number }[];
 }
 
 interface AcademicClass {
@@ -14,6 +16,7 @@ interface AcademicClass {
 }
 
 export default function StudentPromotion() {
+  const { activeSectionId } = useSectionStore();
   const [cutoff, setCutoff] = useState(9.5);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -25,14 +28,14 @@ export default function StudentPromotion() {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const res = await api.get('/academic/classes/');
+        const res = await api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined });
         setClasses(res.data.results || res.data);
       } catch (err) {
         console.error('Failed to fetch classes', err);
       }
     };
     fetchClasses();
-  }, []);
+  }, [activeSectionId]);
 
   const fetchPreview = async () => {
     if (!selectedClass) return;
@@ -85,7 +88,9 @@ export default function StudentPromotion() {
           </div>
           
           <p className="text-sm text-on-surface-variant leading-relaxed">
-            Select a class and configure the academic threshold. Students achieving this average or higher will be eligible for transition.
+            Select a class and configure the academic threshold. The promotion average is the
+            <strong> annual average</strong> — the mean of the three term averages. Official Cameroon
+            standard for passing to the next class: <strong>10/20</strong>.
           </p>
 
           <div className="space-y-4">
@@ -181,8 +186,15 @@ export default function StudentPromotion() {
                 <tbody className="divide-y divide-outline-variant/10">
                   {preview.map((row, i) => (
                     <tr key={i} className="hover:bg-surface-container-high/20 transition-colors">
-                      <td className="py-4 px-8 font-bold text-on-surface">{row.name}</td>
-                      <td className="py-4 px-8 text-center font-mono font-bold tracking-tighter text-lg">{row.average.toFixed(2)}</td>
+                      <td className="py-4 px-8">
+                        <span className="font-bold text-on-surface block">{row.name}</span>
+                        {row.terms && row.terms.length > 0 && (
+                          <span className="text-[10px] text-on-surface-variant font-mono block mt-0.5">
+                            {row.terms.map(t => `${t.term} ${t.average.toFixed(2)}`).join('  ·  ')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-8 text-center font-mono font-bold tracking-tighter text-lg">{row.average === null ? '—' : row.average.toFixed(2)}</td>
                       <td className="py-4 px-8 text-right">
                         <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${row.eligible ? 'bg-success-container text-on-success-container' : 'bg-error-container text-on-error-container'}`}>
                           {row.eligible ? 'PROMOTED' : 'REPEATED'}

@@ -1,6 +1,8 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+﻿import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, lazy, Suspense } from 'react';
 import { api } from './services/api';
+
+// Public + auth pages stay eagerly loaded for instant first paint.
 import Login from './pages/Login';
 import GovLogin from './pages/auth/GovLogin';
 import ParentLogin from './pages/auth/ParentLogin';
@@ -12,83 +14,93 @@ import TrustPage from './pages/public/TrustPage';
 import SchoolTemplate from './pages/public/SchoolTemplate';
 import SchoolsList from './pages/public/SchoolsList';
 import SchoolProfile from './pages/public/SchoolProfile';
-import AdminLayout from './components/layout/AdminLayout';
-import DashboardHome from './pages/admin/dashboard/DashboardHome';
-import AcademicManagement from './pages/admin/academic/AcademicManagement';
-import OperationsCenter from './pages/admin/operations/OperationsCenter';
-import FinanceTreasury from './pages/admin/finance/FinanceTreasury';
-import FinanceFeeSetup from './pages/admin/finance/FinanceFeeSetup';
-import InvoiceManagement from './pages/admin/finance/InvoiceManagement';
-import StudentLedger from './pages/admin/finance/StudentLedger';
-import ArrearsManagement from './pages/admin/finance/ArrearsManagement';
-import ExpensesPage from './pages/admin/finance/ExpensesPage';
-import CommunityEthos from './pages/admin/community/CommunityEthos';
-import ComplianceCenter from './pages/admin/compliance/ComplianceCenter';
-import SystemControl from './pages/admin/system/SystemControl';
-import AcademicSetup from './pages/admin/academic/AcademicSetup';
-import AuditLogs from './pages/admin/audit/AuditLogs';
-import Settings from './pages/admin/settings/Settings';
-import AddStudentPage from './pages/admin/academic/students/AddStudentPage';
-import RecordTransactionPage from './pages/admin/finance/RecordTransactionPage';
-import AddFacultyPage from './pages/admin/operations/AddFacultyPage';
-import AddBursarPage from './pages/admin/operations/AddBursarPage';
-import Timetables from './pages/admin/academic/Timetables';
-import Examinations from './pages/admin/academic/Examinations';
-import ExamWorkflow from './pages/admin/academic/ExamWorkflow';
-import MarkFillStatus from './pages/admin/academic/MarkFillStatus';
-import CurriculumCoverage from './pages/admin/academic/CurriculumCoverage';
-import DisciplineAndTransfers from './pages/admin/operations/DisciplineAndTransfers';
-import FacultyPerformance from './pages/admin/operations/FacultyPerformance';
-import Communications from './pages/admin/community/Communications';
-import PerformanceReports from './pages/admin/compliance/PerformanceReports';
-import AttendanceDashboard from './pages/admin/attendance/AttendanceDashboard';
-import StudentPromotion from './pages/admin/academic/StudentPromotion';
-import ReportCardManagement from './pages/admin/academic/ReportCardManagement';
-import IDCardGenerator from './pages/admin/academic/IDCardGenerator';
-import AcademicAnalytics from './pages/admin/academic/AcademicAnalytics';
-import TeacherDirectory from './pages/admin/operations/TeacherDirectory';
-import BulkImportStudents from './pages/admin/operations/BulkImportStudents';
-import BulkImportTeachers from './pages/admin/operations/BulkImportTeachers';
-import SchoolYearReview from './components/admin/SchoolYearReview';
 import TeacherMarketplace from './pages/public/TeacherMarketplace';
+import ForcePasswordChange from './pages/ForcePasswordChange';
 import { useAuthStore } from './stores/authStore';
 import ToastContainer from './components/ui/ToastContainer';
 
+// Portal pages — code-split so each portal loads its own chunk on demand.
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
+const DashboardHome = lazy(() => import('./pages/admin/dashboard/DashboardHome'));
+const AcademicManagement = lazy(() => import('./pages/admin/academic/AcademicManagement'));
+const OperationsCenter = lazy(() => import('./pages/admin/operations/OperationsCenter'));
+const FinanceTreasury = lazy(() => import('./pages/admin/finance/FinanceTreasury'));
+const FinanceFeeSetup = lazy(() => import('./pages/admin/finance/FinanceFeeSetup'));
+const InvoiceManagement = lazy(() => import('./pages/admin/finance/InvoiceManagement'));
+const StudentLedger = lazy(() => import('./pages/admin/finance/StudentLedger'));
+const ArrearsManagement = lazy(() => import('./pages/admin/finance/ArrearsManagement'));
+const ExpensesPage = lazy(() => import('./pages/admin/finance/ExpensesPage'));
+const CommunityEthos = lazy(() => import('./pages/admin/community/CommunityEthos'));
+const ComplianceCenter = lazy(() => import('./pages/admin/compliance/ComplianceCenter'));
+const SystemControl = lazy(() => import('./pages/admin/system/SystemControl'));
+const AcademicSetup = lazy(() => import('./pages/admin/academic/AcademicSetup'));
+const AuditLogs = lazy(() => import('./pages/admin/audit/AuditLogs'));
+const Settings = lazy(() => import('./pages/admin/settings/Settings'));
+const EmailSettings = lazy(() => import('./pages/admin/settings/EmailSettings'));
+const AddStudentPage = lazy(() => import('./pages/admin/academic/students/AddStudentPage'));
+const RecordTransactionPage = lazy(() => import('./pages/admin/finance/RecordTransactionPage'));
+const AddFacultyPage = lazy(() => import('./pages/admin/operations/AddFacultyPage'));
+const AddBursarPage = lazy(() => import('./pages/admin/operations/AddBursarPage'));
+const Timetables = lazy(() => import('./pages/admin/academic/Timetables'));
+const Examinations = lazy(() => import('./pages/admin/academic/Examinations'));
+const ExamWorkflow = lazy(() => import('./pages/admin/academic/ExamWorkflow'));
+const MarkFillStatus = lazy(() => import('./pages/admin/academic/MarkFillStatus'));
+const CurriculumCoverage = lazy(() => import('./pages/admin/academic/CurriculumCoverage'));
+const DisciplineAndTransfers = lazy(() => import('./pages/admin/operations/DisciplineAndTransfers'));
+const FacultyPerformance = lazy(() => import('./pages/admin/operations/FacultyPerformance'));
+const Communications = lazy(() => import('./pages/admin/community/Communications'));
+const PerformanceReports = lazy(() => import('./pages/admin/compliance/PerformanceReports'));
+const AttendanceDashboard = lazy(() => import('./pages/admin/attendance/AttendanceDashboard'));
+const StudentPromotion = lazy(() => import('./pages/admin/academic/StudentPromotion'));
+const ReportCardManagement = lazy(() => import('./pages/admin/academic/ReportCardManagement'));
+const IDCardGenerator = lazy(() => import('./pages/admin/academic/IDCardGenerator'));
+const AcademicAnalytics = lazy(() => import('./pages/admin/academic/AcademicAnalytics'));
+const TeacherDirectory = lazy(() => import('./pages/admin/operations/TeacherDirectory'));
+const BulkImportStudents = lazy(() => import('./pages/admin/operations/BulkImportStudents'));
+const BulkImportTeachers = lazy(() => import('./pages/admin/operations/BulkImportTeachers'));
+const SchoolYearReview = lazy(() => import('./components/admin/SchoolYearReview'));
+
 // Teacher Portal
-import TeacherLayout from './components/layout/teacher/TeacherLayout';
-import TeacherDashboardHome from './pages/teacher/dashboard/TeacherDashboardHome';
-import TeacherLogbookPage from './pages/teacher/logbook/TeacherLogbookPage';
-import TeacherAssessmentsPage from './pages/teacher/assessments/TeacherAssessmentsPage';
-import TeacherTimetablePage from './pages/teacher/timetable/TeacherTimetablePage';
-import TeacherPlannerPage from './pages/teacher/planner/TeacherPlannerPage';
-import TeacherCoveragePage from './pages/teacher/coverage/TeacherCoveragePage';
-import TeacherSettingsPage from './pages/teacher/settings/TeacherSettingsPage';
-import TeacherProfileEdit from './pages/teacher/settings/TeacherProfileEdit';
+const TeacherLayout = lazy(() => import('./components/layout/teacher/TeacherLayout'));
+const TeacherDashboardHome = lazy(() => import('./pages/teacher/dashboard/TeacherDashboardHome'));
+const TeacherLogbookPage = lazy(() => import('./pages/teacher/logbook/TeacherLogbookPage'));
+const TeacherAssessmentsPage = lazy(() => import('./pages/teacher/assessments/TeacherAssessmentsPage'));
+const TeacherTimetablePage = lazy(() => import('./pages/teacher/timetable/TeacherTimetablePage'));
+const TeacherPlannerPage = lazy(() => import('./pages/teacher/planner/TeacherPlannerPage'));
+const TeacherCoveragePage = lazy(() => import('./pages/teacher/coverage/TeacherCoveragePage'));
+const TeacherSettingsPage = lazy(() => import('./pages/teacher/settings/TeacherSettingsPage'));
+const TeacherProfileEdit = lazy(() => import('./pages/teacher/settings/TeacherProfileEdit'));
 
-import ParentLayout from './components/layout/parent/ParentLayout';
-import ParentDashboard from './pages/parent/ParentDashboard';
-import ParentFees from './pages/parent/ParentFees';
-import ParentReports from './pages/parent/ParentReports';
-import ParentAnalytics from './pages/parent/ParentAnalytics';
-import ParentSettings from './pages/parent/ParentSettings';
-import ParentChildDetail from './pages/parent/ParentChildDetail';
+const ParentLayout = lazy(() => import('./components/layout/parent/ParentLayout'));
+const ParentDashboard = lazy(() => import('./pages/parent/ParentDashboard'));
+const ParentFees = lazy(() => import('./pages/parent/ParentFees'));
+const ParentReports = lazy(() => import('./pages/parent/ParentReports'));
+const ParentAnalytics = lazy(() => import('./pages/parent/ParentAnalytics'));
+const ParentSettings = lazy(() => import('./pages/parent/ParentSettings'));
+const ParentChildDetail = lazy(() => import('./pages/parent/ParentChildDetail'));
 
-import GovLayout from './components/layout/gov/GovLayout';
-import GovDashboard from './pages/gov/GovDashboard';
-import GovRegions from './pages/gov/GovRegions';
-import GovMonitoring from './pages/gov/GovMonitoring';
-import GovCompliance from './pages/gov/GovCompliance';
-import GovAlerts from './pages/gov/GovAlerts';
-import GovInspections from './pages/gov/GovInspections';
-import GovPolicy from './pages/gov/GovPolicy';
-import GovSupport from './pages/gov/GovSupport';
+const GovLayout = lazy(() => import('./components/layout/gov/GovLayout'));
+const GovDashboard = lazy(() => import('./pages/gov/GovDashboard'));
+const GovRegions = lazy(() => import('./pages/gov/GovRegions'));
+const GovMonitoring = lazy(() => import('./pages/gov/GovMonitoring'));
+const GovCompliance = lazy(() => import('./pages/gov/GovCompliance'));
+const GovAlerts = lazy(() => import('./pages/gov/GovAlerts'));
+const GovInspections = lazy(() => import('./pages/gov/GovInspections'));
+const GovPolicy = lazy(() => import('./pages/gov/GovPolicy'));
+const GovSupport = lazy(() => import('./pages/gov/GovSupport'));
 
 // Bursar Portal
-import BursarLayout from './components/layout/bursar/BursarLayout';
-import BursarDashboard from './pages/bursar/BursarDashboard';
-import BursarSettings from './pages/bursar/BursarSettings';
+const BursarLayout = lazy(() => import('./components/layout/bursar/BursarLayout'));
+const BursarDashboard = lazy(() => import('./pages/bursar/BursarDashboard'));
+const BursarSettings = lazy(() => import('./pages/bursar/BursarSettings'));
 
 // Temporary placeholder components for other portals
+const PageLoader = () => (
+  <div className="min-h-screen bg-surface flex items-center justify-center text-primary">
+    <span className="text-sm font-medium">Loading…</span>
+  </div>
+);
+
 const PlaceholderDashboard = ({ title }: { title: string }) => {
   const logout = useAuthStore(state => state.logout);
   return (
@@ -107,9 +119,15 @@ const PlaceholderDashboard = ({ title }: { title: string }) => {
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles = [] }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { token, roles, user } = useAuthStore();
+  const location = useLocation();
   
   if (!token) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Force password change before accessing any portal
+  if (user?.must_change_password && location.pathname !== '/force-password-change') {
+    return <Navigate to="/force-password-change" replace />;
   }
 
   // If specific roles required, check them
@@ -127,6 +145,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: { children: React.React
 const PortalRedirect = () => {
   const { roles, user } = useAuthStore();
   
+  if (user?.must_change_password) return <Navigate to="/force-password-change" replace />;
   if (user?.is_platform_admin) return <Navigate to="/admin/system" replace />;
   
   const rolesList = roles.map(r => r.role);
@@ -139,6 +158,25 @@ const PortalRedirect = () => {
   return <Navigate to="/unauthorized" replace />;
 };
 
+// Scroll Manager - scrolls to top on route change, or to a #hash section if present
+const ScrollManager = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+    window.scrollTo(0, 0);
+  }, [location.pathname, location.hash]);
+
+  return null;
+};
+
 export default function App() {
   const token = useAuthStore(state => state.token);
   const setAuth = useAuthStore(state => state.setAuth);
@@ -148,7 +186,9 @@ export default function App() {
   useEffect(() => {
     if (!token) return;
     api.get('/auth/me/').then(({ data }) => {
-      setAuth(token, useAuthStore.getState().refreshToken || '', data.user, tenants.length > 0 ? tenants : data.tenants, data.roles);
+      const { roles } = data;
+      const user = { ...data, roles: undefined };
+      setAuth(token, useAuthStore.getState().refreshToken || '', user, tenants.length > 0 ? tenants : data.tenants || [], roles);
     }).catch(() => {
       logout();
     });
@@ -157,6 +197,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastContainer />
+      <ScrollManager />
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -174,6 +216,7 @@ export default function App() {
         <Route path="/login/bursar" element={token ? <PortalRedirect /> : <BursarLogin />} />
         {/* Generic Dashboard Redirect */}
         <Route path="/dashboard" element={<PortalRedirect />} />
+        <Route path="/force-password-change" element={<ProtectedRoute><ForcePasswordChange /></ProtectedRoute>} />
         
         {/* Protected Admin Routes */}
         <Route path="/admin" element={
@@ -219,6 +262,7 @@ export default function App() {
           <Route path="year-review" element={<SchoolYearReview />} />
           <Route path="audit" element={<AuditLogs />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="settings/email" element={<EmailSettings />} />
         </Route>
         
         <Route path="/teacher" element={
@@ -282,6 +326,7 @@ export default function App() {
           <PlaceholderDashboard title="Unauthorized. You do not have access to this portal." />
         } />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

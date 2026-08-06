@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
+import { useSectionStore } from '../../../stores/sectionStore';
 
 type TeacherInfo = {
   id: string;
@@ -33,6 +34,7 @@ type TermStats = {
 
 export default function MarkFillStatus() {
   const { addToast } = useToastStore();
+  const { activeSectionId } = useSectionStore();
   const [years, setYears] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -56,7 +58,7 @@ export default function MarkFillStatus() {
         const [yearsRes, termsRes, classesRes, subjectsRes] = await Promise.all([
           api.get('/academic/academic-years/').catch(() => ({ data: [] })),
           api.get('/academic/terms/').catch(() => ({ data: [] })),
-          api.get('/academic/classes/').catch(() => ({ data: [] })),
+          api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }).catch(() => ({ data: [] })),
           api.get('/academic/subjects/').catch(() => ({ data: [] })),
         ]);
         const yearList = yearsRes.data.results || yearsRes.data || [];
@@ -69,7 +71,7 @@ export default function MarkFillStatus() {
       } catch { /* silent */ }
     };
     fetchMeta();
-  }, []);
+  }, [activeSectionId]);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);

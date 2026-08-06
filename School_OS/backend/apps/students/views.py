@@ -6,6 +6,7 @@ import csv
 import io
 import os
 import uuid
+from datetime import date
 from decimal import Decimal
 from django.conf import settings
 from django.db import models
@@ -15,7 +16,7 @@ from rest_framework.decorators import api_view, permission_classes as perm_decor
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS, OR
 from apps.students.serializers import (
     StudentSerializer, StudentCreateSerializer, ParentStudentLinkSerializer,
     DisciplineRecordSerializer, TransferRequestSerializer, PromotionHistorySerializer
@@ -25,7 +26,8 @@ from apps.students.models import (
 )
 from apps.assessments.models import ExamResult
 from apps.academic.views import BaseTenantViewSet
-from apps.authentication.permissions import IsSchoolAdmin, IsAdminOrTeacher
+from apps.academic.models import AcademicYear, Class, Term, effective_coefficient
+from apps.authentication.permissions import IsSchoolAdmin, IsAdminOrTeacher, IsSchoolAdminOrBursar
 
 
 @api_view(['POST'])
@@ -71,6 +73,11 @@ class StudentViewSet(BaseTenantViewSet):
     filterset_fields = ['current_class', 'stream', 'status']
     search_fields = ['first_name', 'last_name', 'admission_number']
 
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve') and self.request.method in SAFE_METHODS:
+            return [OR(IsAdminOrTeacher(), IsSchoolAdminOrBursar())]
+        return super().get_permissions()
+
     def get_serializer_class(self):
         if self.action == 'create':
             return StudentCreateSerializer
@@ -101,50 +108,320 @@ class StudentViewSet(BaseTenantViewSet):
             'message': f'Student {student.full_name} has been verified and is now active.'
         })
 
+    def _term_averages(self, student, year=None):
+        """
+        Cameroon term averages (moyenne trimestrielle):
+        - Per subject: mean of the term's sequence scores (official 50/50 rule)
+        - Term general average: subject averages weighted by section-effective coefficients
+        Returns one entry per term that has marks, ordered by term.
+        """
+        results = ExamResult.objects.filter(
+            student=student, score__isnull=False
+        ).select_related('subject', 'sequence__term', 'exam')
+        if year is not None:
+            results = results.filter(exam__academic_year=year)
+
+        section = student.current_class.stream if student.current_class else student.stream
+        terms = {}
+        for res in results:
+            term_id = res.sequence.term_id if res.sequence else res.exam.term_id
+            term_data = terms.setdefault(term_id, {})
+            subject_data = term_data.setdefault(res.subject_id, {
+                'scores': [],
+                'coeff': float(effective_coefficient(section, res.subject) or 1.0),
+            })
+            subject_data['scores'].append(float(res.score))
+
+        term_meta = {
+            t['id']: t for t in
+            Term.objects.filter(id__in=list(terms.keys())).values('id', 'name', 'order_number')
+        }
+        term_list = []
+        for term_id, term_data in terms.items():
+            wsum = 0.0
+            wsum_coeff = 0.0
+            for subject_data in term_data.values():
+                if subject_data['scores']:
+                    avg_score = sum(subject_data['scores']) / len(subject_data['scores'])
+                    wsum += avg_score * subject_data['coeff']
+                    wsum_coeff += subject_data['coeff']
+            if wsum_coeff > 0:
+                meta = term_meta.get(term_id, {})
+                term_list.append({
+                    'term_id': term_id,
+                    'term_name': meta.get('name') or f'Term {term_id}',
+                    'order_number': meta.get('order_number') or 0,
+                    'average': wsum / wsum_coeff,
+                })
+        term_list.sort(key=lambda t: t['order_number'])
+        return term_list
+
+    def _student_average(self, student, year=None):
+        """
+        Annual average (moyenne annuelle) used for promotion:
+        the mean of the term general averages. This is the official basis
+        for passing to the next class (passage en classe supérieure).
+        Returns None when the student has no marks in any term.
+        """
+        term_list = self._term_averages(student, year)
+        if not term_list:
+            return None
+        return sum(t['average'] for t in term_list) / len(term_list)
+
+    @staticmethod
+    def _next_class(current_class):
+        """
+        The class one level higher in the same section's ladder.
+        Returns None for the last level (e.g. Upper Sixth, Terminale).
+        """
+        return (
+            Class.objects
+            .filter(
+                tenant=current_class.tenant,
+                stream=current_class.stream,
+                level_order=current_class.level_order + 1,
+            )
+            .exclude(id=current_class.id)
+            .order_by('name')
+            .first()
+        )
+
+    @staticmethod
+    def _next_year_suggestion(year):
+        start_year = year.end_date.year if year.end_date.month >= 8 else year.end_date.year + 1
+        start = date(start_year, 9, 1)
+        end = date(start_year + 1, 8, 31)
+        name = f"{start_year}/{start_year + 1}"
+        existing = AcademicYear.objects.filter(tenant_id=year.tenant_id, name=name).first()
+        if existing:
+            return existing
+        next_year = AcademicYear.objects.create(
+            tenant_id=year.tenant_id, name=name, start_date=start, end_date=end, is_active=True,
+        )
+        for i, term_name in enumerate(['First Term', 'Second Term', 'Third Term'], start=1):
+            Term.objects.create(academic_year=next_year, name=term_name, order_number=i)
+        return next_year
+
     @action(detail=False, methods=['get'], permission_classes=[IsSchoolAdmin], url_path='promotion-preview')
     def promotion_preview(self, request):
         """
         Calculate averages for all students in a class for a preview.
+        Uses the active academic year's results only.
         """
         from_class_id = request.query_params.get('from_class')
         avg_cutoff = float(request.query_params.get('cutoff', 9.5))
-        
+
         if not from_class_id:
             return Response({'error': 'from_class is required'}, status=400)
-            
+
+        year = AcademicYear.objects.filter(tenant_id=request.tenant_id, is_active=True).first()
         students = self.get_queryset().filter(current_class_id=from_class_id)
         results = []
-        
+
         for student in students:
-            subject_sum = 0
-            coeff_sum = 0
-            
-            # Fetch all results for student
-            exam_results = ExamResult.objects.filter(student=student).select_related('subject')
-            
-            subjects_seen = {}
-            for res in exam_results:
-                if res.subject_id not in subjects_seen:
-                    subjects_seen[res.subject_id] = {'scores': [], 'coeff': float(res.subject.default_coefficient or 1.0)}
-                if res.score is not None:
-                    subjects_seen[res.subject_id]['scores'].append(float(res.score))
-            
-            for sub_id, data in subjects_seen.items():
-                if data['scores']:
-                    avg_score = sum(data['scores']) / len(data['scores'])
-                    subject_sum += avg_score * data['coeff']
-                    coeff_sum += data['coeff']
-            
-            final_avg = (subject_sum / coeff_sum) if coeff_sum > 0 else 0
-            
+            final_avg = self._student_average(student, year)
+            term_averages = self._term_averages(student, year)
             results.append({
                 'id': student.id,
                 'name': f"{student.first_name} {student.last_name}",
-                'average': round(final_avg, 2),
-                'eligible': final_avg >= avg_cutoff
+                'average': round(final_avg, 2) if final_avg is not None else None,
+                'terms': [
+                    {'term': t['term_name'], 'average': round(t['average'], 2)}
+                    for t in term_averages
+                ],
+                'eligible': final_avg is not None and final_avg >= avg_cutoff,
+                'has_marks': final_avg is not None,
             })
-            
+
         return Response(results)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsSchoolAdmin], url_path='rollover-preview')
+    def rollover_preview(self, request):
+        """
+        Preview the end-of-year rollover: how many students per class will
+        move up, repeat, or graduate at the given cutoff.
+        """
+        cutoff = float(request.query_params.get('cutoff', 10))
+        year = AcademicYear.objects.filter(tenant_id=request.tenant_id, is_active=True).first()
+        if not year:
+            return Response({'error': 'No active academic year found. Create and activate a year first.'}, status=400)
+
+        students = self.get_queryset().filter(current_class__isnull=False)
+        per_class = {}
+        totals = {'total': 0, 'with_marks': 0, 'promoted': 0, 'repeating': 0, 'graduating': 0}
+
+        for student in students:
+            avg = self._student_average(student, year)
+            eligible = avg is not None and avg >= cutoff
+            next_class = self._next_class(student.current_class)
+            totals['total'] += 1
+            if avg is not None:
+                totals['with_marks'] += 1
+
+            entry = per_class.setdefault(student.current_class_id, {
+                'class_id': student.current_class_id,
+                'class_name': student.current_class.name,
+                'section_name': student.current_class.stream.name if student.current_class.stream else 'General',
+                'total': 0,
+                'promoted': 0,
+                'repeating': 0,
+                'graduating': 0,
+            })
+            entry['total'] += 1
+            if eligible and next_class:
+                totals['promoted'] += 1
+                entry['promoted'] += 1
+            elif eligible:
+                totals['graduating'] += 1
+                entry['graduating'] += 1
+            else:
+                totals['repeating'] += 1
+                entry['repeating'] += 1
+
+        start_year = year.end_date.year if year.end_date.month >= 8 else year.end_date.year + 1
+        return Response({
+            'year': {'id': year.id, 'name': year.name},
+            'cutoff': cutoff,
+            'next_year_name': f"{start_year}/{start_year + 1}",
+            'totals': totals,
+            'per_class': sorted(per_class.values(), key=lambda c: c['section_name']),
+        })
+
+    @action(detail=False, methods=['post'], permission_classes=[IsSchoolAdmin], url_path='rollover')
+    def rollover(self, request):
+        """
+        End-of-year rollover. Runs once per year:
+        - Creates (or reuses) the next academic year + its 3 terms and activates it
+        - Students with average >= cutoff move to the next class in the section ladder
+        - Students in the last class of a ladder graduate
+        - Everyone else repeats (stays in place)
+        All movements are logged in PromotionHistory.
+        """
+        cutoff = float(request.data.get('cutoff', 10))
+        year = AcademicYear.objects.filter(tenant_id=request.tenant_id, is_active=True).first()
+        if not year:
+            return Response({'error': 'No active academic year found. Create and activate a year first.'}, status=400)
+
+        already_ran = PromotionHistory.objects.filter(
+            tenant_id=request.tenant_id, academic_year=year, status=PromotionHistory.Status.PROMOTED
+        ).exists()
+        if already_ran:
+            return Response({
+                'error': f'Rollover already ran for {year.name}. Students were already moved. '
+                         'Undo the moves manually if something went wrong.'
+            }, status=400)
+
+        next_year = self._next_year_suggestion(year)
+        stats = {'promoted': 0, 'repeated': 0, 'graduated': 0, 'no_marks': 0}
+
+        with db_transaction.atomic():
+            students = Student.objects.filter(
+                tenant_id=request.tenant_id, current_class__isnull=False
+            )
+            for student in students:
+                avg = self._student_average(student, year)
+                eligible = avg is not None and avg >= cutoff
+                next_class = self._next_class(student.current_class) if eligible else None
+                from_class = student.current_class
+
+                if eligible and next_class:
+                    student.current_class = next_class
+                    student.stream = next_class.stream
+                    student.status = Student.Status.ACTIVE
+                    student.save(update_fields=['current_class', 'stream', 'status'])
+                    PromotionHistory.objects.create(
+                        tenant_id=request.tenant_id, student=student, from_class=from_class,
+                        to_class=next_class, academic_year=year, average_score=avg,
+                        status=PromotionHistory.Status.PROMOTED,
+                    )
+                    stats['promoted'] += 1
+                elif eligible:
+                    student.status = Student.Status.GRADUATED
+                    student.save(update_fields=['status'])
+                    PromotionHistory.objects.create(
+                        tenant_id=request.tenant_id, student=student, from_class=from_class,
+                        to_class=None, academic_year=year, average_score=avg,
+                        status=PromotionHistory.Status.PROMOTED,
+                    )
+                    stats['graduated'] += 1
+                else:
+                    if avg is None:
+                        stats['no_marks'] += 1
+                    stats['repeated'] += 1
+                    PromotionHistory.objects.create(
+                        tenant_id=request.tenant_id, student=student, from_class=from_class,
+                        to_class=from_class, academic_year=year, average_score=avg,
+                        status=PromotionHistory.Status.REPEATED,
+                    )
+
+        return Response({
+            'message': f'Rollover complete. {year.name} is closed and {next_year.name} is now active.',
+            'next_year': {'id': next_year.id, 'name': next_year.name},
+            **stats,
+        })
+
+    @action(detail=False, methods=['post'], permission_classes=[IsSchoolAdmin], url_path='promote')
+    def promote(self, request):
+        """
+        Per-class promotion for one source class at a time.
+        Students with average >= cutoff move to the next class level;
+        those in the final level graduate.
+        """
+        from_class_id = request.data.get('from_class')
+        cutoff = float(request.data.get('cutoff', 9.5))
+        if not from_class_id:
+            return Response({'error': 'from_class is required'}, status=400)
+
+        year = AcademicYear.objects.filter(tenant_id=request.tenant_id, is_active=True).first()
+        already_ran = PromotionHistory.objects.filter(
+            tenant_id=request.tenant_id, from_class_id=from_class_id,
+            academic_year=year, status=PromotionHistory.Status.PROMOTED,
+        ).exists()
+        if already_ran:
+            return Response({
+                'error': 'This class was already promoted this year. '
+                         'Undo the moves manually if something went wrong.'
+            }, status=400)
+
+        students = self.get_queryset().filter(current_class_id=from_class_id)
+        stats = {'promoted': 0, 'repeated': 0, 'graduated': 0}
+
+        with db_transaction.atomic():
+            for student in students:
+                avg = self._student_average(student, year)
+                eligible = avg is not None and avg >= cutoff
+                next_class = self._next_class(student.current_class) if eligible else None
+                from_class = student.current_class
+
+                if eligible and next_class:
+                    student.current_class = next_class
+                    student.stream = next_class.stream
+                    student.status = Student.Status.ACTIVE
+                    student.save(update_fields=['current_class', 'stream', 'status'])
+                    PromotionHistory.objects.create(
+                        tenant_id=request.tenant_id, student=student, from_class=from_class,
+                        to_class=next_class, academic_year=year, average_score=avg,
+                        status=PromotionHistory.Status.PROMOTED,
+                    )
+                    stats['promoted'] += 1
+                elif eligible:
+                    student.status = Student.Status.GRADUATED
+                    student.save(update_fields=['status'])
+                    PromotionHistory.objects.create(
+                        tenant_id=request.tenant_id, student=student, from_class=from_class,
+                        to_class=None, academic_year=year, average_score=avg,
+                        status=PromotionHistory.Status.PROMOTED,
+                    )
+                    stats['graduated'] += 1
+                else:
+                    stats['repeated'] += 1
+                    PromotionHistory.objects.create(
+                        tenant_id=request.tenant_id, student=student, from_class=from_class,
+                        to_class=from_class, academic_year=year, average_score=avg,
+                        status=PromotionHistory.Status.REPEATED,
+                    )
+
+        return Response({'message': 'Promotion processed for the selected class.', **stats})
 
     @action(detail=False, methods=['post'], permission_classes=[IsSchoolAdmin], url_path='bulk-import')
     def bulk_import(self, request):
@@ -362,7 +639,10 @@ class ParentDashboardAPIView(APIView):
                 "message": f"Amount: {inv.balance}. Outstanding balance for {inv.academic_year.name}.",
                 "amount": float(inv.balance),
                 "action_text": "pay_now",
-                "date": inv.due_date.isoformat() if inv.due_date else ""
+                "date": inv.due_date.isoformat() if inv.due_date else "",
+                "student_id": str(inv.student_id),
+                "student_first_name": inv.student.first_name,
+                "student_last_name": inv.student.last_name
             })
 
         # General/Event Alerts
@@ -430,6 +710,7 @@ class ParentFeesView(APIView):
                 "status": inv.status,
                 "due_date": inv.due_date.isoformat() if inv.due_date else None,
                 "student_name": inv.student.full_name if inv.student else "Unknown",
+                "student_id": str(inv.student_id) if inv.student_id else None,
                 "academic_year": inv.academic_year.name if inv.academic_year else "",
             })
 
@@ -478,8 +759,9 @@ class ParentAnalyticsView(APIView):
         )
 
         data = []
+        section = student.current_class.stream if student.current_class else None
         for r in results:
-            coefficient = float(r.subject.default_coefficient) if r.subject else 1.0
+            coefficient = float(effective_coefficient(section, r.subject)) if r.subject else 1.0
             score_val = float(r.score) if r.score else 0
             scale_max = float(config.grading_scale_max) if config else 20.0
             data.append({
@@ -592,7 +874,7 @@ class ParentChildSummaryView(APIView):
                     "subjects": [],
                 }
             if terms_dict[term_key]["sequences"][seq_key].get("is_shared"):
-                coefficient = float(r.subject.default_coefficient) if r.subject else 1.0
+                coefficient = float(effective_coefficient(section, r.subject)) if r.subject else 1.0
                 scale_max = float(config.grading_scale_max) if config else 20.0
                 terms_dict[term_key]["sequences"][seq_key]["subjects"].append({
                     "name": r.subject.name if r.subject else "",
@@ -784,6 +1066,13 @@ class ParentPaymentView(APIView):
             elif invoice.amount_paid > 0:
                 invoice.status = StudentInvoice.Status.PARTIAL
             invoice.save()
+
+        # Notify parents (confirmation) and tenant admins (payment received)
+        try:
+            from apps.notifications.utils import notify_payment_received
+            notify_payment_received(payment, created_by=user)
+        except Exception:
+            pass
 
         return Response({
             "reference_number": payment.receipt_number,

@@ -22,6 +22,9 @@ export interface AlertSummary {
     amount?: number;
     action_text: string;
     date: string;
+    student_id?: string;
+    student_first_name?: string;
+    student_last_name?: string;
 }
 
 export interface ParentDashboardData {

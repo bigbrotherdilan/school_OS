@@ -4,8 +4,8 @@ import { Link, useLocation } from 'react-router-dom';
 const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Find Schools', to: '/schools' },
+  { label: 'Teacher Marketplace', to: '/find-teachers' },
   { label: 'Features', to: '/#features' },
-  { label: 'Trust', to: '/trust' },
 ];
 
 export default function PublicNavbar() {
@@ -56,9 +56,6 @@ export default function PublicNavbar() {
             <Link to="/login" className="text-slate-600 hover:text-blue-900 transition-colors font-medium">
               Login
             </Link>
-            <button className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 transition-all active:scale-95">
-              Request Demo
-            </button>
           </div>
 
           <button
@@ -99,13 +96,10 @@ export default function PublicNavbar() {
               <Link
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className="block w-full text-center px-6 py-3 border border-outline-variant/30 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors"
+                className="block w-full text-center px-6 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
               >
                 Login
               </Link>
-              <button className="w-full px-6 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95">
-                Request Demo
-              </button>
             </div>
           </div>
         </div>

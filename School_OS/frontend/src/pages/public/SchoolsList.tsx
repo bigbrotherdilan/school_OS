@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
@@ -201,7 +201,7 @@ export default function SchoolsList() {
                 <div className="mb-12">
                   <SectionHeader title="Exact Match" count={exactMatch.length} icon="match_word" />
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {exactMatch.map((s) => <SchoolCard key={s.id} school={s} />)}
+                    {exactMatch.map((s) => <SchoolCard key={s.slug} school={s} />)}
                   </div>
                 </div>
               )}
@@ -210,7 +210,7 @@ export default function SchoolsList() {
                 <div className="mb-12">
                   <SectionHeader title="In This Area" count={closeMatch.length} icon="near_me" />
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {closeMatch.map((s) => <SchoolCard key={s.id} school={s} />)}
+                    {closeMatch.map((s) => <SchoolCard key={s.slug} school={s} />)}
                   </div>
                 </div>
               )}
@@ -223,7 +223,7 @@ export default function SchoolsList() {
                     icon="school"
                   />
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {otherSchools.map((s) => <SchoolCard key={s.id} school={s} />)}
+                    {otherSchools.map((s) => <SchoolCard key={s.slug} school={s} />)}
                   </div>
                 </div>
               )}

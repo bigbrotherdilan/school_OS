@@ -2,35 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Star, MapPin, BookOpen, Award, Clock, Filter, ChevronDown, GraduationCap, Languages, Loader2 } from 'lucide-react';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
-
-interface TeacherProfile {
-  id: string;
-  name: string;
-  first_name: string;
-  last_name: string;
-  qualification: string;
-  department: string;
-  specializations: string[];
-  subjects_taught: string[];
-  languages_spoken: string[];
-  availability: string;
-  hourly_rate: string | null;
-  average_rating: number;
-  total_reviews: number;
-  years_of_experience: number | null;
-  certifications: string[];
-  achievements: string[];
-  teaching_philosophy: string;
-  profile_photo: string;
-  school: {
-    id: string;
-    name: string;
-    slug: string;
-    region: string;
-    division: string;
-    education_type: string;
-  };
-}
+import { fetchPublicTeachers, type PublicTeacher } from '../../services/publicApi';
 
 const AVAILABILITY_LABELS: Record<string, string> = {
   full_time: 'Full Time',
@@ -42,7 +14,7 @@ const AVAILABILITY_LABELS: Record<string, string> = {
 const DEPARTMENTS = ['', 'Science', 'Mathematics', 'Arts', 'Languages', 'Physical Education', 'Technology'];
 
 export default function TeacherMarketplace() {
-  const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
+  const [teachers, setTeachers] = useState<PublicTeacher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState('');
@@ -50,23 +22,22 @@ export default function TeacherMarketplace() {
   const [availability, setAvailability] = useState('');
   const [minRating, setMinRating] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState<TeacherProfile | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<PublicTeacher | null>(null);
 
   const fetchTeachers = async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (search) params.set('q', search);
-      if (subject) params.set('subject', subject);
-      if (region) params.set('region', region);
-      if (availability) params.set('availability', availability);
-      if (minRating) params.set('min_rating', minRating);
-
-      const res = await fetch(`http://localhost:8000/api/v1/public/teachers/?${params.toString()}`);
-      const data = await res.json();
-      setTeachers(data);
+      const teachers = await fetchPublicTeachers({
+        q: search || undefined,
+        subject: subject || undefined,
+        region: region || undefined,
+        availability: availability || undefined,
+        min_rating: minRating || undefined,
+      });
+      setTeachers(teachers);
     } catch (err) {
       console.error('Failed to fetch teachers:', err);
+      setTeachers([]);
     } finally {
       setIsLoading(false);
     }
@@ -203,7 +174,7 @@ export default function TeacherMarketplace() {
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                       <MapPin className="w-3 h-3" />
-                      <span className="font-medium">{teacher.school.name} — {teacher.school.region}</span>
+                      <span className="font-medium">{teacher.school?.name} — {teacher.school?.region}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                       <BookOpen className="w-3 h-3" />
@@ -273,7 +244,7 @@ export default function TeacherMarketplace() {
                       <span className="text-sm font-bold">{selectedTeacher.average_rating > 0 ? selectedTeacher.average_rating.toFixed(1) : 'New'}</span>
                     </div>
                     <span className="text-white/30">|</span>
-                    <span className="text-sm text-white/60">{selectedTeacher.school.name}</span>
+                    <span className="text-sm text-white/60">{selectedTeacher.school?.name}</span>
                   </div>
                 </div>
               </div>
@@ -366,6 +337,6 @@ export default function TeacherMarketplace() {
   );
 }
 
-function CheckCircle() {
-  return <span className="material-symbols-outlined text-secondary text-sm">check_circle</span>;
+function CheckCircle({ className = '' }: { className?: string }) {
+  return <span className={`material-symbols-outlined text-secondary text-sm ${className}`}>check_circle</span>;
 }

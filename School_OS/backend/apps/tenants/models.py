@@ -83,6 +83,9 @@ class Tenant(models.Model):
 
     class Meta:
         db_table = 'tenants'
+        indexes = [
+            models.Index(fields=['status'], name='idx_tenant_status'),
+        ]
         ordering = ['school_name']
         verbose_name = 'School (Tenant)'
         verbose_name_plural = 'Schools (Tenants)'

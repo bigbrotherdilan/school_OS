@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { reportsApi } from '../../../services/reportsApi';
 import { useToastStore } from '../../../stores/toastStore';
+import { useSectionStore } from '../../../stores/sectionStore';
 
 interface Sequence {
   id: number;
@@ -60,10 +61,11 @@ export default function ExamWorkflow() {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [showGenerateModal, setShowGenerateModal] = useState<number | null>(null);
+  const { activeSectionId } = useSectionStore();
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeSectionId]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,12 +73,11 @@ export default function ExamWorkflow() {
       const [termsRes, windowsRes, classesRes, yearsRes] = await Promise.all([
         api.get('/academic/terms/'),
         api.get('/assessments/mark-windows/'),
-        api.get('/academic/classes/').catch(() => ({ data: [] })),
+        api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }).catch(() => ({ data: [] })),
         api.get('/academic/academic-years/').catch(() => ({ data: [] })),
       ]);
 
       const termsData = termsRes.data.results || termsRes.data;
-      console.log('Terms loaded:', termsData);
       setTerms(termsData);
       setWindows(windowsRes.data.results || windowsRes.data);
       setClasses(classesRes.data.results || classesRes.data || []);

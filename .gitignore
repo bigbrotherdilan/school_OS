@@ -41,3 +41,20 @@ Thumbs.db
 
 # Pyright
 .pyrightconfig.json
+
+# Secrets & local credentials
+credentials.md
+*.credentials
+_cookies.txt
+_r*.json
+_c*.json
+*.secret
+
+# Process/server logs
+*.err
+*.out
+
+# Scratch / QA artifacts
+test_output.pdf
+_ssr_test.*
+_scratch.*

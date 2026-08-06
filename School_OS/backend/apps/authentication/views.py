@@ -21,6 +21,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken
 from apps.authentication.models import User, UserRoleMapping, UserSession
 from apps.authentication.serializers import (
     SOSTokenObtainPairSerializer,
@@ -206,6 +207,7 @@ class SOSLoginView(TokenObtainPairView):
 
         response = super().finalize_response(request, response, *args, **kwargs)
         response = _set_refresh_cookie(response, refresh_token)
+        response.data.pop('refresh', None)  # M3: never expose refresh token in body
         response.data['session_id'] = str(session.id)
         response.data['device'] = device_info
         return response
@@ -279,7 +281,6 @@ def confirm_kill_login_view(request):
 
     response = Response({
         'access': access_token,
-        'refresh': refresh_token_str,
         'session_id': str(session.id),
         'device': device_info,
         'sessions_killed': killed,
@@ -293,9 +294,11 @@ def confirm_kill_login_view(request):
             'email_alerts': user.email_alerts,
             'sms_alerts': user.sms_alerts,
             'is_platform_admin': user.is_platform_admin,
+            'must_change_password': user.must_change_password,
         },
         'roles': roles,
         'tenants': tenants,
+        'must_change_password': user.must_change_password,
     }, status=status.HTTP_200_OK)
 
     response = _set_refresh_cookie(response, refresh_token_str)
@@ -307,6 +310,8 @@ class SOSTokenRefreshView(TokenRefreshView):
     POST /api/v1/auth/refresh/
     Refresh JWT access token.
     Reads refresh token from HttpOnly cookie if not in request body.
+    Rejects tokens whose UserSession has been terminated, or tokens
+    issued before a password change.
     """
     permission_classes = [AllowAny]
 
@@ -314,11 +319,49 @@ class SOSTokenRefreshView(TokenRefreshView):
         if 'refresh' not in request.data and request.COOKIES.get('refresh_token'):
             request.data['refresh'] = request.COOKIES['refresh_token']
 
+        refresh_token_str = request.data.get('refresh')
+        session = None
+
+        if refresh_token_str:
+            # H1: reject if the owning session has been deactivated
+            token_hash = _hash_refresh_token(refresh_token_str)
+            session = UserSession.objects.filter(refresh_token_hash=token_hash).first()
+            if session is None or not session.is_active:
+                raise InvalidToken(
+                    'Your session has been terminated. Please log in again.',
+                    code='session_terminated',
+                )
+
+            # H2: reject if the password changed after this token was issued
+            try:
+                token = RefreshToken(refresh_token_str)
+                iat = token.payload.get('iat')
+                user = User.objects.get(id=token.payload.get('user_id'))
+                if iat and user.password_changed_at:
+                    token_issued = timezone.datetime.fromtimestamp(
+                        iat, tz=timezone.get_current_timezone()
+                    )
+                    if user.password_changed_at > token_issued:
+                        raise InvalidToken(
+                            'Password has been changed. Please log in again.',
+                            code='password_changed',
+                        )
+            except (User.DoesNotExist, InvalidToken):
+                raise
+            except Exception:
+                raise InvalidToken('Invalid refresh token.', code='token_invalid')
+
         response = super().post(request, *args, **kwargs)
 
         if response.status_code == 200 and 'refresh' in response.data:
             refresh = response.data.pop('refresh')
             response = _set_refresh_cookie(response, refresh)
+
+            # Track the rotated token so logout/session-kill can still find it
+            if session is not None and refresh:
+                UserSession.objects.filter(id=session.id).update(
+                    refresh_token_hash=_hash_refresh_token(refresh)
+                )
 
         return response
 
@@ -446,6 +489,7 @@ def change_password_view(request):
     Requires: old_password, new_password
     """
     from apps.authentication.serializers import check_password_breach
+    from django.contrib.auth.password_validation import validate_password as django_validate_password
 
     old_password = request.data.get('old_password', '')
     new_password = request.data.get('new_password', '')
@@ -456,16 +500,22 @@ def change_password_view(request):
     if len(new_password) < 8:
         return Response({'detail': 'New password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    user = request.user
+    try:
+        django_validate_password(new_password, user=user)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     if check_password_breach(new_password):
         return Response({'detail': 'This password has appeared in data breaches. Please choose a different password.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = request.user
     if not user.check_password(old_password):
         return Response({'detail': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
 
     user.set_password(new_password)
     user.password_changed_at = timezone.now()
-    user.save(update_fields=['password', 'password_changed_at'])
+    user.must_change_password = False
+    user.save(update_fields=['password', 'password_changed_at', 'must_change_password'])
 
     killed = _deactivate_user_sessions(user)
 
@@ -577,6 +627,7 @@ def password_reset_confirm_view(request):
     Kills all existing sessions on success.
     """
     from apps.authentication.serializers import check_password_breach
+    from django.contrib.auth.password_validation import validate_password as django_validate_password
 
     uid = request.data.get('uid')
     token = request.data.get('token')
@@ -600,9 +651,15 @@ def password_reset_confirm_view(request):
     if not default_token_generator.check_token(user, token):
         return Response({'detail': 'Invalid or expired reset link.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    try:
+        django_validate_password(password, user=user)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     user.set_password(password)
     user.password_changed_at = timezone.now()
-    user.save(update_fields=['password', 'password_changed_at'])
+    user.must_change_password = False
+    user.save(update_fields=['password', 'password_changed_at', 'must_change_password'])
 
     killed = _deactivate_user_sessions(user)
 
@@ -648,21 +705,41 @@ class UserViewSet(viewsets.ModelViewSet):
         return User.objects.none()
 
     def get_permissions(self):
-        if self.action in ['create', 'destroy']:
+        if self.action in ['create', 'destroy', 'assign_role']:
             return [IsSchoolAdmin()]
         return [IsAuthenticated()]
 
     @action(detail=True, methods=['post'])
     def assign_role(self, request, id=None):
-        """POST /users/{id}/assign-role/ — Assign role within tenant."""
+        """POST /users/{id}/assign-role/ — Assign role within tenant (admin only)."""
         user = self.get_object()
         tenant_id = request.tenant_id
         if not tenant_id:
             return Response({'detail': 'Tenant context required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        requested_role = request.data.get('role')
+        if requested_role not in UserRoleMapping.Role.values:
+            return Response({'detail': 'Invalid role.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Privilege escalation guard: only platform admin / super_admin can grant admin roles.
+        assigner_is_super = (
+            request.user.is_platform_admin
+            or request.user.role_mappings.filter(
+                tenant_id=tenant_id,
+                role='super_admin',
+                is_active=True,
+            ).exists()
+        )
+        if requested_role in ('admin', 'super_admin') and not assigner_is_super:
+            return Response(
+                {'detail': 'You do not have permission to assign admin roles.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = UserRoleMappingSerializer(data={
             'user': str(user.id),
             'tenant': tenant_id,
-            'role': request.data.get('role'),
+            'role': requested_role,
         })
         serializer.is_valid(raise_exception=True)
         serializer.save(assigned_by=request.user)
@@ -681,7 +758,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
         user.set_password(new_password)
         user.password_changed_at = timezone.now()
-        user.save(update_fields=['password', 'password_changed_at'])
+        user.must_change_password = True
+        user.save(update_fields=['password', 'password_changed_at', 'must_change_password'])
 
         killed = _deactivate_user_sessions(user)
 
@@ -709,6 +787,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response({
             "message": f"Password reset for {user.full_name}. Temporary password sent to {user.email}.",
+            "temporary_password": new_password,
+            "must_change_password": True,
             "sessions_terminated": killed,
             "user": {
                 "id": str(user.id),

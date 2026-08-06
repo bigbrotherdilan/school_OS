@@ -5,10 +5,12 @@ import TopBar from './TopBar';
 import BackButton from '../ui/BackButton';
 import { useAuthStore } from '../../stores/authStore';
 import { useTenantStore } from '../../stores/tenantStore';
+import { useSectionStore } from '../../stores/sectionStore';
 
 export default function AdminLayout() {
   const { tenants } = useAuthStore();
   const { activeTenantId, setActiveTenantId } = useTenantStore();
+  const { fetchSections, setActiveSectionId } = useSectionStore();
   const location = useLocation();
   const [darkMode, _setDarkMode] = useState(() => {
     return localStorage.getItem('schoolos-dark-mode') === 'true';
@@ -26,6 +28,17 @@ export default function AdminLayout() {
       }
     }
   }, [activeTenantId, tenants, setActiveTenantId]);
+
+  // Load sections for the active tenant; a section change re-scopes the whole panel
+  useEffect(() => {
+    if (!activeTenantId) return;
+    const previousTenant = localStorage.getItem('schoolos-section-tenant');
+    if (previousTenant && previousTenant !== activeTenantId) {
+      setActiveSectionId(null);
+    }
+    localStorage.setItem('schoolos-section-tenant', activeTenantId);
+    fetchSections(activeTenantId);
+  }, [activeTenantId, fetchSections, setActiveSectionId]);
 
   useEffect(() => {
     localStorage.setItem('schoolos-dark-mode', String(darkMode));

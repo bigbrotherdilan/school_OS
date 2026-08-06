@@ -102,6 +102,14 @@ export const DEFAULT_REPORT_CARD_STYLE: ReportCardStyle = {
   footer_font_size: 6.5,
 };
 
+interface ReportCardSubject {
+  name: string;
+  coef: number;
+  score: number | null;
+  grade: string;
+  remarks?: string;
+}
+
 interface ReportCardPreviewProps {
   style: ReportCardStyle;
   studentName?: string;
@@ -109,10 +117,19 @@ interface ReportCardPreviewProps {
   admissionNumber?: string;
   termName?: string;
   academicYear?: string;
-  subjects?: { name: string; coef: number; score: number | null; grade: string }[];
-  annualAverage?: number;
-  classAverage?: number;
-  rank?: number;
+  dateOfBirth?: string | null;
+  repeater?: string;
+  subjects?: ReportCardSubject[];
+  annualAverage?: number | null;
+  classAverage?: number | null;
+  bestAverage?: number | null;
+  rank?: number | null;
+  maxScale?: number;
+  decision?: string;
+  absences?: number;
+  suspensions?: string;
+  punishments?: string;
+  warning?: string;
 }
 
 const FONT_STACK = {
@@ -120,16 +137,35 @@ const FONT_STACK = {
   helvetica: 'Helvetica, Arial, sans-serif',
 };
 
-const SUBJECTS = [
-  { name: 'Mathematics', coef: 3, score: 15, grade: 'B' },
-  { name: 'Physics', coef: 3, score: 12, grade: 'C' },
-  { name: 'Chemistry', coef: 2, score: 16, grade: 'A' },
-  { name: 'English Language', coef: 2, score: 14, grade: 'B' },
-  { name: 'French Language', coef: 2, score: 10, grade: 'D' },
-  { name: 'Biology', coef: 2, score: 13, grade: 'B' },
-  { name: 'History', coef: 1, score: 11, grade: 'C' },
-  { name: 'Geography', coef: 1, score: 9, grade: 'D' },
-];
+export default function ReportCardPreview({
+  style: st,
+  studentName = '',
+  className = 'N/A',
+  admissionNumber = '',
+  termName = '1ST TERM',
+  academicYear = '',
+  dateOfBirth,
+  repeater,
+  subjects = [],
+  annualAverage,
+  classAverage,
+  bestAverage,
+  rank,
+  maxScale = 20,
+  decision,
+  absences,
+  suspensions = '-',
+  punishments = '-',
+  warning = '-',
+}: ReportCardPreviewProps) {
+  const font = FONT_STACK[st.header_font];
+  const scale = 0.42;
+  const previewW = 210 * scale;
+  const previewH = 297 * scale;
+  const totalCoef = subjects.reduce((s, subj) => s + subj.coef, 0);
+  const fmt = (v?: number | null) => (v === undefined || v === null || Number.isNaN(v) ? '-' : v.toFixed(2));
+  const rankSuffix = (n: number) =>
+    n % 100 >= 11 && n % 100 <= 13 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
 
 function InnerBorderedRow({ children, borderColor, borderWidth }: { children: React.ReactNode; borderColor: string; borderWidth: number }) {
   return (
@@ -138,32 +174,6 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
     </div>
   );
 }
-
-function Cell({ flex, children, className = '', style: cellStyle = {} }: { flex: number; children?: React.ReactNode; className?: string; style?: React.CSSProperties }) {
-  return (
-    <div className={className} style={{ flex: `${flex}`, ...cellStyle }}>
-      {children}
-    </div>
-  );
-}
-
-export default function ReportCardPreview({
-  style: st,
-  studentName = 'Nkomo Jean Baptiste',
-  className = 'Form 5 Science',
-  admissionNumber = 'SJA/2024/001',
-  termName = '1ST TERM',
-  academicYear = '2024/2025',
-  subjects = SUBJECTS,
-  annualAverage = 12.5,
-  classAverage = 11.2,
-  rank = 5,
-}: ReportCardPreviewProps) {
-  const font = FONT_STACK[st.header_font];
-  const scale = 0.42;
-  const previewW = 210 * scale;
-  const previewH = 297 * scale;
-  const totalCoef = subjects.reduce((s, subj) => s + subj.coef, 0);
 
   return (
     <div
@@ -283,12 +293,12 @@ export default function ReportCardPreview({
                 <span className="font-bold">Admission No :</span> {admissionNumber}
               </div>
               <div className="flex-1 p-1" style={{ borderLeft: `${st.table_border_width * 0.2}px solid ${st.border_color}`, ...(st.show_alternating_info_rows ? { backgroundColor: st.table_alt_row_bg } : {}) }}>
-                <span className="font-bold">Repeater :</span> No
+                <span className="font-bold">Repeater :</span> {repeater || '-'}
               </div>
             </div>
             <div className="flex">
               <div className="flex-1 p-1">
-                <span className="font-bold">Date of birth :</span> 15/03/2008
+                <span className="font-bold">Date of birth :</span> {dateOfBirth || '-'}
               </div>
               <div className="flex-1 p-1" style={{ borderLeft: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
                 <span className="font-bold">Tel :</span> _______________
@@ -338,7 +348,7 @@ export default function ReportCardPreview({
                 <span style={{ color: subj.grade === 'A' ? '#2E7D32' : subj.grade === 'D' ? '#C62828' : st.primary_color }}>{subj.grade}</span>
               </div>
               <div className="py-0.5 px-1 text-[9px] italic" style={{ flex: '1.5', ...(st.show_alternating_rows && i % 2 === 1 ? { backgroundColor: st.table_alt_row_bg } : {}) }}>
-                {subj.score && subj.score >= 15 ? 'Excellent' : subj.score && subj.score >= 12 ? 'Good' : subj.score && subj.score >= 10 ? 'Fair' : subj.score ? 'Weak' : '-'}
+                {subj.remarks || (subj.score && subj.score >= 15 ? 'Excellent' : subj.score && subj.score >= 12 ? 'Good' : subj.score && subj.score >= 10 ? 'Fair' : subj.score ? 'Weak' : '-')}
               </div>
             </InnerBorderedRow>
           ))}
@@ -352,13 +362,13 @@ export default function ReportCardPreview({
               {totalCoef}
             </div>
             <div className="py-1 px-1 text-center font-bold" style={{ flex: '1.5', borderRight: `${Math.max(st.table_border_width * 0.15, 0.1)}px solid ${st.border_color}`, backgroundColor: st.table_header_bg }}>
-              {annualAverage.toFixed(2)}
+              {fmt(annualAverage)}
             </div>
             <div className="py-1 px-1 text-center font-bold" style={{ flex: '0.8', borderRight: `${Math.max(st.table_border_width * 0.15, 0.1)}px solid ${st.border_color}`, backgroundColor: st.table_header_bg }}>
               -
             </div>
             <div className="py-1 px-1 text-center italic" style={{ flex: '1.5', backgroundColor: st.table_header_bg, color: st.secondary_color }}>
-              /20
+              /{maxScale}
             </div>
           </InnerBorderedRow>
         </div>
@@ -385,23 +395,25 @@ export default function ReportCardPreview({
           <div className="flex text-center">
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none', backgroundColor: st.table_header_bg }}>
               <div className="font-bold">{termName} Av.</div>
-              <div className="text-lg font-bold" style={{ color: st.accent_color }}>{annualAverage.toFixed(2)}</div>
+              <div className="text-lg font-bold" style={{ color: st.accent_color }}>{fmt(annualAverage)}</div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none' }}>
               <div className="font-bold">Class Av.</div>
-              <div className="text-lg font-bold" style={{ color: st.secondary_color }}>{classAverage?.toFixed(2) ?? '-'}</div>
+              <div className="text-lg font-bold" style={{ color: st.secondary_color }}>{fmt(classAverage)}</div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none', backgroundColor: st.table_header_bg }}>
               <div className="font-bold">Best Av.</div>
-              <div className="text-lg">14.50</div>
+              <div className="text-lg">{fmt(bestAverage)}</div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none' }}>
               <div className="font-bold">Rank</div>
-              <div className="text-lg font-bold" style={{ color: rank <= 3 ? '#2E7D32' : st.primary_color }}>{rank}<sup>th</sup></div>
+              <div className="text-lg font-bold" style={{ color: rank !== undefined && rank !== null && rank <= 3 ? '#2E7D32' : st.primary_color }}>
+                {rank !== undefined && rank !== null ? <>{rank}<sup>{rankSuffix(rank)}</sup></> : '-'}
+              </div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ backgroundColor: st.table_header_bg }}>
               <div className="font-bold">Annual Av.</div>
-              <div className="text-lg font-bold" style={{ color: st.accent_color }}>{annualAverage.toFixed(2)}</div>
+              <div className="text-lg font-bold" style={{ color: st.accent_color }}>{fmt(annualAverage)}</div>
             </div>
           </div>
         </div>
@@ -427,16 +439,16 @@ export default function ReportCardPreview({
             </div>
             <div className="flex text-center">
               <div className="flex-1 py-1" style={{ borderRight: `${st.table_border_width * 0.15}px solid ${st.border_color}` }}>
-                <span className="font-bold">Absences :</span> 2
+                <span className="font-bold">Absences :</span> {absences ?? '-'}
               </div>
               <div className="flex-1 py-1" style={{ borderRight: `${st.table_border_width * 0.15}px solid ${st.border_color}` }}>
-                <span className="font-bold">Suspensions :</span> -
+                <span className="font-bold">Suspensions :</span> {suspensions}
               </div>
               <div className="flex-1 py-1" style={{ borderRight: `${st.table_border_width * 0.15}px solid ${st.border_color}` }}>
-                <span className="font-bold">Punishments :</span> -
+                <span className="font-bold">Punishments :</span> {punishments}
               </div>
               <div className="flex-1 py-1">
-                <span className="font-bold">Warning :</span> -
+                <span className="font-bold">Warning :</span> {warning}
               </div>
             </div>
           </div>
@@ -455,7 +467,7 @@ export default function ReportCardPreview({
               letterSpacing: '0.5px',
             }}
           >
-            <span style={{ color: '#2E7D32' }}>DECISION :</span> PROMOTED / ADMIS(E)
+            <span style={{ color: '#2E7D32' }}>DECISION :</span> {decision || '-'}
           </div>
         )}
 

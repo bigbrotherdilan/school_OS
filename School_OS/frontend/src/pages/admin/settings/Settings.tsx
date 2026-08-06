@@ -1,9 +1,11 @@
 ﻿import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ProfileEditor from '../../../components/ui/ProfileEditor';
 import { useToastStore } from '../../../stores/toastStore';
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
   const { addToast } = useToastStore();
   const [twoFactor, setTwoFactor] = useState(false);
@@ -28,9 +30,14 @@ export default function Settings() {
             { label: 'Academic Structure', icon: 'account_tree' },
             { label: 'Security & Privacy', icon: 'shield' },
             { label: 'Billing & Subscriptions', icon: 'credit_card' },
-            { label: 'Integrations', icon: 'extension' }
+            { label: 'Integrations', icon: 'extension' },
+            { label: 'Email Configuration', icon: 'mail', route: '/admin/settings/email' }
           ].map((item, i) => (
-            <button key={i} className="w-full flex items-center gap-3 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+            <button
+              key={i}
+              onClick={() => item.route && navigate(item.route)}
+              className="w-full flex items-center gap-3 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+            >
               <span className="material-symbols-outlined text-lg">{item.icon}</span>
               {item.label}
             </button>

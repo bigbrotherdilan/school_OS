@@ -2,6 +2,7 @@
 import { useAuthStore } from '../../stores/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useTenantStore } from '../../stores/tenantStore';
+import { useSectionStore } from '../../stores/sectionStore';
 import PortalSwitcher from './PortalSwitcher';
 import NotificationsDropdown from './NotificationsDropdown';
 import HelpPanel from './HelpPanel';
@@ -9,12 +10,15 @@ import HelpPanel from './HelpPanel';
 export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, logout, tenants } = useAuthStore();
   const { activeTenantId } = useTenantStore();
+  const { sections, activeSectionId, setActiveSectionId } = useSectionStore();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
   const activeTenant = tenants?.find(t => t.id === activeTenantId);
   const schoolName = activeTenant?.school_name || 'School OS';
   const currentYear = new Date().getFullYear();
   const academicYear = `${currentYear}-${currentYear + 1}`;
+  const activeSection = sections.find(s => s.id === activeSectionId);
 
   const initials = user?.full_name
     ? user.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -24,6 +28,8 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
     logout();
     navigate('/login');
   };
+
+  const showSectionSwitcher = sections.length > 1 && !!activeSection;
 
   return (
     <>
@@ -47,6 +53,47 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       </div>
       
       <div className="flex items-center gap-2 lg:gap-4">
+        {showSectionSwitcher && (
+          <div className="relative hidden sm:block">
+            <button
+              onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-900/10 bg-white text-blue-900 hover:bg-blue-50 transition-all text-sm font-semibold"
+              title="Switch section"
+            >
+              <span className="w-2 h-2 bg-secondary rounded-full shrink-0"></span>
+              <span className="hidden lg:inline text-slate-500 font-medium">Section:</span>
+              <span className="truncate max-w-[10rem]">{activeSection.name}</span>
+              <span className="material-symbols-outlined text-sm">expand_more</span>
+            </button>
+
+            {sectionDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setSectionDropdownOpen(false)}></div>
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                  <div className="p-2 bg-slate-50 text-xs font-bold uppercase tracking-widest text-slate-500 text-center border-b border-slate-100">
+                    Switch Section
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {sections.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => { setActiveSectionId(s.id); setSectionDropdownOpen(false); }}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
+                          activeSectionId === s.id ? 'bg-blue-50/50 border-l-2 border-l-primary' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="font-bold text-slate-800">{s.name}</span>
+                        {s.language && (
+                          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{s.language}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <PortalSwitcher />
         <div className="hidden sm:block">
           <NotificationsDropdown />

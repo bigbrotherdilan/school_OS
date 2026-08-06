@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 interface SetupProgressBarProps {
   studentCount: number | null;
   classCount: number | null;
+  sectionCount: number | null;
   hasFinance: boolean;
 }
 
@@ -15,13 +16,13 @@ interface ChecklistItem {
   icon: string;
 }
 
-export default function SetupProgressBar({ studentCount, classCount, hasFinance }: SetupProgressBarProps) {
+export default function SetupProgressBar({ studentCount, classCount, sectionCount, hasFinance }: SetupProgressBarProps) {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(() => localStorage.getItem('sos-setup-dismissed') === 'true');
   const [reportCardCount, setReportCardCount] = useState<number | null>(null);
 
   useEffect(() => {
-    api.get('/academic/report-cards/')
+    api.get('/reports/report-cards/')
       .then((res) => {
         const d = res.data;
         setReportCardCount(d.count ?? d.results?.length ?? 0);
@@ -32,7 +33,7 @@ export default function SetupProgressBar({ studentCount, classCount, hasFinance 
   if (dismissed) return null;
 
   const items: ChecklistItem[] = [
-    { label: 'School info set up', done: true, link: '/admin/settings', icon: 'school' },
+    { label: 'Create sections', done: (sectionCount ?? 0) > 0, link: '/admin/academic/setup', icon: 'layers' },
     { label: 'Create classes', done: (classCount ?? 0) > 0, link: '/admin/academic/setup', icon: 'class' },
     { label: 'Enroll students', done: (studentCount ?? 0) > 0, link: '/admin/academic/students/new', icon: 'person_add' },
     { label: 'Generate report cards', done: (reportCardCount ?? 0) > 0, link: '/admin/academic/report-cards', icon: 'description' },

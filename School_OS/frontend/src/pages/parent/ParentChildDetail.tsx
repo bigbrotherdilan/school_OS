@@ -2,19 +2,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { parentApi, type ChildSummary } from '../../services/parentApi';
 import { useTenantStore } from '../../stores/tenantStore';
-import { useParentStore } from '../../stores/parentStore';
 
 const ParentChildDetail: React.FC = () => {
     const { childId } = useParams<{ childId: string }>();
     const { schoolConfig } = useTenantStore();
-    const { dashboardData } = useParentStore();
     const [summary, setSummary] = useState<ChildSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedTerm, setSelectedTerm] = useState<number>(0);
     const [selectedSequence, setSelectedSequence] = useState<number>(0);
-
-    const ward = dashboardData?.wards.find(w => w.id === childId);
 
     useEffect(() => {
         if (!childId) return;

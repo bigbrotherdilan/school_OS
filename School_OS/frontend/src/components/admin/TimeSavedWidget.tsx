@@ -1,5 +1,4 @@
 ﻿import { useState, useEffect } from 'react';
-import { api } from '../../services/api';
 
 const TIME_ESTIMATES: Record<string, number> = {
   'REPORT_CARD_GENERATED': 15,

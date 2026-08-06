@@ -2,8 +2,11 @@
 Tenant Middleware — Enforces tenant context on every request.
 Extracts X-Tenant-ID header and injects tenant into request.
 """
+from django.core.cache import cache
 from django.http import JsonResponse
 from apps.tenants.models import Tenant
+
+TENANT_CACHE_TTL = 60
 
 
 # Paths that don't require tenant context
@@ -36,8 +39,11 @@ class TenantMiddleware:
         request.tenant = None
         request.tenant_id = None
 
-        # Skip tenant enforcement for exempt paths
+        # Skip tenant enforcement for non-API paths (SPA shell, PWA assets,
+        # static files) and the explicitly exempt API routes
         path = request.path
+        if not path.startswith('/api/'):
+            return self.get_response(request)
         if any(path.startswith(exempt) for exempt in TENANT_EXEMPT_PATHS):
             return self.get_response(request)
 
@@ -51,7 +57,21 @@ class TenantMiddleware:
             )
 
         try:
-            tenant = Tenant.objects.get(id=tenant_id, status='active')
+            # Cached tenant lookup avoids a DB round-trip on every request.
+            # Invalidated via post_save/post_delete signals on Tenant.
+            cache_key = f'tenant:{tenant_id}'
+            tenant = cache.get(cache_key)
+            if tenant is None:
+                try:
+                    tenant = Tenant.objects.get(id=tenant_id, status='active')
+                except (Tenant.DoesNotExist, ValueError):
+                    tenant = None
+                if tenant is not None:
+                    cache.set(cache_key, tenant, TENANT_CACHE_TTL)
+
+            if tenant is None or tenant.status != Tenant.Status.ACTIVE:
+                raise Tenant.DoesNotExist
+
             request.tenant = tenant
             request.tenant_id = str(tenant.id)
         except (Tenant.DoesNotExist, ValueError):

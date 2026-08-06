@@ -19,7 +19,6 @@ interface BulkCsvUploadProps {
 
 export default function BulkCsvUpload({
   title,
-  description,
   requiredColumns,
   optionalColumns = [],
   uploadEndpoint,
@@ -31,8 +30,6 @@ export default function BulkCsvUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<{ created: any[]; errors: any[]; message: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
-
-  const allColumns = [...requiredColumns, ...optionalColumns];
 
   const handleFile = useCallback((f: File) => {
     if (!f.name.endsWith('.csv')) {

@@ -1,9 +1,11 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { api } from '../../../services/api';
 import { useTenantStore } from '../../../stores/tenantStore';
 import { useToastStore } from '../../../stores/toastStore';
+import { useSectionStore } from '../../../stores/sectionStore';
 import StudentIDCard, { type StudentIDCardData, type IDCardStyle, DEFAULT_CARD_STYLE } from '../../../components/admin/StudentIDCard';
 import IDCardCustomizer from '../../../components/admin/IDCardCustomizer';
+import PreviewFullscreenModal from '../../../components/admin/PreviewFullscreenModal';
 import ConfettiBurst from '../../../components/ui/ConfettiBurst';
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -19,6 +21,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export default function IDCardGenerator() {
   const { addToast } = useToastStore();
+  const { activeSectionId } = useSectionStore();
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -38,6 +41,8 @@ export default function IDCardGenerator() {
   // Preview state
   const [previewStudent, setPreviewStudent] = useState<any>(null);
   const [previewSide, setPreviewSide] = useState<'front' | 'back' | 'both'>('both');
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   // Card style customization
   const [customStyle, setCustomStyle] = useState<IDCardStyle>(DEFAULT_CARD_STYLE);
@@ -49,7 +54,7 @@ export default function IDCardGenerator() {
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [activeSectionId]);
 
   useEffect(() => {
     if (selectedClass) {
@@ -63,20 +68,35 @@ export default function IDCardGenerator() {
     }
   }, [selectedClass, selectedYear]);
 
-  // When a student is selected in individual mode, load preview
+  // Load preview: individual = selected student, batch = first selected or first in class
   useEffect(() => {
-    if (mode === 'individual' && selectedStudents.length === 1) {
-      const student = students.find(s => s.id === selectedStudents[0]);
-      if (student) setPreviewStudent(student);
+    if (mode === 'individual') {
+      const student = selectedStudents.length > 0
+        ? students.find(s => s.id === selectedStudents[0])
+        : null;
+      setPreviewStudent(student || null);
     } else {
-      setPreviewStudent(null);
+      const student = selectedStudents.length > 0
+        ? students.find(s => s.id === selectedStudents[0])
+        : students[0] || null;
+      setPreviewStudent(student || null);
     }
   }, [selectedStudents, mode, students]);
+
+  // Auto-scroll the preview into view so it is never missed
+  useEffect(() => {
+    if (previewStudent) {
+      const t = setTimeout(() => {
+        previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 120);
+      return () => clearTimeout(t);
+    }
+  }, [previewStudent, mode]);
 
   const fetchInitialData = async () => {
     try {
       const [classesRes, yearsRes, templatesRes, tenantRes] = await Promise.all([
-        api.get('/academic/classes/'),
+        api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }),
         api.get('/academic/academic-years/'),
         api.get('/documents/id-card-templates/'),
         api.get('/tenants/').catch(() => null),
@@ -181,7 +201,7 @@ export default function IDCardGenerator() {
         responseType: 'arraybuffer',
       });
 
-      const contentType = response.headers['content-type'] || '';
+      const contentType = String(response.headers['content-type'] || '');
       if (contentType.includes('application/json')) {
         const text = new TextDecoder().decode(response.data);
         const parsed = JSON.parse(text);
@@ -189,7 +209,7 @@ export default function IDCardGenerator() {
         return;
       }
 
-      const contentDisposition = response.headers['content-disposition'];
+      const contentDisposition = String(response.headers['content-disposition'] || '');
       const filename = contentDisposition
         ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') || 'id_cards.pdf'
         : 'id_cards.pdf';
@@ -202,7 +222,7 @@ export default function IDCardGenerator() {
     } catch (err: any) {
       console.error('ID Card generation error:', err);
       if (err.response?.data) {
-        const ct = err.response.headers?.['content-type'] || '';
+        const ct = String(err.response.headers?.['content-type'] || '');
         if (ct.includes('application/json')) {
           try {
             const text = new TextDecoder().decode(err.response.data);
@@ -488,27 +508,50 @@ export default function IDCardGenerator() {
         {/* Right Panel - Preview only (sticky, always visible) */}
         <div className="xl:col-span-2 xl:sticky xl:top-6 xl:self-start space-y-4">
           {/* Live Preview */}
-          {previewStudent && mode === 'individual' ? (
-            <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-              <div className="flex items-center justify-between mb-4">
+          {previewStudent ? (
+            <div ref={previewRef} className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
+              <div className="flex items-center justify-between mb-4 gap-2">
                 <h2 className="text-lg font-semibold text-on-surface">Live Preview</h2>
-                <div className="flex gap-1 bg-surface-container rounded-lg p-0.5">
-                  {(['both', 'front', 'back'] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setPreviewSide(s)}
-                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                        previewSide === s
-                          ? 'bg-primary text-white'
-                          : 'text-on-surface-variant hover:text-on-surface'
-                      }`}
-                    >
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1 bg-surface-container rounded-lg p-0.5">
+                    {(['both', 'front', 'back'] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setPreviewSide(s)}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                          previewSide === s
+                            ? 'bg-primary text-white'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowFullscreen(true)}
+                    className="flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                    title="Open fullscreen preview"
+                  >
+                    <span className="material-symbols-outlined text-sm">fullscreen</span>
+                    Enlarge
+                  </button>
                 </div>
               </div>
-              <div className="flex justify-center overflow-x-auto py-2">
+              {mode === 'batch' && (
+                <p className="text-xs text-on-surface-variant mb-2 -mt-2">
+                  {selectedStudents.length > 1
+                    ? `Previewing first of ${selectedStudents.length} selected students`
+                    : selectedStudents.length === 1
+                      ? 'Previewing selected student'
+                      : 'Previewing first student in class'}
+                </p>
+              )}
+              <div
+                className="flex justify-center overflow-x-auto py-2 cursor-zoom-in"
+                onClick={() => setShowFullscreen(true)}
+                title="Click to enlarge"
+              >
                 <StudentIDCard data={buildCardData(previewStudent)} side={previewSide} style={customStyle} />
               </div>
             </div>
@@ -520,7 +563,7 @@ export default function IDCardGenerator() {
                 <p className="text-sm text-center">
                   {mode === 'individual'
                     ? 'Select a student to preview their ID card'
-                    : 'Select students and choose batch mode to preview'}
+                    : 'Select students to preview their ID cards'}
                 </p>
               </div>
             </div>
@@ -564,6 +607,38 @@ export default function IDCardGenerator() {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen preview modal */}
+      <PreviewFullscreenModal
+        open={showFullscreen && !!previewStudent}
+        onClose={() => setShowFullscreen(false)}
+        title={previewStudent ? `ID Card — ${previewStudent.full_name}` : 'ID Card Preview'}
+        fit="contain"
+        maxScale={6}
+        controls={
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1 bg-white/10 rounded-lg p-0.5">
+              {(['both', 'front', 'back'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setPreviewSide(s)}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    previewSide === s
+                      ? 'bg-primary text-white'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        }
+      >
+        {previewStudent && (
+          <StudentIDCard data={buildCardData(previewStudent)} side={previewSide} style={customStyle} />
+        )}
+      </PreviewFullscreenModal>
     </div>
   );
 }

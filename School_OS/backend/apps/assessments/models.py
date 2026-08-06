@@ -91,6 +91,10 @@ class MarkEntryWindow(models.Model):
     class Meta:
         db_table = 'assessment_mark_windows'
         unique_together = ['tenant', 'sequence']
+        indexes = [
+            models.Index(fields=['tenant', 'sequence'], name='idx_window_tenant_seq'),
+            models.Index(fields=['tenant', 'is_open'], name='idx_window_open'),
+        ]
         ordering = ['-academic_year__start_date', 'sequence__term__order_number', 'sequence__order_number']
 
     def __str__(self):
@@ -131,6 +135,10 @@ class Exam(models.Model):
     class Meta:
         db_table = 'assessment_exams'
         unique_together = ['tenant', 'term']
+        indexes = [
+            models.Index(fields=['tenant', 'term'], name='idx_exam_tenant_term'),
+            models.Index(fields=['term'], name='idx_exam_term'),
+        ]
         ordering = ['term__order_number', 'name']
 
     def __str__(self):
@@ -165,6 +173,11 @@ class ExamResult(models.Model):
     class Meta:
         db_table = 'assessment_results'
         unique_together = ['exam', 'student', 'subject', 'sequence']
+        indexes = [
+            models.Index(fields=['exam', 'student', 'subject', 'sequence'], name='idx_result_lookup'),
+            models.Index(fields=['student', 'exam'], name='idx_result_student_exam'),
+            models.Index(fields=['sequence'], name='idx_result_sequence'),
+        ]
 
     def __str__(self):
         return f"{self.student} - {self.subject} ({self.score})"

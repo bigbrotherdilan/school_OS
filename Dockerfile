@@ -9,21 +9,21 @@ RUN apt-get update && apt-get install -y curl && \
 WORKDIR /app
 
 # Install Python deps
-COPY backend/requirements.txt backend/requirements.txt
+COPY School_OS/backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Build frontend
-COPY frontend/ frontend/
-RUN cd frontend && npm install && VITE_API_URL=/api/v1 npx vite build
+COPY School_OS/frontend/ frontend/
+RUN cd frontend && npm install --legacy-peer-deps && VITE_API_URL=/api/v1 npx vite build
 
 # Copy backend
-COPY backend/ backend/
+COPY School_OS/backend/ backend/
 
 # Copy frontend build into Django template/static dirs
 RUN mkdir -p backend/templates backend/static/frontend_assets && \
     cp frontend/dist/index.html backend/templates/index.html && \
     cp -r frontend/dist/assets/* backend/static/frontend_assets/ && \
-    cd backend && python manage.py collectstatic --noinput
+    cd backend && DJANGO_SECRET_KEY=build-only-collectstatic python manage.py collectstatic --noinput
 
 FROM python:3.11-slim
 
@@ -43,6 +43,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 RUN mkdir -p /app/backend/media /app/backend/staticfiles && \
     chown -R appuser:appgroup /app
 
+# appuser is created with --no-create-home so HOME=/nonexistent; gunicorn 26's
+# control server writes its socket under $HOME and would crash without a writable one
+ENV HOME=/app
+
 WORKDIR /app/backend
 
 EXPOSE 8000
@@ -55,4 +59,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # NOTE: seed_all is NOT run in production. Run it manually once during initial setup.
 # Run database migrations on startup (safe to run every time, they're idempotent)
 # but do NOT run seed scripts — they would re-create default accounts.
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
+# 2 workers × 8 threads → 16 concurrent requests; threads are the right
+# fit for the IO-bound mark-entry burst. --max-requests rotates workers so
+# persistent DB connections (CONN_MAX_AGE) don't go stale.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --threads 8 --timeout 120 --max-requests 1000 --max-requests-jitter 100"]

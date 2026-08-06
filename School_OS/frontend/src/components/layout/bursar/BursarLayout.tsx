@@ -10,8 +10,6 @@ export default function BursarLayout() {
   const navigate = useNavigate();
   const { user, logout, tenants } = useAuthStore();
   const { activeTenantId, setActiveTenantId } = useTenantStore();
-  const activeTenant = tenants?.find(t => t.id === activeTenantId);
-  const schoolName = activeTenant?.school_name || 'School OS';
 
   useEffect(() => {
     if (tenants && tenants.length > 0) {

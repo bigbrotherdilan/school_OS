@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
+import { useSectionStore } from '../../../stores/sectionStore';
 
 interface Stats {
   total_sessions: number;
@@ -20,6 +21,7 @@ export default function AttendanceDashboard() {
   const [formData, setFormData] = useState({ classId: '', subjectId: '', teacherId: '', termId: '', date: new Date().toISOString().split('T')[0], startTime: '' });
   const [submitting, setSubmitting] = useState(false);
   const { addToast } = useToastStore();
+  const { activeSectionId } = useSectionStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,7 +29,7 @@ export default function AttendanceDashboard() {
         const [statsRes, sessionsRes, classesRes, subjectsRes, staffRes, termsRes] = await Promise.all([
           api.get('/attendance/sessions/dashboard-stats/'),
           api.get('/attendance/sessions/'),
-          api.get('/academic/classes/'),
+          api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }),
           api.get('/academic/subjects/'),
           api.get('/staff/teachers/'),
           api.get('/academic/terms/')
@@ -47,7 +49,7 @@ export default function AttendanceDashboard() {
       }
     };
     fetchData();
-  }, []);
+  }, [activeSectionId]);
 
   const handleExportReport = async () => {
     try {

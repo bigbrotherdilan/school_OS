@@ -5,6 +5,7 @@ Provides aggregated performance data for admin and teacher dashboards.
 from decimal import Decimal
 from collections import defaultdict
 
+from django.core.cache import cache
 from django.db.models import Avg, Count, Q, Sum, F
 from django.utils import timezone
 from rest_framework import status
@@ -12,7 +13,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.academic.models import AcademicYear, Term, Class, Subject, Section, ClassSubject
+from apps.academic.models import AcademicYear, Term, Class, Subject, Section, ClassSubject, effective_coefficient
 from apps.assessments.models import Exam, ExamResult, MarkEntryWindow
 from apps.attendance.models import AttendanceSession, AttendanceRecord
 from apps.authentication.permissions import IsSchoolMember, IsSchoolAdmin, IsAdminOrTeacher
@@ -327,7 +328,7 @@ def class_performance_detail(request):
             'subject_id': str(subj.id),
             'subject_name': subj.name,
             'subject_code': subj.code,
-            'coefficient': float(subj.default_coefficient),
+            'coefficient': float(effective_coefficient(cls_obj.stream, subj)),
             **stats,
         })
 
@@ -521,7 +522,7 @@ def teacher_analytics_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsAdminOrTeacher])
+@permission_classes([IsAuthenticated, IsSchoolMember])
 def analytics_metadata(request):
     """
     GET /api/v1/reports/analytics/metadata/
@@ -531,6 +532,11 @@ def analytics_metadata(request):
     if not tenant:
         return Response({'detail': 'Tenant not found.'}, status=400)
 
+    cache_key = f'analytics_metadata:{tenant.id}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached)
+
     years = AcademicYear.objects.filter(tenant=tenant).values('id', 'name', 'is_active')
     terms = Term.objects.filter(academic_year__tenant=tenant).values(
         'id', 'name', 'order_number', 'academic_year_id'
@@ -538,9 +544,13 @@ def analytics_metadata(request):
     classes = Class.objects.filter(tenant=tenant).values('id', 'name', 'stream__name')
     subjects = Subject.objects.filter(tenant=tenant).values('id', 'name', 'code')
 
-    return Response({
+    data = {
         'academic_years': list(years),
         'terms': list(terms),
         'classes': list(classes),
         'subjects': list(subjects),
-    })
+    }
+    # Filter dropdowns are loaded once per page visit; a short TTL keeps
+    # them fresh after admins add classes/subjects/years.
+    cache.set(cache_key, data, 60)
+    return Response(data)

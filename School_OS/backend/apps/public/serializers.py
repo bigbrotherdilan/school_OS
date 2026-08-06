@@ -20,7 +20,7 @@ class PublicSchoolListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = [
-            'school_name', 'slug', 'region', 'division',
+            'school_name', 'slug', 'region', 'division', 'address',
             'education_type', 'education_type_display',
             'school_type', 'motto', 'logo_url',
             'student_count', 'class_count',
@@ -51,9 +51,14 @@ class PublicFeeStructureSerializer(serializers.ModelSerializer):
 
 class PublicClassSerializer(serializers.ModelSerializer):
     """Class info for public profile."""
+    cycle_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Class
-        fields = ['name', 'level_order']
+        fields = ['name', 'level_order', 'cycle_name']
+
+    def get_cycle_name(self, obj):
+        return obj.cycle.name if obj.cycle_id else None
 
 
 class PublicSchoolProfileSerializer(serializers.ModelSerializer):
@@ -73,7 +78,7 @@ class PublicSchoolProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = [
-            'school_name', 'slug', 'region', 'division', 'country',
+            'id', 'school_name', 'slug', 'region', 'division', 'country',
             'education_type', 'education_type_display',
             'school_type', 'school_type_display',
             'session_type', 'address', 'motto', 'logo_url',

@@ -3,8 +3,13 @@ Authentication Serializers — JWT Token & User Management
 """
 import hashlib
 import logging
+from datetime import timedelta
 import requests
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed as DRFAuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from apps.authentication.models import User, UserRoleMapping
 from apps.tenants.serializers import TenantListSerializer
@@ -75,7 +80,41 @@ class SOSTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        # M1: brute-force lockout — check before authenticating
+        email = attrs.get(self.username_field, '')
+        account = None
+        if email:
+            account = User.objects.filter(email=email).first()
+            if account and account.locked_until and account.locked_until > timezone.now():
+                mins_left = int((account.locked_until - timezone.now()).total_seconds() // 60) + 1
+                raise DRFAuthenticationFailed(
+                    f'Account temporarily locked due to too many failed attempts. Try again in {mins_left} minute(s).',
+                    code='account_locked',
+                )
+
+        try:
+            data = super().validate(attrs)
+        except DRFAuthenticationFailed:
+            # Record the failed attempt
+            if account:
+                max_attempts = getattr(settings, 'LOGIN_MAX_ATTEMPTS', 5)
+                lockout_minutes = getattr(settings, 'LOGIN_LOCKOUT_MINUTES', 15)
+                attempts = account.failed_login_attempts + 1
+                if attempts >= max_attempts:
+                    account.failed_login_attempts = 0
+                    account.locked_until = timezone.now() + timedelta(minutes=lockout_minutes)
+                    logger.warning(f"Account {account.email} locked for {lockout_minutes} minutes after {attempts} failed attempts.")
+                else:
+                    account.failed_login_attempts = attempts
+                account.save(update_fields=['failed_login_attempts', 'locked_until'])
+            raise
+
+        # Success — reset counters
+        if account and (account.failed_login_attempts or account.locked_until):
+            account.failed_login_attempts = 0
+            account.locked_until = None
+            account.save(update_fields=['failed_login_attempts', 'locked_until'])
+
         user = self.user
 
         # Add extra response data
@@ -116,9 +155,11 @@ class SOSTokenObtainPairSerializer(TokenObtainPairSerializer):
             'email_alerts': user.email_alerts,
             'sms_alerts': user.sms_alerts,
             'is_platform_admin': user.is_platform_admin,
+            'must_change_password': user.must_change_password,
         }
         data['roles'] = roles
         data['tenants'] = unique_tenants
+        data['must_change_password'] = user.must_change_password
 
         return data
 
@@ -134,6 +175,7 @@ class UserSerializer(serializers.ModelSerializer):
             'phone', 'default_language', 'profile_photo',
             'email_alerts', 'sms_alerts',
             'is_platform_admin', 'is_active', 'date_joined',
+            'must_change_password',
             'roles',
         ]
         read_only_fields = ['id', 'date_joined', 'is_platform_admin']
@@ -165,7 +207,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate_password(self, value):
-        """Check password against breach database."""
+        """Enforce Django password validators + breach check."""
+        validate_password(value)
         if check_password_breach(value):
             raise serializers.ValidationError(
                 "This password has appeared in data breaches. Please choose a different password."
@@ -179,6 +222,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         # Use full email as username to ensure global uniqueness
         validated_data['username'] = validated_data['email']
+
+        # Admin-supplied password is temporary — force change on first login.
+        validated_data['must_change_password'] = True
 
         user = User.objects.create_user(
             password=password,

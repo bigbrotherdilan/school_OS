@@ -27,7 +27,8 @@ class TenantListSerializer(serializers.ModelSerializer):
         model = Tenant
         fields = [
             'id', 'school_name', 'slug', 'education_type',
-            'region', 'status', 'created_at',
+            'region', 'division', 'address', 'phone', 'email',
+            'logo_url', 'motto', 'postal_code', 'status', 'created_at',
         ]
 
 

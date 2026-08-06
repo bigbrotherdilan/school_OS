@@ -12,7 +12,7 @@ const ParentLayout: React.FC = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const [isChildDrawerOpen, setIsChildDrawerOpen] = useState(false);
     const logout = useAuthStore(state => state.logout);
-    const { activeTenantId, fetchSchoolConfig, schoolConfig } = useTenantStore();
+    const { activeTenantId, fetchSchoolConfig } = useTenantStore();
     const { dashboardData, selectedWardId, setSelectedWardId } = useParentStore();
 
     useEffect(() => {

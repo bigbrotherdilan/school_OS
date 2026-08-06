@@ -65,6 +65,10 @@ class Student(models.Model):
     class Meta:
         db_table = 'students'
         unique_together = ['tenant', 'admission_number']
+        indexes = [
+            models.Index(fields=['tenant', 'current_class'], name='idx_student_class'),
+            models.Index(fields=['tenant', 'status'], name='idx_student_status'),
+        ]
         ordering = ['last_name', 'first_name']
 
     def __str__(self):
@@ -123,6 +127,7 @@ class DisciplineRecord(models.Model):
 
     class Meta:
         db_table = 'student_discipline'
+        ordering = ['-date', '-id']
 
 
 class TransferRequest(models.Model):
@@ -141,6 +146,7 @@ class TransferRequest(models.Model):
 
     class Meta:
         db_table = 'student_transfers'
+        ordering = ['-date', '-id']
 
     def __str__(self):
         return f"{self.student.first_name} - {self.reason} ({self.date})"
