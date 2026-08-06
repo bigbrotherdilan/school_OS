@@ -14,7 +14,7 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
     series_code = serializers.CharField(source='series.code', read_only=True, default=None)
     academic_year_name = serializers.CharField(source='academic_year.name', read_only=True)
     series = serializers.PrimaryKeyRelatedField(
-        queryset=Series.objects.all(), required=False, allow_null=True, default=None
+        queryset=Series.objects.all(), required=False, allow_null=True
     )
 
     class Meta:
