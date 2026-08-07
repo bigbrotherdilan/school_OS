@@ -3,11 +3,23 @@ Staff Serializers — School OS
 """
 from rest_framework import serializers
 from apps.staff.models import Teacher, TeachingAssignment, LeaveRequest, PerformanceReview
-from apps.academic.models import Series
+from apps.academic.models import Series, Subject, Class, AcademicYear
 from apps.authentication.serializers import UserSerializer
 
 
 class TeachingAssignmentSerializer(serializers.ModelSerializer):
+    teacher = serializers.PrimaryKeyRelatedField(
+        queryset=Teacher.objects.all(), required=True, allow_null=False
+    )
+    subject = serializers.PrimaryKeyRelatedField(
+        queryset=Subject.objects.all(), required=True, allow_null=False
+    )
+    academic_class = serializers.PrimaryKeyRelatedField(
+        queryset=Class.objects.all(), required=True, allow_null=False
+    )
+    academic_year = serializers.PrimaryKeyRelatedField(
+        queryset=AcademicYear.objects.all(), required=True, allow_null=False
+    )
     teacher_name = serializers.CharField(source='teacher.user.full_name', read_only=True)
     subject_name = serializers.CharField(source='subject.name', read_only=True)
     class_name = serializers.CharField(source='academic_class.name', read_only=True)
@@ -25,12 +37,6 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
             'academic_year', 'academic_year_name',
         ]
         read_only_fields = ['id']
-        extra_kwargs = {
-            'teacher': {'required': True, 'allow_null': False},
-            'subject': {'required': True, 'allow_null': False},
-            'academic_class': {'required': True, 'allow_null': False},
-            'academic_year': {'required': True, 'allow_null': False},
-        }
 
 
 class TeacherSerializer(serializers.ModelSerializer):

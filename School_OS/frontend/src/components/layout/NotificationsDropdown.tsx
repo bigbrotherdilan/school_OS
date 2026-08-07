@@ -13,6 +13,7 @@ interface Announcement {
   published: boolean;
   created_by_name: string;
   created_at: string;
+  is_read?: boolean;
 }
 
 interface DirectMessage {
@@ -45,11 +46,10 @@ const POLL_INTERVAL_MS = 45000;
 
 export default function NotificationsDropdown() {
   const navigate = useNavigate();
-  const { user, roles } = useAuthStore();
+  const { roles } = useAuthStore();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [readAnnouncementIds, setReadAnnouncementIds] = useState<string[]>([]);
   const [selectedItem, setSelectedItem] = useState<NotificationItem | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -70,23 +70,9 @@ export default function NotificationsDropdown() {
     return false;
   }, []);
 
-  // Load read announcements from localStorage on mount
-  useEffect(() => {
-    if (user?.id) {
-      try {
-        const stored = localStorage.getItem(`read_announcements_${user.id}`);
-        if (stored) {
-          setReadAnnouncementIds(JSON.parse(stored));
-        }
-      } catch {
-        /* silent */
-      }
-    }
-  }, [user?.id]);
-
   const unreadMessages = items.filter((n) => n.type === 'message' && !n.data.is_read).length;
   const unreadNotifications = items.filter((n) => n.type === 'notification' && !n.data.is_read).length;
-  const unreadAnnouncements = items.filter((n) => n.type === 'announcement' && !readAnnouncementIds.includes(n.data.id)).length;
+  const unreadAnnouncements = items.filter((n) => n.type === 'announcement' && !n.data.is_read).length;
   const badgeCount = unreadMessages + unreadNotifications + unreadAnnouncements;
 
   useEffect(() => {
@@ -143,43 +129,31 @@ export default function NotificationsDropdown() {
     fetchItems().finally(() => setLoading(false));
   }, [open, fetchItems]);
 
-  // Mark all announcements as read (localStorage) for this user
-  const markAnnouncementsRead = useCallback(() => {
-    const announcementIds = items
-      .filter((n) => n.type === 'announcement')
-      .map((n) => n.id);
-    if (announcementIds.length > 0 && user?.id) {
-      setReadAnnouncementIds((prev) => {
-        const next = Array.from(new Set([...prev, ...announcementIds]));
-        localStorage.setItem(`read_announcements_${user.id}`, JSON.stringify(next));
-        return next;
-      });
+  // Mark all notifications, messages and announcements as read for this user.
+  // Announcement read state is tracked server-side so it persists across
+  // log-ins, log-outs and page reloads for the current user.
+  const markAllAsRead = useCallback(() => {
+    try {
+      api.post('/notifications/announcements/mark-all-read/');
+      api.post('/notifications/notifications/mark-all-read/');
+      api.post('/notifications/messages/mark-all-read/');
+    } catch {
+      /* silent */
     }
-  }, [items, user?.id]);
+    setItems((prev) =>
+      prev.map((n) => {
+        if (n.type === 'announcement') return { ...n, data: { ...n.data, is_read: true } };
+        if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
+        if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
+        return n;
+      })
+    );
+  }, []);
 
-  // Mark everything read when the bell is clicked: opening the dropdown
-  // counts as "seen", so the red badge clears until a new item arrives.
+  // Opening the bell only toggles the dropdown. Read state is handled by
+  // individual item clicks or the "Mark all as read" button in the header.
   const handleBellClick = () => {
-    setOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        markAnnouncementsRead();
-        try {
-          api.post('/notifications/notifications/mark-all-read/');
-          api.post('/notifications/messages/mark-all-read/');
-        } catch {
-          /* silent */
-        }
-        setItems((prevItems) =>
-          prevItems.map((n) => {
-            if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
-            if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
-            return n;
-          })
-        );
-      }
-      return next;
-    });
+    setOpen((prev) => !prev);
   };
 
   const markMessageRead = async (msgId: string) => {
@@ -204,6 +178,17 @@ export default function NotificationsDropdown() {
     } catch { /* silent */ }
   };
 
+  const markAnnouncementRead = async (annId: string) => {
+    try {
+      await api.post(`/notifications/announcements/${annId}/read/`);
+      setItems((prev) =>
+        prev.map((n) =>
+          n.type === 'announcement' && n.data.id === annId ? { ...n, data: { ...n.data, is_read: true } } : n
+        )
+      );
+    } catch { /* silent */ }
+  };
+
   const handleItemClick = (item: NotificationItem) => {
     setOpen(false);
 
@@ -216,35 +201,15 @@ export default function NotificationsDropdown() {
       }
     } else if (item.type === 'message') {
       if (!item.data.is_read) markMessageRead(item.data.id);
-    } else {
-      if (!readAnnouncementIds.includes(item.data.id)) {
-        const nextIds = [...readAnnouncementIds, item.data.id];
-        setReadAnnouncementIds(nextIds);
-        if (user?.id) {
-          localStorage.setItem(`read_announcements_${user.id}`, JSON.stringify(nextIds));
-        }
-      }
+    } else if (item.type === 'announcement') {
+      if (!item.data.is_read) markAnnouncementRead(item.data.id);
     }
     setSelectedItem(item);
   };
 
-  const handleViewAll = async () => {
+  const handleViewAll = () => {
     setOpen(false);
-    markAnnouncementsRead();
-
-    try {
-      await api.post('/notifications/notifications/mark-all-read/');
-      await api.post('/notifications/messages/mark-all-read/');
-      setItems((prev) =>
-        prev.map((n) => {
-          if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
-          if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
-          return n;
-        })
-      );
-    } catch {
-      /* silent */
-    }
+    markAllAsRead();
 
     const activeRoles = new Set(rolesRef.current.map((r) => r.role));
     if (activeRoles.has('admin') || activeRoles.has('super_admin')) {
@@ -335,12 +300,23 @@ export default function NotificationsDropdown() {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-900">Notifications</h3>
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-slate-900">Notifications</h3>
+              {badgeCount > 0 && (
+                <span className="text-xs bg-error/10 text-error font-semibold px-2 py-0.5 rounded-full">
+                  {badgeCount} unread
+                </span>
+              )}
+            </div>
             {badgeCount > 0 && (
-              <span className="text-xs bg-error/10 text-error font-semibold px-2 py-0.5 rounded-full">
-                {badgeCount} unread
-              </span>
+              <button
+                onClick={markAllAsRead}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 py-1 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm leading-none">done_all</span>
+                Mark all as read
+              </button>
             )}
           </div>
 
@@ -363,7 +339,8 @@ export default function NotificationsDropdown() {
                 const isUnread =
                   item.type === 'message' ? !item.data.is_read :
                   item.type === 'notification' ? !item.data.is_read :
-                  !readAnnouncementIds.includes(item.data.id);
+                  item.type === 'announcement' ? !item.data.is_read :
+                  false;
                 const isUrgent = item.type === 'announcement' && item.data.is_urgent;
 
                 return (

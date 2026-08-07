@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Announcement, DirectMessage, EmailSetting, Notification
+from .models import Announcement, AnnouncementRead, DirectMessage, EmailSetting, Notification
 from .serializers import AnnouncementSerializer, DirectMessageSerializer, EmailSettingSerializer, TestEmailSerializer, NotificationSerializer
 from apps.authentication.permissions import IsSchoolMember, IsSchoolAdmin
 
@@ -106,6 +106,52 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
                     qs = qs.none()
 
         return qs.order_by('-created_at')
+
+    @action(detail=True, methods=['post'], url_path='read')
+    def mark_read(self, request, pk=None):
+        """
+        POST /notifications/announcements/{id}/read/
+        Marks one announcement as read for the current user (server-side).
+        """
+        announcement = self.get_object()
+        AnnouncementRead.objects.get_or_create(
+            announcement=announcement,
+            user=request.user,
+            tenant_id=request.tenant_id,
+        )
+        return Response({'detail': 'Announcement marked as read.', 'id': str(announcement.id)})
+
+    @action(detail=False, methods=['post'], url_path='mark-all-read')
+    def mark_all_read(self, request):
+        """
+        POST /notifications/announcements/mark-all-read/
+        Marks every published announcement for this tenant as read for the
+        current user (server-side).
+        """
+        announcement_ids = list(
+            Announcement.objects.filter(
+                tenant_id=request.tenant_id,
+                published=True,
+            ).values_list('id', flat=True)
+        )
+        existing = set(
+            AnnouncementRead.objects.filter(
+                user=request.user,
+                announcement_id__in=announcement_ids,
+            ).values_list('announcement_id', flat=True)
+        )
+        to_create = [
+            AnnouncementRead(
+                announcement_id=ann_id,
+                user=request.user,
+                tenant_id=request.tenant_id,
+            )
+            for ann_id in announcement_ids
+            if ann_id not in existing
+        ]
+        if to_create:
+            AnnouncementRead.objects.bulk_create(to_create, ignore_conflicts=True)
+        return Response({'detail': 'All announcements marked as read.'})
 
 
 class DirectMessageViewSet(viewsets.ModelViewSet):
