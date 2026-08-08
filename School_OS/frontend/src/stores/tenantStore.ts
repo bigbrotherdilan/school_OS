@@ -18,6 +18,7 @@ export interface SchoolConfig {
   grade_c_threshold: number;
   promotion_cutoff: number;
   payment_methods: string[];
+  finance_recording: 'admin_and_bursar' | 'bursar_only';
   default_language: string;
   phone_format_placeholder: string;
 }
@@ -31,6 +32,7 @@ const DEFAULT_CONFIG: SchoolConfig = {
   grade_c_threshold: 10,
   promotion_cutoff: 9.5,
   payment_methods: ['mtn_momo', 'orange_money', 'bank_transfer'],
+  finance_recording: 'admin_and_bursar',
   default_language: 'en',
   phone_format_placeholder: '6XX XXX XXX',
 };
@@ -44,6 +46,7 @@ interface TenantState {
   setActiveTenantId: (id: string) => void;
   setThemeConfig: (config: ThemeConfig) => void;
   fetchSchoolConfig: (tenantId: string) => Promise<void>;
+  patchSchoolConfig: (patch: Partial<SchoolConfig>) => Promise<void>;
 }
 
 export const useTenantStore = create<TenantState>()(
@@ -65,6 +68,13 @@ export const useTenantStore = create<TenantState>()(
         } catch {
           set({ schoolConfig: DEFAULT_CONFIG, configLoaded: true });
         }
+      },
+
+      patchSchoolConfig: async (patch: Partial<SchoolConfig>) => {
+        const tenantId = get().activeTenantId;
+        if (!tenantId) throw new Error('No active tenant.');
+        const res = await api.patch(`/tenants/${tenantId}/school_config/`, patch);
+        set({ schoolConfig: { ...get().schoolConfig, ...res.data }, configLoaded: true });
       },
     }),
     {

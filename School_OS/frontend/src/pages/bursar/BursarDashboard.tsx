@@ -145,7 +145,7 @@ export default function BursarDashboard() {
               </div>
             </div>
             <p className="text-2xl font-bold text-error">{formatCFA(summary.total_arrears)}</p>
-            <p className="text-[11px] text-on-surface-variant mt-1.5">{summary.unpaid_count} of {summary.total_invoices} bills unpaid</p>
+            <p className="text-[11px] text-on-surface-variant mt-1.5">{summary.unpaid_count} of {summary.total_invoices} fees unpaid</p>
           </button>
 
           {/* Today's Collections */}

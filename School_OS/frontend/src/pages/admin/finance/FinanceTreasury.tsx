@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
+import { useCanRecordFinance } from '../../../hooks/useCanRecordFinance';
 
 const modules = [
   {
@@ -10,13 +11,15 @@ const modules = [
     desc: 'Configure fee categories, amounts per class and academic year.',
     path: '/admin/finance/fee-setup',
     color: 'from-blue-600 to-blue-700',
+    write: true,
   },
   {
     icon: 'assignment',
-    title: 'Fee Bills',
-    desc: 'Generate fee bills individually or by class, view all issued bills.',
+    title: 'Fees',
+    desc: 'Generate fees individually or by class, view all issued fees.',
     path: '/admin/finance/invoices',
     color: 'from-emerald-600 to-emerald-700',
+    write: true,
   },
   {
     icon: 'payments',
@@ -24,13 +27,15 @@ const modules = [
     desc: 'Process fee payments and generate official receipts.',
     path: '/admin/finance/transactions/new',
     color: 'from-violet-600 to-violet-700',
+    write: true,
   },
   {
     icon: 'account_balance',
     title: 'Student Ledger',
-    desc: 'View per-student fee balances, payment history, and bills.',
+    desc: 'View per-student fee balances and payment history.',
     path: '/admin/finance/ledger',
     color: 'from-amber-600 to-amber-700',
+    write: false,
   },
   {
     icon: 'warning_amber',
@@ -38,6 +43,7 @@ const modules = [
     desc: 'Track overdue accounts, send reminders, manage follow-ups.',
     path: '/admin/finance/arrears',
     color: 'from-rose-600 to-rose-700',
+    write: false,
   },
   {
     icon: 'money_off',
@@ -45,12 +51,14 @@ const modules = [
     desc: 'Record and track school expenditures by category.',
     path: '/admin/finance/expenses',
     color: 'from-cyan-600 to-cyan-700',
+    write: true,
   },
 ];
 
 export default function FinanceTreasury() {
   const navigate = useNavigate();
   const { addToast } = useToastStore();
+  const canRecord = useCanRecordFinance();
   const [summary, setSummary] = useState({
     total_revenue: 0, total_expected: 0, total_arrears: 0,
     collection_rate: 0, daily_volume: 0, total_expenses: 0,
@@ -88,7 +96,7 @@ export default function FinanceTreasury() {
         <div>
           <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Financial Management</span>
           <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Finance & Treasury</h1>
-          <p className="text-on-surface-variant mt-1">Manage fees, payments, bills, and expenses.</p>
+          <p className="text-on-surface-variant mt-1">Manage fees, payments, and expenses.</p>
         </div>
         <div className="flex gap-3">
           <button onClick={handleExport} className="px-5 py-3 bg-surface-container-highest text-on-surface font-bold rounded-xl hover:bg-slate-200 transition-all text-xs uppercase tracking-widest flex items-center gap-2">
@@ -117,7 +125,7 @@ export default function FinanceTreasury() {
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Outstanding Arrears</span>
             <p className="text-3xl font-bold text-error mt-1">CFA {summary.total_arrears.toLocaleString()}</p>
-            <p className="text-xs text-on-surface-variant mt-1">{summary.unpaid_count} of {summary.total_invoices} bills unpaid</p>
+            <p className="text-xs text-on-surface-variant mt-1">{summary.unpaid_count} of {summary.total_invoices} fees unpaid</p>
           </div>
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Today's Collections</span>
@@ -135,8 +143,14 @@ export default function FinanceTreasury() {
       {/* Quick Navigation Modules */}
       <div>
         <h2 className="text-lg font-bold text-on-surface mb-4">Quick Actions</h2>
+        {!canRecord && (
+          <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl px-5 py-4 text-sm font-semibold">
+            <span className="material-symbols-outlined">lock</span>
+            Finance recording is restricted to the bursar. You can view fees and the ledger, but recording payments and expenses requires the bursar account.
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {modules.map((m) => (
+          {modules.filter(m => canRecord || !m.write).map((m) => (
             <button
               key={m.path}
               onClick={() => navigate(m.path)}
@@ -156,9 +170,11 @@ export default function FinanceTreasury() {
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
           <h3 className="font-bold text-on-surface">Recent Transactions</h3>
-          <button onClick={() => navigate('/admin/finance/transactions/new')} className="text-xs font-bold text-primary hover:underline">
-            + Record Payment
-          </button>
+          {canRecord && (
+            <button onClick={() => navigate('/admin/finance/transactions/new')} className="text-xs font-bold text-primary hover:underline">
+              + Record Payment
+            </button>
+          )}
         </div>
         {recentTx.length === 0 ? (
           <div className="p-12 text-center text-on-surface-variant text-sm font-medium">No payments recorded yet. Record your first payment to start tracking finances.</div>

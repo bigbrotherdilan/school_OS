@@ -13,6 +13,7 @@ interface Announcement {
   published: boolean;
   created_by_name: string;
   created_at: string;
+  is_read: boolean;
 }
 
 interface DirectMessage {
@@ -43,15 +44,17 @@ type NotificationItem =
 
 const POLL_INTERVAL_MS = 45000;
 
+const isItemRead = (n: NotificationItem): boolean => n.data.is_read;
+
 export default function NotificationsDropdown() {
   const navigate = useNavigate();
-  const { user, roles } = useAuthStore();
+  const { roles } = useAuthStore();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [readAnnouncementIds, setReadAnnouncementIds] = useState<string[]>([]);
   const [selectedItem, setSelectedItem] = useState<NotificationItem | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const openRef = useRef(false);
 
   // Current role set for the active tenant (client-side safety net on top of
   // the backend audience filter, so teachers never see parent-only items).
@@ -70,38 +73,12 @@ export default function NotificationsDropdown() {
     return false;
   }, []);
 
-  // Load read announcements from localStorage on mount
-  useEffect(() => {
-    if (user?.id) {
-      try {
-        const stored = localStorage.getItem(`read_announcements_${user.id}`);
-        if (stored) {
-          setReadAnnouncementIds(JSON.parse(stored));
-        }
-      } catch {
-        /* silent */
-      }
-    }
-  }, [user?.id]);
-
-  const unreadMessages = items.filter((n) => n.type === 'message' && !n.data.is_read).length;
-  const unreadNotifications = items.filter((n) => n.type === 'notification' && !n.data.is_read).length;
-  const unreadAnnouncements = items.filter((n) => n.type === 'announcement' && !readAnnouncementIds.includes(n.data.id)).length;
-  const badgeCount = unreadMessages + unreadNotifications + unreadAnnouncements;
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
+  // Fetch only UNREAD items — read ones never come back into the bell list.
   const fetchItems = useCallback(() => {
     return Promise.all([
-      api.get('/notifications/notifications/?limit=10').catch(() => ({ data: { results: [] } })),
-      api.get('/notifications/announcements/?published=true&ordering=-created_at&limit=10').catch(() => ({ data: { results: [] } })),
-      api.get('/notifications/messages/?ordering=-created_at&limit=10').catch(() => ({ data: { results: [] } })),
+      api.get('/notifications/notifications/?unread=true&limit=10').catch(() => ({ data: { results: [] } })),
+      api.get('/notifications/announcements/?published=true&unread=true&ordering=-created_at&limit=10').catch(() => ({ data: { results: [] } })),
+      api.get('/notifications/messages/?unread=true&ordering=-created_at&limit=10').catch(() => ({ data: { results: [] } })),
     ]).then(([notifRes, annRes, msgRes]) => {
       const notifs: NotificationItem[] = (notifRes.data.results || notifRes.data || []).map((n: UserNotification) => ({
         type: 'notification' as const,
@@ -129,87 +106,85 @@ export default function NotificationsDropdown() {
     });
   }, [isAnnouncementVisible]);
 
-  // Fetch on mount + poll so the badge reappears only for genuinely new items
+  // Mark all items as read on the server (persists across logins/devices).
+  const markAllRead = useCallback(async () => {
+    const results = await Promise.allSettled([
+      api.post('/notifications/notifications/mark-all-read/'),
+      api.post('/notifications/messages/mark-all-read/'),
+      api.post('/notifications/announcements/mark-all-read/'),
+    ]);
+    return results.every((r) => r.status === 'fulfilled');
+  }, []);
+
+  // Fetch on mount + poll so new items show up while the badge stays accurate.
+  // While the dropdown is open, skip polling so viewed items aren't wiped out
+  // mid-session before the user has read them.
   useEffect(() => {
     fetchItems();
-    const interval = setInterval(fetchItems, POLL_INTERVAL_MS);
+    const interval = setInterval(() => {
+      if (!openRef.current) fetchItems();
+    }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchItems]);
 
-  // Fetch full list when dropdown opens
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    fetchItems().finally(() => setLoading(false));
-  }, [open, fetchItems]);
-
-  // Mark all announcements as read (localStorage) for this user
-  const markAnnouncementsRead = useCallback(() => {
-    const announcementIds = items
-      .filter((n) => n.type === 'announcement')
-      .map((n) => n.id);
-    if (announcementIds.length > 0 && user?.id) {
-      setReadAnnouncementIds((prev) => {
-        const next = Array.from(new Set([...prev, ...announcementIds]));
-        localStorage.setItem(`read_announcements_${user.id}`, JSON.stringify(next));
-        return next;
-      });
+  // Clicking the bell opens the dropdown; everything shown there gets marked
+  // read (server-persisted) and the badge clears. Closing re-fetches only
+  // unread items, so read ones disappear from the list for good.
+  const handleBellClick = async () => {
+    const next = !open;
+    openRef.current = next;
+    setOpen(next);
+    if (next) {
+      setLoading(true);
+      const fresh = await fetchItems();
+      await markAllRead();
+      setItems(fresh.map((n) => ({ ...n, data: { ...n.data, is_read: true } })));
+      setLoading(false);
+    } else {
+      fetchItems();
     }
-  }, [items, user?.id]);
+  };
 
-  // Mark everything read when the bell is clicked: opening the dropdown
-  // counts as "seen", so the red badge clears until a new item arrives.
-  const handleBellClick = () => {
-    setOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        markAnnouncementsRead();
-        try {
-          api.post('/notifications/notifications/mark-all-read/');
-          api.post('/notifications/messages/mark-all-read/');
-        } catch {
-          /* silent */
-        }
-        setItems((prevItems) =>
-          prevItems.map((n) => {
-            if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
-            if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
-            return n;
-          })
-        );
+  // Close on outside click (keeps bell/dropdown refs in sync)
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node) && openRef.current) {
+        openRef.current = false;
+        setOpen(false);
+        fetchItems();
       }
-      return next;
-    });
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [fetchItems]);
+
+  const markNotificationRead = async (notifId: string) => {
+    try {
+      await api.patch(`/notifications/notifications/${notifId}/`, { is_read: true });
+      setItems((prev) => prev.filter((n) => !(n.type === 'notification' && n.data.id === notifId)));
+    } catch { /* silent */ }
   };
 
   const markMessageRead = async (msgId: string) => {
     try {
       await api.patch(`/notifications/messages/${msgId}/`, { is_read: true });
-      setItems((prev) =>
-        prev.map((n) =>
-          n.type === 'message' && n.data.id === msgId ? { ...n, data: { ...n.data, is_read: true } } : n
-        )
-      );
+      setItems((prev) => prev.filter((n) => !(n.type === 'message' && n.data.id === msgId)));
     } catch { /* silent */ }
   };
 
-  const markNotificationRead = async (notifId: string) => {
+  const markAnnouncementRead = async (annId: string) => {
     try {
-      await api.patch(`/notifications/notifications/${notifId}/`, { is_read: true });
-      setItems((prev) =>
-        prev.map((n) =>
-          n.type === 'notification' && n.data.id === notifId ? { ...n, data: { ...n.data, is_read: true } } : n
-        )
-      );
+      await api.post('/notifications/announcements/mark-all-read/');
+      setItems((prev) => prev.filter((n) => !(n.type === 'announcement' && n.data.id === annId)));
     } catch { /* silent */ }
   };
 
   const handleItemClick = (item: NotificationItem) => {
+    openRef.current = false;
     setOpen(false);
 
     if (item.type === 'notification') {
       if (!item.data.is_read) markNotificationRead(item.data.id);
-      // Navigate when the notification carries a destination link
       if (item.data.link) {
         navigate(item.data.link);
         return;
@@ -217,35 +192,16 @@ export default function NotificationsDropdown() {
     } else if (item.type === 'message') {
       if (!item.data.is_read) markMessageRead(item.data.id);
     } else {
-      if (!readAnnouncementIds.includes(item.data.id)) {
-        const nextIds = [...readAnnouncementIds, item.data.id];
-        setReadAnnouncementIds(nextIds);
-        if (user?.id) {
-          localStorage.setItem(`read_announcements_${user.id}`, JSON.stringify(nextIds));
-        }
-      }
+      if (!item.data.is_read) markAnnouncementRead(item.data.id);
     }
     setSelectedItem(item);
   };
 
   const handleViewAll = async () => {
+    openRef.current = false;
     setOpen(false);
-    markAnnouncementsRead();
-
-    try {
-      await api.post('/notifications/notifications/mark-all-read/');
-      await api.post('/notifications/messages/mark-all-read/');
-      setItems((prev) =>
-        prev.map((n) => {
-          if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
-          if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
-          return n;
-        })
-      );
-    } catch {
-      /* silent */
-    }
-
+    await markAllRead();
+    setItems([]);
     const activeRoles = new Set(rolesRef.current.map((r) => r.role));
     if (activeRoles.has('admin') || activeRoles.has('super_admin')) {
       navigate('/admin/community/communications');
@@ -257,6 +213,8 @@ export default function NotificationsDropdown() {
       navigate('/');
     }
   };
+
+  const unreadCount = items.filter((n) => !isItemRead(n)).length;
 
   const timeAgo = (ts: string) => {
     try {
@@ -326,9 +284,9 @@ export default function NotificationsDropdown() {
         title="Notifications"
       >
         <span className="material-symbols-outlined">notifications</span>
-        {badgeCount > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-            {badgeCount > 99 ? '99+' : badgeCount}
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
@@ -337,9 +295,9 @@ export default function NotificationsDropdown() {
         <div className="absolute right-0 top-full mt-2 w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
             <h3 className="font-bold text-slate-900">Notifications</h3>
-            {badgeCount > 0 && (
+            {unreadCount > 0 && (
               <span className="text-xs bg-error/10 text-error font-semibold px-2 py-0.5 rounded-full">
-                {badgeCount} unread
+                {unreadCount} unread
               </span>
             )}
           </div>
@@ -360,10 +318,7 @@ export default function NotificationsDropdown() {
 
             {!loading &&
               items.map((item) => {
-                const isUnread =
-                  item.type === 'message' ? !item.data.is_read :
-                  item.type === 'notification' ? !item.data.is_read :
-                  !readAnnouncementIds.includes(item.data.id);
+                const isUnread = !item.data.is_read;
                 const isUrgent = item.type === 'announcement' && item.data.is_urgent;
 
                 return (

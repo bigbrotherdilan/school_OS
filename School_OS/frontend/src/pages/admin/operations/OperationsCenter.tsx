@@ -60,6 +60,7 @@ export default function OperationsCenter() {
           { label: 'Discipline & Transfers', icon: 'gavel', path: '/admin/operations/discipline', color: 'bg-amber-500' },
           { label: 'Add Staff', icon: 'person_add', path: '/admin/operations/faculty/new', color: 'bg-violet-500' },
           { label: 'Add Bursar', icon: 'account_balance', path: '/admin/operations/bursars/new', color: 'bg-emerald-600' },
+          { label: 'Add Parent', icon: 'family_restroom', path: '/admin/operations/parents/new', color: 'bg-teal-600' },
         ].map((mod) => (
           <button
             key={mod.path}

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParentStore, type WardSummary, type AlertSummary } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
 import { parentApi, type ChildSummary } from '../../services/parentApi';
@@ -158,7 +158,7 @@ const ParentDashboard: React.FC = () => {
                     </div>
 
                     {childFees.map((child, idx) => (
-                        <div key={idx} className="bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-5 text-white shadow-lg shadow-red-500/30 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl">
+                        <div key={idx} className="bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-5 text-white shadow-lg shadow-red-500/30">
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="material-symbols-outlined text-xl text-red-100">warning</span>
                                 <span className="text-sm font-bold text-red-100 uppercase tracking-wider">Fee Balance Due</span>

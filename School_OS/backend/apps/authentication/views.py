@@ -709,6 +709,17 @@ class UserViewSet(viewsets.ModelViewSet):
             return [IsSchoolAdmin()]
         return [IsAuthenticated()]
 
+    def create(self, request, *args, **kwargs):
+        """POST /users/ — create user; returns the temporary password on screen
+        (email delivery is not configured, so the admin must share it manually)."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        response_data = UserSerializer(user, context=self.get_serializer_context()).data
+        response_data['temp_password'] = serializer.validated_data.get('password')
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
     @action(detail=True, methods=['post'])
     def assign_role(self, request, id=None):
         """POST /users/{id}/assign-role/ — Assign role within tenant (admin only)."""

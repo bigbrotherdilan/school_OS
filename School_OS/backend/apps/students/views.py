@@ -10,6 +10,7 @@ from datetime import date
 from decimal import Decimal
 from django.conf import settings
 from django.db import models
+from django.db.models import Q, Count
 from django.db import transaction as db_transaction
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import api_view, permission_classes as perm_decorator
@@ -515,6 +516,92 @@ class ParentStudentLinkViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         tenant_id = self.request.tenant_id
         return self.queryset.filter(student__tenant_id=tenant_id)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsSchoolAdmin])
+    def search(self, request):
+        """
+        GET /api/v1/students/parent-student-links/search/?q=<email or name>
+        Find GLOBAL parents (any school) so an admin can link them to a
+        student in this school.
+        """
+        from apps.authentication.models import User, UserRoleMapping
+
+        q = request.query_params.get('q', '').strip()
+        if not q:
+            return Response([])
+
+        parent_user_ids = UserRoleMapping.objects.filter(
+            role='parent', is_active=True,
+        ).values_list('user_id', flat=True).distinct()
+
+        users = User.objects.filter(
+            id__in=parent_user_ids,
+            is_active=True,
+        ).filter(
+            Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q)
+        )[:20]
+
+        linked_counts = {
+            r['parent_user_id']: r['count']
+            for r in ParentStudentRelationship.objects.filter(
+                parent_user_id__in=[u.id for u in users]
+            ).values('parent_user_id').annotate(count=Count('id'))
+        }
+
+        return Response([
+            {
+                'id': str(u.id),
+                'full_name': u.full_name,
+                'email': u.email,
+                'phone': u.phone or '',
+                'linked_students': linked_counts.get(u.id, 0),
+            }
+            for u in users
+        ])
+
+    @action(detail=False, methods=['post'], permission_classes=[IsSchoolAdmin])
+    def link(self, request):
+        """
+        POST /api/v1/students/parent-student-links/link/
+        Link an existing GLOBAL parent to a student in this school.
+        Body: {parent_user: <uuid>, student: <uuid>, relationship_type}
+        No role mapping is required in this school — parents are global.
+        """
+        from apps.authentication.models import UserRoleMapping
+
+        parent_user_id = request.data.get('parent_user')
+        student_id = request.data.get('student')
+        relationship_type = request.data.get('relationship_type', 'guardian')
+
+        if not parent_user_id or not student_id:
+            return Response({'detail': 'parent_user and student are required.'}, status=400)
+
+        from apps.students.models import Student
+
+        try:
+            student = Student.objects.get(id=student_id, tenant_id=request.tenant_id)
+        except Student.DoesNotExist:
+            return Response({'detail': 'Student not found in this school.'}, status=404)
+
+        is_parent = UserRoleMapping.objects.filter(
+            user_id=parent_user_id, role='parent', is_active=True,
+        ).exists()
+        if not is_parent:
+            return Response({'detail': 'User is not an active parent.'}, status=400)
+
+        if relationship_type not in ('father', 'mother', 'guardian'):
+            return Response({'detail': 'relationship_type must be father, mother or guardian.'}, status=400)
+
+        rel, created = ParentStudentRelationship.objects.get_or_create(
+            parent_user_id=parent_user_id, student=student,
+            defaults={'relationship_type': relationship_type},
+        )
+        if not created:
+            rel.relationship_type = relationship_type
+            rel.save(update_fields=['relationship_type'])
+
+        return Response(ParentStudentLinkSerializer(rel).data,
+                        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 class DisciplineRecordViewSet(viewsets.ModelViewSet):
     serializer_class = DisciplineRecordSerializer

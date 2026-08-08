@@ -50,5 +50,6 @@ class TenantConfigSerializer(serializers.ModelSerializer):
             'grade_a_threshold', 'grade_b_threshold', 'grade_c_threshold',
             'promotion_cutoff',
             'payment_methods',
+            'finance_recording',
             'default_language', 'phone_format_placeholder',
         ]

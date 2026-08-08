@@ -48,6 +48,35 @@ class IsSchoolAdminOrBursar(BasePermission):
         ).exists()
 
 
+class CanWriteFinance(IsSchoolAdminOrBursar):
+    """
+    Permits RECORDING finance transactions (payments, expenses, invoices).
+
+    - Bursars may always record.
+    - Admins may record only when the school's TenantConfig.finance_recording
+      is 'admin_and_bursar' (the default). When set to 'bursar_only', admins
+      keep read access but lose recording rights.
+    """
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        if request.user.is_platform_admin:
+            return True
+        tenant_id = getattr(request, 'tenant_id', None)
+        if not tenant_id:
+            return False
+        is_bursar = request.user.role_mappings.filter(
+            tenant_id=tenant_id,
+            role='bursar',
+            is_active=True,
+        ).exists()
+        if is_bursar:
+            return True
+        from apps.tenants.models import TenantConfig
+        config = TenantConfig.get_for_tenant(request.tenant)
+        return config.finance_recording == TenantConfig.FinanceRecording.ADMIN_AND_BURSAR
+
+
 class IsTeacher(BasePermission):
     """User must be a teacher for the current tenant."""
     def has_permission(self, request, view):

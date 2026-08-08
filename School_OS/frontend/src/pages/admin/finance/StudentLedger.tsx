@@ -36,7 +36,7 @@ export default function StudentLedger() {
       <div>
         <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Student Accounts</span>
         <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Student Ledger</h1>
-        <p className="text-on-surface-variant mt-1">View per-student fee summaries, bills, and payment history.</p>
+        <p className="text-on-surface-variant mt-1">View per-student fee summaries and payment history.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -75,7 +75,7 @@ export default function StudentLedger() {
               {/* Summary cards */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/10">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Total Billed</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Total Fees</span>
                   <p className="text-2xl font-bold text-on-surface mt-1">CFA {invoices.reduce((s, i) => s + i.total_amount, 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/10">
@@ -88,16 +88,16 @@ export default function StudentLedger() {
                 </div>
               </div>
 
-              {/* Fee Bills */}
+              {/* Fees */}
               <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
-                <div className="px-6 py-4 border-b border-outline-variant/10"><h3 className="font-bold text-on-surface">Fee Bills</h3></div>
+                <div className="px-6 py-4 border-b border-outline-variant/10"><h3 className="font-bold text-on-surface">Fees</h3></div>
                 {invoices.length === 0 ? (
-                  <div className="p-8 text-center text-on-surface-variant text-sm">No fee bills.</div>
+                  <div className="p-8 text-center text-on-surface-variant text-sm">No fees.</div>
                 ) : (
                   <table className="w-full text-left">
                     <thead>
                       <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
-                        <th className="px-6 py-3">Bill</th>
+                        <th className="px-6 py-3">Ref</th>
                         <th className="px-6 py-3">Total</th>
                         <th className="px-6 py-3">Paid</th>
                         <th className="px-6 py-3">Balance</th>

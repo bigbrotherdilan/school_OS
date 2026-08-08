@@ -210,7 +210,7 @@ const ParentFees: React.FC = () => {
             {childGroups.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
                     <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">receipt</span>
-                    <p className="text-slate-500 font-medium">No fee bills found</p>
+                    <p className="text-slate-500 font-medium">No fees found</p>
                 </div>
             )}
 
@@ -337,7 +337,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                             </button>
                         </div>
 
-                        {/* Bill Info */}
+                        {/* Fee Info */}
                         <div className="bg-slate-50 rounded-xl p-4 mb-5">
                             <p className="text-sm font-medium text-slate-500">{invoice.invoice_number}</p>
                             <p className="text-2xl font-extrabold text-slate-900 mt-1">{balance.toLocaleString()} {schoolConfig.currency_symbol}</p>

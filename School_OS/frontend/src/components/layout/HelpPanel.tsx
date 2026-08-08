@@ -23,7 +23,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I manage fees?',
-    a: 'Navigate to Finance > Fee Bills, select the class and term, and generate bills. You can track payments and arrears from the same page.',
+    a: 'Navigate to Finance > Fees, select the class, and generate fees. You can track payments and arrears from the same page.',
   },
 ];
 

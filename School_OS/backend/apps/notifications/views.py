@@ -1,11 +1,11 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Announcement, DirectMessage, EmailSetting, Notification
+from .models import Announcement, AnnouncementRead, DirectMessage, EmailSetting, Notification
 from .serializers import AnnouncementSerializer, DirectMessageSerializer, EmailSettingSerializer, TestEmailSerializer, NotificationSerializer
 from apps.authentication.permissions import IsSchoolMember, IsSchoolAdmin
 
@@ -62,11 +62,24 @@ class NotificationViewSet(viewsets.ModelViewSet):
 class AnnouncementViewSet(viewsets.ModelViewSet):
     serializer_class = AnnouncementSerializer
     permission_classes = [IsAuthenticated, IsSchoolMember]
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_permissions(self):
+        # Only school admins may create/edit/delete announcements;
+        # everyone else reads (audience-filtered) only.
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsAuthenticated(), IsSchoolAdmin()]
+        return super().get_permissions()
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
         user = self.request.user
         qs = Announcement.objects.filter(tenant_id=tenant_id)
+
+        # Only published announcements in the bell / feed
+        published = self.request.query_params.get('published')
+        if published in ('true', '1'):
+            qs = qs.filter(published=True)
 
         # If not admin/super_admin, filter by audience matching user's role
         user_roles = set(user.get_roles_for_tenant(tenant_id))
@@ -87,7 +100,36 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         if audience_filter:
             qs = qs.filter(audience=audience_filter)
 
+        # Unread-only view for the bell badge
+        if self.request.query_params.get('unread') in ('true', '1'):
+            qs = qs.exclude(reads__user=user)
+
         return qs.order_by('-created_at')
+
+    @action(detail=False, methods=['post'], url_path='mark-all-read')
+    def mark_all_read(self, request):
+        """
+        POST /notifications/announcements/mark-all-read/
+        Marks all announcements visible to this user as read (server-side).
+        """
+        tenant_id = request.tenant_id
+        user = request.user
+        qs = self.get_queryset()
+        AnnouncementRead.objects.bulk_create(
+            [
+                AnnouncementRead(tenant_id=tenant_id, user=user, announcement=a)
+                for a in qs
+            ],
+            ignore_conflicts=True,
+        )
+        return Response({'detail': 'All announcements marked as read.'})
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        count = self.get_queryset().filter(
+            published=True,
+        ).exclude(reads__user=request.user).count()
+        return Response({'count': count})
 
 
 class DirectMessageViewSet(viewsets.ModelViewSet):
@@ -96,11 +138,48 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        return DirectMessage.objects.filter(
+        qs = DirectMessage.objects.filter(
             tenant_id=tenant_id
         ).filter(
             Q(sender=self.request.user) | Q(recipient=self.request.user)
         )
+        if self.request.query_params.get('unread') in ('true', '1'):
+            qs = qs.filter(recipient=self.request.user, is_read=False)
+        return qs
+
+    def perform_create(self, serializer):
+        # Never trust the client for the sender or the tenant; the recipient
+        # must belong to the same school, or the message would cross tenant
+        # boundaries.
+        from apps.authentication.models import UserRoleMapping
+        recipient = serializer.validated_data.get('recipient')
+        in_tenant = UserRoleMapping.objects.filter(
+            user=recipient, tenant_id=self.request.tenant_id, is_active=True,
+        ).exists() if recipient else False
+        if not in_tenant:
+            raise serializers.ValidationError({'recipient': 'Recipient must belong to this school.'})
+        serializer.save(sender=self.request.user, tenant_id=self.request.tenant_id)
+
+    def update(self, request, *args, **kwargs):
+        # Messages are immutable content-wise; only the read flag may change.
+        if 'is_read' not in (request.data or {}):
+            return Response(
+                {'detail': 'Only is_read may be updated on a message.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        message = self.get_object()
+        message.is_read = True
+        message.save(update_fields=['is_read'])
+        return Response(DirectMessageSerializer(message, context=self.get_serializer_context()).data)
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        count = DirectMessage.objects.filter(
+            tenant_id=request.tenant_id,
+            recipient=request.user,
+            is_read=False,
+        ).count()
+        return Response({'count': count})
 
     @action(detail=False, methods=['post'], url_path='mark-all-read')
     def mark_all_read(self, request):

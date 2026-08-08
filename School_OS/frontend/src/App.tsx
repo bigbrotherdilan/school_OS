@@ -41,6 +41,7 @@ const AddStudentPage = lazy(() => import('./pages/admin/academic/students/AddStu
 const RecordTransactionPage = lazy(() => import('./pages/admin/finance/RecordTransactionPage'));
 const AddFacultyPage = lazy(() => import('./pages/admin/operations/AddFacultyPage'));
 const AddBursarPage = lazy(() => import('./pages/admin/operations/AddBursarPage'));
+const AddParentPage = lazy(() => import('./pages/admin/operations/AddParentPage'));
 const Timetables = lazy(() => import('./pages/admin/academic/Timetables'));
 const Examinations = lazy(() => import('./pages/admin/academic/Examinations'));
 const ExamWorkflow = lazy(() => import('./pages/admin/academic/ExamWorkflow'));
@@ -232,6 +233,7 @@ export default function App() {
           <Route path="operations/faculty" element={<TeacherDirectory />} />
           <Route path="operations/faculty/new" element={<AddFacultyPage />} />
           <Route path="operations/bursars/new" element={<AddBursarPage />} />
+          <Route path="operations/parents/new" element={<AddParentPage />} />
           <Route path="operations/faculty/import" element={<BulkImportTeachers />} />
           <Route path="finance" element={<FinanceTreasury />} />
           <Route path="finance/fee-setup" element={<FinanceFeeSetup />} />

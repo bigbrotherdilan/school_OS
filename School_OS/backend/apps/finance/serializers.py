@@ -22,9 +22,12 @@ class FeeStructureSerializer(serializers.ModelSerializer):
 
 
 class InvoiceLineItemSerializer(serializers.ModelSerializer):
+    category = serializers.CharField(source='fee_structure.category.name', read_only=True)
+    is_mandatory = serializers.BooleanField(source='fee_structure.category.is_mandatory', read_only=True)
+
     class Meta:
         model = InvoiceLineItem
-        fields = ['id', 'fee_structure', 'label', 'amount']
+        fields = ['id', 'fee_structure', 'category', 'label', 'amount', 'is_mandatory']
 
 
 class StudentInvoiceSerializer(serializers.ModelSerializer):
