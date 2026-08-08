@@ -26,10 +26,16 @@ class MarkEntryWindowSerializer(serializers.ModelSerializer):
         read_only_fields = ['tenant']
 
     def get_sequence_name(self, obj):
-        return f"{obj.sequence.name} ({obj.sequence.term.name})" if obj.sequence_id else None
+        try:
+            return f"{obj.sequence.name} ({obj.sequence.term.name})" if obj.sequence_id and obj.sequence else None
+        except Exception:
+            return None
 
     def get_term_name(self, obj):
-        return obj.sequence.term.name if obj.sequence_id else None
+        try:
+            return obj.sequence.term.name if obj.sequence_id and obj.sequence and obj.sequence.term else None
+        except Exception:
+            return None
 
 
 class ExamSerializer(serializers.ModelSerializer):

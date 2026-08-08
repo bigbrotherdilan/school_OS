@@ -127,6 +127,38 @@ export default function NotificationsDropdown() {
     return () => clearInterval(interval);
   }, [fetchItems]);
 
+  // Fetch full list when dropdown opens
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    fetchItems().finally(() => setLoading(false));
+  }, [open, fetchItems]);
+
+  // Mark all notifications, messages and announcements as read for this user.
+  // Announcement read state is tracked server-side so it persists across
+  // log-ins, log-outs and page reloads for the current user.
+  const markAllAsRead = useCallback(() => {
+    try {
+      api.post('/notifications/announcements/mark-all-read/');
+      api.post('/notifications/notifications/mark-all-read/');
+      api.post('/notifications/messages/mark-all-read/');
+    } catch {
+      /* silent */
+    }
+    setItems((prev) =>
+      prev.map((n) => {
+        if (n.type === 'announcement') return { ...n, data: { ...n.data, is_read: true } };
+        if (n.type === 'notification') return { ...n, data: { ...n.data, is_read: true } };
+        if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
+        return n;
+      })
+    );
+  }, []);
+
+  // Opening the bell only toggles the dropdown. Read state is handled by
+  // individual item clicks or the "Mark all as read" button in the header.
+  const handleBellClick = () => {
+    setOpen((prev) => !prev);
   // Clicking the bell opens the dropdown; everything shown there gets marked
   // read (server-persisted) and the badge clears. Closing re-fetches only
   // unread items, so read ones disappear from the list for good.
@@ -176,6 +208,17 @@ export default function NotificationsDropdown() {
     try {
       await api.post('/notifications/announcements/mark-all-read/');
       setItems((prev) => prev.filter((n) => !(n.type === 'announcement' && n.data.id === annId)));
+    } catch { /* silent */ }
+  };
+
+  const markAnnouncementRead = async (annId: string) => {
+    try {
+      await api.post(`/notifications/announcements/${annId}/read/`);
+      setItems((prev) =>
+        prev.map((n) =>
+          n.type === 'announcement' && n.data.id === annId ? { ...n, data: { ...n.data, is_read: true } } : n
+        )
+      );
     } catch { /* silent */ }
   };
 
@@ -293,12 +336,23 @@ export default function NotificationsDropdown() {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-900">Notifications</h3>
-            {unreadCount > 0 && (
-              <span className="text-xs bg-error/10 text-error font-semibold px-2 py-0.5 rounded-full">
-                {unreadCount} unread
-              </span>
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-slate-900">Notifications</h3>
+              {badgeCount > 0 && (
+                <span className="text-xs bg-error/10 text-error font-semibold px-2 py-0.5 rounded-full">
+                  {badgeCount} unread
+                </span>
+              )}
+            </div>
+            {badgeCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 py-1 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm leading-none">done_all</span>
+                Mark all as read
+              </button>
             )}
           </div>
 
@@ -318,7 +372,11 @@ export default function NotificationsDropdown() {
 
             {!loading &&
               items.map((item) => {
-                const isUnread = !item.data.is_read;
+                const isUnread =
+                  item.type === 'message' ? !item.data.is_read :
+                  item.type === 'notification' ? !item.data.is_read :
+                  item.type === 'announcement' ? !item.data.is_read :
+                  false;
                 const isUrgent = item.type === 'announcement' && item.data.is_urgent;
 
                 return (

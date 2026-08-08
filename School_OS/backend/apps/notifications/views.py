@@ -71,6 +71,12 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), IsSchoolAdmin()]
         return super().get_permissions()
 
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant_id=self.request.tenant_id,
+            created_by=self.request.user,
+        )
+
     def get_queryset(self):
         tenant_id = self.request.tenant_id
         user = self.request.user
@@ -95,10 +101,23 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
                 audience_q |= Q(audience=Announcement.AudienceType.STUDENTS)
             qs = qs.filter(audience_q)
 
-        # Optional audience filter for admin
         audience_filter = self.request.query_params.get('audience')
         if audience_filter:
-            qs = qs.filter(audience=audience_filter)
+            if is_admin:
+                qs = qs.filter(audience=audience_filter)
+            else:
+                role_audience = None
+                if 'parent' in user_roles:
+                    role_audience = Announcement.AudienceType.PARENTS
+                elif 'teacher' in user_roles:
+                    role_audience = Announcement.AudienceType.TEACHERS
+                elif 'student' in user_roles:
+                    role_audience = Announcement.AudienceType.STUDENTS
+
+                if audience_filter in {Announcement.AudienceType.ALL, role_audience}:
+                    qs = qs.filter(Q(audience=Announcement.AudienceType.ALL) | Q(audience=audience_filter))
+                else:
+                    qs = qs.none()
 
         # Unread-only view for the bell badge
         if self.request.query_params.get('unread') in ('true', '1'):
@@ -135,6 +154,12 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
 class DirectMessageViewSet(viewsets.ModelViewSet):
     serializer_class = DirectMessageSerializer
     permission_classes = [IsAuthenticated, IsSchoolMember]
+
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant_id=self.request.tenant_id,
+            sender=self.request.user,
+        )
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id

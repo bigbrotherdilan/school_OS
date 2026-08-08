@@ -10,6 +10,16 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
+        extra_kwargs = {
+            'tenant': {'read_only': True},
+            'created_by': {'read_only': True},
+        }
+
+    def get_is_read(self, obj):
+        request = self.context.get('request')
+        if request and getattr(request, 'user', None) and request.user.is_authenticated:
+            return obj.reads.filter(user=request.user).exists()
+        return False
 
     def get_is_read(self, obj):
         request = self.context.get('request')
