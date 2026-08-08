@@ -2,8 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.core.exceptions import ValidationError
 from apps.tenants.models import Tenant, TenantConfig
-from apps.authentication.permissions import IsPlatformAdmin
+from apps.authentication.permissions import IsPlatformAdmin, IsSchoolAdmin
 from apps.tenants.serializers import (
     TenantSerializer,
     TenantListSerializer,
@@ -25,15 +26,43 @@ class TenantViewSet(viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
     lookup_field = 'id'
 
+    def _resolve_tenant_context(self):
+        """The tenant middleware skips /api/v1/tenants*, so restore the
+        request tenant context from this URL's tenant id. This lets
+        tenant-scoped permissions (e.g. IsSchoolAdmin) work on these routes."""
+        if getattr(self.request, 'tenant_id', None):
+            return
+        raw = self.kwargs.get(self.lookup_field)
+        if not raw:
+            return
+        try:
+            tenant = Tenant.objects.filter(
+                id=raw, status='active'
+            ).first()
+        except (ValueError, ValidationError):
+            return
+        if tenant is not None:
+            self.request.tenant = tenant
+            self.request.tenant_id = str(tenant.id)
+
+    def get_permissions(self):
+        self._resolve_tenant_context()
+        if self.action in ['list', 'retrieve', 'config']:
+            return [IsAuthenticated()]
+        if self.action == 'school_config':
+            if self.request.method == 'PATCH':
+                return [IsAuthenticated(), IsSchoolAdmin()]
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsPlatformAdmin()]
+
     def get_serializer_class(self):
         if self.action == 'list':
             return TenantListSerializer
         return TenantSerializer
 
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'config', 'school_config']:
-            return [IsAuthenticated()]
-        return [IsAuthenticated(), IsPlatformAdmin()]
+    def get_object(self):
+        self._resolve_tenant_context()
+        return super().get_object()
 
     def perform_create(self, serializer):
         serializer.save(status='active')

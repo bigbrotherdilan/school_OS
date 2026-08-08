@@ -6,7 +6,7 @@ from django.db.models import Sum, Q
 from django.db import transaction
 from django.utils import timezone
 from apps.academic.views import BaseTenantViewSet
-from apps.authentication.permissions import IsSchoolAdminOrBursar
+from apps.authentication.permissions import IsSchoolAdminOrBursar, CanWriteFinance
 from apps.finance.models import (
     FeeCategory, FeeStructure, StudentInvoice, PaymentTransaction,
     InvoiceLineItem, ExpenseCategory, Expense
@@ -27,24 +27,43 @@ from django.http import HttpResponse
 from django.utils.crypto import get_random_string
 
 
-class FeeCategoryViewSet(BaseTenantViewSet):
+class FinanceWritePermissionsMixin:
+    """
+    Finance views: everyone with IsSchoolAdminOrBursar may READ; RECORDING
+    (create/update/delete) requires CanWriteFinance — i.e. bursars always,
+    admins only while TenantConfig.finance_recording is 'admin_and_bursar'.
+    """
+    permission_classes = [IsSchoolAdminOrBursar]
+
+    def get_permissions(self):
+        if self.request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+            return [CanWriteFinance()]
+        return [IsSchoolAdminOrBursar()]
+
+
+class FeeCategoryViewSet(FinanceWritePermissionsMixin, BaseTenantViewSet):
     queryset = FeeCategory.objects.select_related('tenant')
     serializer_class = FeeCategorySerializer
-    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
-class FeeStructureViewSet(BaseTenantViewSet):
+class FeeStructureViewSet(FinanceWritePermissionsMixin, BaseTenantViewSet):
     queryset = FeeStructure.objects.select_related('tenant', 'academic_year', 'category', 'target_class')
     serializer_class = FeeStructureSerializer
-    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
-class StudentInvoiceViewSet(BaseTenantViewSet):
-    queryset = StudentInvoice.objects.select_related('tenant', 'student', 'student__current_class', 'academic_year')
+class StudentInvoiceViewSet(FinanceWritePermissionsMixin, BaseTenantViewSet):
+    queryset = StudentInvoice.objects.select_related(
+        'tenant', 'student', 'student__current_class', 'academic_year'
+    ).prefetch_related('line_items__fee_structure__category')
     serializer_class = StudentInvoiceSerializer
-    permission_classes = [IsSchoolAdminOrBursar]
+
+    def get_permissions(self):
+        # send-reminder is a notification, not a financial record — admins keep it.
+        if self.action == 'send_reminder':
+            return [IsSchoolAdminOrBursar()]
+        return super().get_permissions()
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -102,6 +121,27 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
         if not fee_structures.exists():
             return Response(
                 {'detail': 'No fee structures found for this student.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Duplicate guard: refuse to create a second fee for the year while any
+        # (unpaid, partial, paid, or draft) invoice already covers the same fees
+        applicable_ids = list(fee_structures.values_list('id', flat=True))
+        existing_items = InvoiceLineItem.objects.filter(
+            invoice__tenant=tenant,
+            invoice__student=student,
+            invoice__academic_year=current_year,
+            fee_structure_id__in=applicable_ids,
+        ).exclude(invoice__status=StudentInvoice.Status.CANCELLED)
+        if existing_items.exists():
+            numbers = sorted(set(existing_items.values_list('invoice__invoice_number', flat=True)))
+            labels = sorted(set(existing_items.values_list('label', flat=True)))
+            return Response(
+                {'detail': (
+                    f"{student.full_name} already has fee(s) on {', '.join(numbers)} "
+                    f"covering: {', '.join(labels)}. Only one fee per student per academic year — "
+                    "no duplicate generated. Cancel the existing fee first if it needs re-issuing."
+                )},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -170,6 +210,25 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
         if not fee_structures.exists():
             return Response({'detail': 'No fee structures found for this class.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Skip students who already have a fee (unpaid, partial, paid, or draft)
+        # covering any of these categories in the current academic year
+        applicable_ids = list(fee_structures.values_list('id', flat=True))
+        already_billed = set(InvoiceLineItem.objects.filter(
+            invoice__tenant=tenant,
+            invoice__academic_year=current_year,
+            fee_structure_id__in=applicable_ids,
+        ).exclude(invoice__status=StudentInvoice.Status.CANCELLED).values_list('invoice__student_id', flat=True))
+        class_student_ids = set(students.values_list('id', flat=True))
+        skipped_count = len(class_student_ids & already_billed)
+        students = students.exclude(id__in=already_billed)
+
+        if not students.exists():
+            return Response({
+                'detail': 'No new fees generated: all students in this class already have fees covering these categories.',
+                'created': 0,
+                'skipped': skipped_count,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         created = []
         with transaction.atomic():
             for student in students:
@@ -205,7 +264,7 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
             except Exception:
                 pass
 
-        return Response({'created': len(created), 'invoice_ids': created})
+        return Response({'created': len(created), 'skipped': skipped_count, 'invoice_ids': created})
 
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request):
@@ -269,10 +328,9 @@ class StudentInvoiceViewSet(BaseTenantViewSet):
             return Response({'detail': f'Failed to send reminder: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class PaymentTransactionViewSet(BaseTenantViewSet):
+class PaymentTransactionViewSet(FinanceWritePermissionsMixin, BaseTenantViewSet):
     queryset = PaymentTransaction.objects.select_related('tenant', 'invoice', 'recorded_by')
     serializer_class = PaymentTransactionSerializer
-    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
     def create(self, request, *args, **kwargs):
@@ -286,21 +344,20 @@ class PaymentTransactionViewSet(BaseTenantViewSet):
         return response
 
 
-class ExpenseCategoryViewSet(BaseTenantViewSet):
+class ExpenseCategoryViewSet(FinanceWritePermissionsMixin, BaseTenantViewSet):
     queryset = ExpenseCategory.objects.select_related('tenant')
     serializer_class = ExpenseCategorySerializer
-    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
-class ExpenseViewSet(BaseTenantViewSet):
+class ExpenseViewSet(FinanceWritePermissionsMixin, BaseTenantViewSet):
     queryset = Expense.objects.select_related('tenant', 'category', 'recorded_by')
     serializer_class = ExpenseSerializer
-    permission_classes = [IsSchoolAdminOrBursar]
     allow_delete = False
 
 
 @api_view(['GET'])
+@permission_classes([IsSchoolAdminOrBursar])
 def finance_summary(request):
     tenant_id = getattr(request, 'tenant_id', None)
     if not tenant_id:

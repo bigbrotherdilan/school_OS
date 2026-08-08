@@ -8,6 +8,7 @@ import {
   Star, Globe, Briefcase, Languages, BookOpen, MapPin, KeyRound
 } from 'lucide-react';
 import TeachingAssignmentModal from '../../../components/admin/staff/TeachingAssignmentModal';
+import CredentialsCard from '../../../components/ui/CredentialsCard';
 
 export default function TeacherDirectory() {
   const navigate = useNavigate();
@@ -473,25 +474,27 @@ export default function TeacherDirectory() {
       {resetResult && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setResetResult(null)}>
           <div className="bg-surface-container-lowest rounded-3xl w-full max-w-md p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-            <div className="text-center space-y-6">
-              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto">
-                <KeyRound className="w-8 h-8 text-amber-600" />
+              <div className="text-center space-y-6">
+                <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto">
+                  <KeyRound className="w-8 h-8 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-on-surface mb-1">Password Reset</h3>
+                  <p className="text-sm text-on-surface-variant">New temporary password for <span className="font-bold">{resetResult.user.full_name}</span></p>
+                </div>
+                {resetResult.temporary_password && (
+                  <div className="text-left">
+                    <CredentialsCard
+                      email={resetResult.user.email}
+                      password={resetResult.temporary_password}
+                      label="New Temporary Password"
+                    />
+                  </div>
+                )}
+                <button onClick={() => setResetResult(null)} className="w-full py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:shadow-lg active:scale-95 transition-all">
+                  Done
+                </button>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-on-surface mb-1">Password Reset</h3>
-                <p className="text-sm text-on-surface-variant">New temporary password for <span className="font-bold">{resetResult.user.full_name}</span></p>
-              </div>
-              <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/15">
-                <p className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-2">Status</p>
-                <p className="text-sm font-bold text-success">Password sent to {resetResult.user.email}</p>
-              </div>
-              <p className="text-xs text-on-surface-variant leading-relaxed">
-                A temporary password has been sent to the teacher's email. They should change it after logging in.
-              </p>
-              <button onClick={() => setResetResult(null)} className="w-full py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:shadow-lg active:scale-95 transition-all">
-                Done
-              </button>
-            </div>
           </div>
         </div>
       )}

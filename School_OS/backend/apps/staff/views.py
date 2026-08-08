@@ -63,6 +63,8 @@ def onboard_bursar(request):
                 last_name=data['last_name'],
                 password=temp_password,
             )
+            user.must_change_password = True
+            user.save(update_fields=['must_change_password'])
 
             UserRoleMapping.objects.create(
                 user=user,
@@ -92,7 +94,9 @@ def onboard_bursar(request):
                 pass
 
             return Response({
-                "message": f"Bursar {user.full_name} onboarded successfully. Credentials sent to {user.email}.",
+                "message": f"Bursar {user.full_name} onboarded successfully. "
+                          f"Temporary password below — share it with {user.first_name} (email is not configured).",
+                "temp_password": temp_password,
                 "user": {
                     "id": str(user.id),
                     "full_name": user.full_name,
@@ -101,6 +105,112 @@ def onboard_bursar(request):
                 }
             }, status=status.HTTP_201_CREATED)
 
+    except Exception as e:
+        return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@perm_decorator([IsAuthenticated, IsSchoolAdmin])
+def onboard_parent(request):
+    """
+    POST /api/v1/staff/parents/onboard/
+    Create a parent user. Parents are GLOBAL — they hold a parent role mapping
+    at the creating school (their 'home') but can be linked to students in any
+    school. Returns the temporary password on screen (email is not configured).
+    Body: {first_name, last_name, email, phone?, default_language?,
+           links?: [{student_id, relationship_type}]}
+    """
+    from rest_framework import serializers as drf_serializers
+    from apps.authentication.models import User, UserRoleMapping
+    from apps.students.models import Student, ParentStudentRelationship
+
+    class ParentOnboardSerializer(drf_serializers.Serializer):
+        first_name = drf_serializers.CharField(max_length=150)
+        last_name = drf_serializers.CharField(max_length=150)
+        email = drf_serializers.EmailField()
+        phone = drf_serializers.CharField(max_length=30, required=False, allow_blank=True)
+        default_language = drf_serializers.ChoiceField(
+            choices=['en', 'fr'], required=False, default='en')
+        links = drf_serializers.ListField(
+            child=drf_serializers.DictField(), required=False, default=list)
+
+        def validate_email(self, value):
+            if User.objects.filter(email=value).exists():
+                raise drf_serializers.ValidationError("A user with this email already exists.")
+            return value
+
+    serializer = ParentOnboardSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+
+    try:
+        with transaction.atomic():
+            tenant = request.tenant
+
+            alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+            temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+
+            user = User.objects.create_user(
+                email=data['email'],
+                username=data['email'],
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                password=temp_password,
+                phone=data.get('phone', ''),
+                default_language=data.get('default_language', 'en'),
+            )
+            user.must_change_password = True
+            user.save(update_fields=['must_change_password'])
+
+            UserRoleMapping.objects.create(
+                user=user,
+                tenant=tenant,
+                role='parent',
+                assigned_by=request.user,
+            )
+
+            # Validate + create student links (students must belong to the
+            # requesting school; the parent can later be linked to other
+            # schools' students by those schools' admins).
+            created_links = []
+            for link in data.get('links', []):
+                student_id = link.get('student_id')
+                relationship_type = link.get('relationship_type', 'guardian')
+                if not student_id:
+                    continue
+                try:
+                    student = Student.objects.get(id=student_id, tenant_id=tenant.id)
+                except (Student.DoesNotExist, ValueError):
+                    raise drf_serializers.ValidationError({
+                        'links': f'Student {student_id} does not exist in this school.'
+                    })
+                if relationship_type not in ('father', 'mother', 'guardian'):
+                    raise drf_serializers.ValidationError({
+                        'links': f'Invalid relationship_type: {relationship_type}.'
+                    })
+                rel, rel_created = ParentStudentRelationship.objects.get_or_create(
+                    parent_user=user, student=student,
+                    defaults={'relationship_type': relationship_type},
+                )
+                if rel_created:
+                    created_links.append(str(student.id))
+
+            return Response({
+                "message": f"Parent {user.full_name} created. "
+                           f"Temporary password below — share it with {user.first_name} (email is not configured).",
+                "temp_password": temp_password,
+                "user": {
+                    "id": str(user.id),
+                    "full_name": user.full_name,
+                    "email": user.email,
+                    "phone": user.phone,
+                    "home_school": tenant.school_name,
+                },
+                "linked_students": created_links,
+            }, status=status.HTTP_201_CREATED)
+
+    except drf_serializers.ValidationError:
+        raise
     except Exception as e:
         return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -142,6 +252,8 @@ class TeacherViewSet(BaseTenantViewSet):
                     password=temp_password,
                     default_language=data.get('default_language', 'en')
                 )
+                user.must_change_password = True
+                user.save(update_fields=['must_change_password'])
 
                 UserRoleMapping.objects.create(
                     user=user,
@@ -191,7 +303,9 @@ class TeacherViewSet(BaseTenantViewSet):
                 result_serializer = TeacherSerializer(teacher)
 
                 return Response({
-                    "message": f"Teacher {user.full_name} onboarded successfully. Credentials sent to {user.email}.",
+                    "message": f"Teacher {user.full_name} onboarded successfully. "
+                               f"Temporary password below — share it with {user.first_name} (email is not configured).",
+                    "temp_password": temp_password,
                     "teacher": result_serializer.data
                 }, status=status.HTTP_201_CREATED)
 
@@ -255,6 +369,8 @@ class TeacherViewSet(BaseTenantViewSet):
                         password=temp_password,
                         default_language=row.get('default_language', 'en').strip() or 'en',
                     )
+                    user.must_change_password = True
+                    user.save(update_fields=['must_change_password'])
 
                     UserRoleMapping.objects.create(
                         user=user, tenant=tenant, role='teacher', assigned_by=request.user,
@@ -292,6 +408,7 @@ class TeacherViewSet(BaseTenantViewSet):
                         'email': email,
                         'name': f"{first_name} {last_name}",
                         'employee_id': employee_id,
+                        'temp_password': temp_password,
                     })
             except Exception as e:
                 errors.append({'row': row_num, 'email': email, 'error': str(e)})

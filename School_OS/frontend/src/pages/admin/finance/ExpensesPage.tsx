@@ -1,9 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
+import { useCanRecordFinance } from '../../../hooks/useCanRecordFinance';
 
 export default function ExpensesPage() {
   const { addToast } = useToastStore();
+  const canRecord = useCanRecordFinance();
   const [categories, setCategories] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,9 +48,11 @@ export default function ExpensesPage() {
           <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Expenses</h1>
           <p className="text-on-surface-variant mt-1">Record and track school operating expenses.</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:shadow-lg transition-all">
-          + New Expense
-        </button>
+        {canRecord && (
+          <button onClick={() => setShowForm(true)} className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:shadow-lg transition-all">
+            + New Expense
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2 border-b border-outline-variant/10">

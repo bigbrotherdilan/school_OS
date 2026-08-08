@@ -1,8 +1,10 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ProfileEditor from '../../../components/ui/ProfileEditor';
 import { useToastStore } from '../../../stores/toastStore';
+import { useTenantStore } from '../../../stores/tenantStore';
+import { useAuthStore } from '../../../stores/authStore';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -10,6 +12,37 @@ export default function Settings() {
   const { addToast } = useToastStore();
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState(true);
+  const { activeTenantId, schoolConfig, fetchSchoolConfig, patchSchoolConfig } = useTenantStore();
+  const roles = useAuthStore(s => s.roles);
+  const isAdminRole = roles.some(r => r.tenant_id === activeTenantId && (r.role === 'admin' || r.role === 'super_admin'));
+
+  const [financeRecording, setFinanceRecording] = useState<'admin_and_bursar' | 'bursar_only'>(schoolConfig.finance_recording);
+  const [savingFinance, setSavingFinance] = useState(false);
+
+  useEffect(() => {
+    if (activeTenantId) fetchSchoolConfig(activeTenantId);
+  }, [activeTenantId, fetchSchoolConfig]);
+
+  useEffect(() => {
+    setFinanceRecording(schoolConfig.finance_recording);
+  }, [schoolConfig.finance_recording]);
+
+  const handleFinanceToggle = async (value: 'admin_and_bursar' | 'bursar_only') => {
+    setSavingFinance(true);
+    try {
+      await patchSchoolConfig({ finance_recording: value });
+      addToast(
+        value === 'bursar_only'
+          ? 'Finance recording restricted to bursars only.'
+          : 'Admins can record finance again.',
+        'success'
+      );
+    } catch {
+      addToast('Failed to update finance settings.', 'error');
+    } finally {
+      setSavingFinance(false);
+    }
+  };
 
   const handlePurge = () => {
     addToast('System cache completely purged. Operations restored to zero state.', 'success');
@@ -102,6 +135,45 @@ export default function Settings() {
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${sessionTimeout ? 'right-1' : 'left-1'}`}></div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-8 pt-12 border-t border-slate-100">
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Billing & Finance</h3>
+            <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200/60">
+              <div className="flex justify-between items-center gap-8">
+                <div>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">Finance Recording Role</h4>
+                  <p className="text-xs font-medium text-slate-500 leading-relaxed max-w-md">
+                    {financeRecording === 'bursar_only'
+                      ? 'Only the bursar can record payments, expenses, and generate fees. Admins keep read-only access to the treasury.'
+                      : 'Admins and the bursar can both record payments, expenses, and generate fees.'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleFinanceToggle('admin_and_bursar')}
+                    disabled={savingFinance}
+                    className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${financeRecording === 'admin_and_bursar' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-400 hover:bg-slate-100'}`}
+                  >
+                    Admin + Bursar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFinanceToggle('bursar_only')}
+                    disabled={savingFinance}
+                    className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${financeRecording === 'bursar_only' ? 'bg-error text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-400 hover:bg-slate-100'}`}
+                  >
+                    Bursar Only
+                  </button>
+                </div>
+              </div>
+              {isAdminRole && financeRecording === 'bursar_only' && (
+                <p className="mt-4 text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  You are an admin — when this mode is active you can view the treasury but cannot record transactions. Add a bursar under Administration → Add Bursar to record finance.
+                </p>
+              )}
             </div>
           </div>
 

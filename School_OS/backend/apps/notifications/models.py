@@ -36,28 +36,22 @@ class Announcement(models.Model):
 
 class AnnouncementRead(models.Model):
     """
-    Per-user read marker for an announcement so read state persists
-    server-side across sessions (log out / log back in, new devices).
+    Server-side read tracking for announcements so the bell badge and
+    "removed once viewed" behaviour persist across logins/devices.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    announcement = models.ForeignKey(
-        Announcement, on_delete=models.CASCADE, related_name='reads'
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='announcement_reads')
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='announcement_reads')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='read_announcements')
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name='reads')
     read_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'announcement_reads'
         constraints = [
-            models.UniqueConstraint(fields=['announcement', 'user'], name='uniq_announcement_user'),
-        ]
-        indexes = [
-            models.Index(fields=['user', 'tenant'], name='idx_ann_read_user'),
+            models.UniqueConstraint(fields=['user', 'announcement'], name='uniq_announcement_read_user'),
         ]
 
     def __str__(self):
-        return f"{self.user.email} read {self.announcement.title}"
+        return f"{self.user.full_name} read {self.announcement.title}"
 
 
 class DirectMessage(models.Model):

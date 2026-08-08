@@ -1,9 +1,10 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Wallet, Receipt, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Wallet, Receipt, CheckCircle, Loader2, Lock } from 'lucide-react';
 import { useToastStore } from '../../../stores/toastStore';
 import { api } from '../../../services/api';
 import { useAuthStore } from '../../../stores/authStore';
+import { useCanRecordFinance } from '../../../hooks/useCanRecordFinance';
 
 export default function RecordTransactionPage() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function RecordTransactionPage() {
   const { addToast } = useToastStore();
   const { roles } = useAuthStore();
   const isBursar = roles?.some((r) => r.role === 'bursar');
+  const canRecord = useCanRecordFinance();
   const backPath = isBursar ? '/bursar' : '/admin/finance';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -35,7 +37,7 @@ export default function RecordTransactionPage() {
         const unpaid = data.filter((inv: any) => inv.status !== 'paid');
         setInvoices(unpaid);
         if (unpaid.length === 0) {
-          setInvoiceError('No unpaid invoices found. Generate fee bills first from the Invoices page.');
+          setInvoiceError('No unpaid fees found. Generate fees first from the Fees page.');
         }
       } catch (error: any) {
         console.error("Failed to fetch invoices:", error);
@@ -101,9 +103,31 @@ export default function RecordTransactionPage() {
         <p className="text-on-surface-variant mt-2 text-lg">Process institutional fee collections and generate official receipts.</p>
       </section>
 
+      {!canRecord && (
+        <div className="mb-10 max-w-3xl bg-amber-50 border border-amber-200 rounded-3xl p-10 flex items-start gap-6">
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
+            <Lock className="w-7 h-7 text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-amber-900">Recording is restricted to the bursar</h3>
+            <p className="text-sm text-amber-800/80 font-medium mt-2 leading-relaxed">
+              This school has enabled <strong>Bursar Only</strong> finance recording. Payments, expenses and fee
+              generation can only be recorded by the bursar account. You can still view the
+              treasury, invoices, and the student ledger.
+            </p>
+            <button
+              onClick={() => navigate('/admin/finance')}
+              className="mt-5 px-6 py-3 bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-amber-700 active:scale-95 transition-all"
+            >
+              Back to Treasury
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Form Area */}
-        <div className="md:col-span-2 space-y-8 ">
+        <div className={`md:col-span-2 space-y-8 ${!canRecord ? 'pointer-events-none opacity-40 select-none' : ''}`}>
           <form onSubmit={handleSubmit} className="bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm space-y-8">
             
             <div className="space-y-6 border-b border-outline-variant/10 pb-8">
@@ -112,7 +136,7 @@ export default function RecordTransactionPage() {
               </h3>
               
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Select Target Bill</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Select Fee</label>
                 <div className="relative">
                     <select
                         required
@@ -123,7 +147,7 @@ export default function RecordTransactionPage() {
                         className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value="">
-                          {isLoadingInvoices ? 'Loading invoices...' : '-- Choose Bill to Credit --'}
+                          {isLoadingInvoices ? 'Loading fees...' : '-- Choose Fee to Credit --'}
                         </option>
                         {invoices.map((inv) => (
                             <option key={inv.id} value={inv.id}>
@@ -144,10 +168,27 @@ export default function RecordTransactionPage() {
                     </div>
                 )}
                 {selectedInvoiceDetails && (
-                    <p className="text-xs font-bold text-secondary mt-2 flex items-center gap-2">
-                        <CheckCircle className="w-3 h-3" />
-                        Selected: {selectedInvoiceDetails.student_name} - Amount Due: CFA {parseFloat(selectedInvoiceDetails.balance).toLocaleString()}
+                  <div className="mt-3">
+                    <p className="text-xs font-bold text-secondary flex items-center gap-2">
+                      <CheckCircle className="w-3 h-3" />
+                      Selected: {selectedInvoiceDetails.student_name} - Amount Due: CFA {parseFloat(selectedInvoiceDetails.balance).toLocaleString()}
                     </p>
+                    {selectedInvoiceDetails.line_items?.length > 0 && (
+                      <div className="mt-3 rounded-xl border border-secondary/10 bg-secondary-container/20 divide-y divide-secondary/10 overflow-hidden">
+                        {selectedInvoiceDetails.line_items.map((li: any, idx: number) => (
+                          <div key={idx} className="px-4 py-2 flex items-center justify-between gap-3 text-xs">
+                            <span className="font-bold text-on-surface truncate">
+                              {li.label || li.category}
+                              <span className={`ml-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${li.is_mandatory ? 'bg-secondary/15 text-secondary' : 'bg-amber-100 text-amber-700'}`}>
+                                {li.is_mandatory ? 'Mandatory' : 'Optional'}
+                              </span>
+                            </span>
+                            <span className="font-black text-on-surface-variant shrink-0">CFA {parseFloat(li.amount).toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 

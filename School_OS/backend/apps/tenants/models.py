@@ -152,6 +152,19 @@ class TenantConfig(models.Model):
         help_text='Available payment methods, e.g. ["mtn_momo", "orange_money", "bank_transfer"]',
     )
 
+    # Finance role policy
+    class FinanceRecording(models.TextChoices):
+        ADMIN_AND_BURSAR = 'admin_and_bursar', 'Admin and Bursar'
+        BURSAR_ONLY = 'bursar_only', 'Bursar Only'
+
+    finance_recording = models.CharField(
+        max_length=20,
+        choices=FinanceRecording.choices,
+        default=FinanceRecording.ADMIN_AND_BURSAR,
+        help_text="Who is allowed to RECORD financial transactions (payments, expenses, invoices). "
+                  "Bursar Only removes recording rights from school admins.",
+    )
+
     # Localization
     default_language = models.CharField(
         max_length=5, default='en',

@@ -55,7 +55,7 @@ export default function ArrearsManagement() {
           <option value="">All Classes</option>
           {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <span className="text-sm text-on-surface-variant font-medium">{invoices.length} outstanding bill{invoices.length !== 1 ? 's' : ''}</span>
+        <span className="text-sm text-on-surface-variant font-medium">{invoices.length} outstanding fee{invoices.length !== 1 ? 's' : ''}</span>
       </div>
 
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
@@ -64,7 +64,7 @@ export default function ArrearsManagement() {
         ) : invoices.length === 0 ? (
           <div className="p-12 text-center">
             <span className="material-symbols-outlined text-5xl block mb-3 opacity-30 mx-auto">check_circle</span>
-            <p className="text-sm font-bold text-secondary">No outstanding arrears - all bills are settled!</p>
+            <p className="text-sm font-bold text-secondary">No outstanding arrears - all fees are settled!</p>
           </div>
         ) : (
           <table className="w-full text-left">
@@ -72,7 +72,7 @@ export default function ArrearsManagement() {
               <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4">Class</th>
-                <th className="px-6 py-4">Bill #</th>
+                <th className="px-6 py-4">Ref</th>
                 <th className="px-6 py-4">Amount</th>
                 <th className="px-6 py-4">Balance</th>
                 <th className="px-6 py-4">Due Date</th>

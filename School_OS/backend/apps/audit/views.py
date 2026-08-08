@@ -7,12 +7,13 @@ import csv
 from datetime import datetime
 from .models import AuditLog
 from .serializers import AuditLogSerializer
+from apps.authentication.permissions import IsSchoolAdminOrBursar
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """List and retrieve audit logs."""
     serializer_class = AuditLogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsSchoolAdminOrBursar]
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
@@ -40,7 +41,7 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSchoolAdminOrBursar])
 def export_system_audit(request):
     """
     Export System Audit logs as CSV.

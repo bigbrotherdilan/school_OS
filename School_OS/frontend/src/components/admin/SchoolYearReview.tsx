@@ -129,7 +129,7 @@ export default function SchoolYearReview() {
             <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">Financial Summary</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Total Billed</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Total Fees</span>
                 <p className="text-2xl font-bold text-gray-900">{formatCFA(data.finance.total_billed)} CFA</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">

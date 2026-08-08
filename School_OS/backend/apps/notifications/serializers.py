@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Announcement, DirectMessage, EmailSetting, Notification
+from .models import Announcement, AnnouncementRead, DirectMessage, EmailSetting, Notification
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):
@@ -21,6 +21,13 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             return obj.reads.filter(user=request.user).exists()
         return False
 
+    def get_is_read(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        return obj.reads.filter(user=user).exists()
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(source='get_category_display', read_only=True)
@@ -38,11 +45,7 @@ class DirectMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = DirectMessage
         fields = '__all__'
-        extra_kwargs = {
-            'tenant': {'read_only': True},
-            'sender': {'read_only': True},
-        }
-
+        read_only_fields = ['tenant', 'sender', 'created_at']
 
 
 class EmailSettingSerializer(serializers.ModelSerializer):

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToastStore } from '../../../stores/toastStore';
 import { ArrowLeft, UserCircle, BadgeCheck, CheckCircle, Banknote } from 'lucide-react';
 import { api } from '../../../services/api';
+import CredentialsCard from '../../../components/ui/CredentialsCard';
 
 export default function AddBursarPage() {
   const navigate = useNavigate();
@@ -77,15 +78,11 @@ export default function AddBursarPage() {
               <span className="text-on-surface-variant">Staff ID</span>
               <span className="font-bold text-on-surface">{result.user.employee_id}</span>
             </div>
-            <div className="flex justify-between text-sm border-t border-outline-variant/15 pt-3">
-              <span className="text-on-surface-variant">Status</span>
-              <span className="font-bold text-success text-sm">Credentials sent to email</span>
-            </div>
           </div>
 
-          <p className="text-xs text-on-surface-variant leading-relaxed">
-            A temporary password has been sent to the bursar's email. They will be prompted to change it on first login.
-          </p>
+          {result.temp_password && (
+            <CredentialsCard email={result.user.email} password={result.temp_password} label="Bursar Temporary Password" />
+          )}
 
           <button onClick={() => navigate('/admin/operations')} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">
             Return to Operations
