@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Star, MapPin, BookOpen, Award, Clock, Filter, ChevronDown, GraduationCap, Languages, Loader2 } from 'lucide-react';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
@@ -23,8 +23,21 @@ export default function TeacherMarketplace() {
   const [minRating, setMinRating] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<PublicTeacher | null>(null);
+  const [regions, setRegions] = useState<{ name: string; count: number }[]>([]);
 
-  const fetchTeachers = async () => {
+  useEffect(() => {
+    fetchPublicTeachers().then((all) => {
+      const counts = new Map<string, number>();
+      for (const t of all) {
+        const name = t.school?.region;
+        if (!name) continue;
+        counts.set(name, (counts.get(name) || 0) + 1);
+      }
+      setRegions([...counts.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name)));
+    }).catch(() => {});
+  }, []);
+
+  const fetchTeachers = useCallback(async () => {
     setIsLoading(true);
     try {
       const teachers = await fetchPublicTeachers({
@@ -41,11 +54,11 @@ export default function TeacherMarketplace() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [search, subject, region, availability, minRating]);
 
   useEffect(() => {
     fetchTeachers();
-  }, [subject, region, availability, minRating]);
+  }, [fetchTeachers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +114,12 @@ export default function TeacherMarketplace() {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Region</label>
-              <input type="text" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="e.g. Centre" className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer">
+                <option value="">All Regions</option>
+                {regions.map((r) => (
+                  <option key={r.name} value={r.name}>{r.name} ({r.count})</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Availability</label>

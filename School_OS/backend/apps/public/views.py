@@ -127,6 +127,7 @@ class PublicSchoolListView(generics.ListAPIView):
                 Q(school_name__icontains=q) |
                 Q(region__icontains=q) |
                 Q(division__icontains=q) |
+                Q(address__icontains=q) |
                 Q(education_type__icontains=q)
             )
 
@@ -327,6 +328,7 @@ class PublicTeacherListView(generics.ListAPIView):
         if subject:
             qs = qs.filter(
                 Q(subjects_taught__contains=[subject]) |
+                Q(department__icontains=subject) |
                 Q(assignments__subject__name__icontains=subject)
             ).distinct()
 

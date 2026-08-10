@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.db import transaction
 from django.db.models import Q, Avg, Count
+from django.utils import timezone
 from django.core.mail import send_mail
 from apps.staff.models import Teacher, TeachingAssignment, PerformanceReview
 from apps.staff.serializers import (
@@ -466,6 +467,12 @@ class PerformanceReviewViewSet(viewsets.ModelViewSet):
     serializer_class = PerformanceReviewSerializer
     permission_classes = [IsSchoolAdmin]
     filterset_fields = ['teacher']
+
+    def perform_create(self, serializer):
+        serializer.save(
+            reviewer=self.request.user,
+            review_date=serializer.validated_data.get('review_date') or timezone.now().date(),
+        )
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id

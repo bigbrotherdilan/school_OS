@@ -12,3 +12,5 @@ python-dotenv==1.2.2
 qrcode[pil]==8.2
 requests==2.33.1
 ortools>=9.9,<10
+django-storages[s3]==1.14.4
+boto3==1.35.76

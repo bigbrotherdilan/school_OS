@@ -1,13 +1,7 @@
 ﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
-
-interface ThemeConfig {
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  fontFamily: string;
-}
+import { type ThemeConfig, DEFAULT_THEME } from '../utils/theme';
 
 export interface SchoolConfig {
   currency_code: string;
@@ -40,13 +34,20 @@ const DEFAULT_CONFIG: SchoolConfig = {
 interface TenantState {
   activeTenantId: string | null;
   themeConfig: ThemeConfig | null;
+  themeTenantId: string | null;
+  draftTheme: ThemeConfig | null;
+  logoUrl: string | null;
   schoolConfig: SchoolConfig;
   configLoaded: boolean;
   
   setActiveTenantId: (id: string) => void;
   setThemeConfig: (config: ThemeConfig) => void;
+  setDraftTheme: (config: ThemeConfig | null) => void;
   fetchSchoolConfig: (tenantId: string) => Promise<void>;
   patchSchoolConfig: (patch: Partial<SchoolConfig>) => Promise<void>;
+  fetchThemeConfig: (tenantId: string) => Promise<void>;
+  updateThemeConfig: (patch: Partial<ThemeConfig>) => Promise<void>;
+  uploadLogo: (tenantId: string, file: File) => Promise<string>;
 }
 
 export const useTenantStore = create<TenantState>()(
@@ -54,11 +55,15 @@ export const useTenantStore = create<TenantState>()(
     (set, get) => ({
       activeTenantId: null,
       themeConfig: null,
+      themeTenantId: null,
+      draftTheme: null,
+      logoUrl: null,
       schoolConfig: DEFAULT_CONFIG,
       configLoaded: false,
 
       setActiveTenantId: (id) => set({ activeTenantId: id, configLoaded: false }),
       setThemeConfig: (themeConfig) => set({ themeConfig }),
+      setDraftTheme: (draftTheme) => set({ draftTheme }),
 
       fetchSchoolConfig: async (tenantId: string) => {
         if (get().configLoaded && get().activeTenantId === tenantId) return;
@@ -76,9 +81,51 @@ export const useTenantStore = create<TenantState>()(
         const res = await api.patch(`/tenants/${tenantId}/school_config/`, patch);
         set({ schoolConfig: { ...get().schoolConfig, ...res.data }, configLoaded: true });
       },
+
+      fetchThemeConfig: async (tenantId: string) => {
+        try {
+          const res = await api.get(`/tenants/${tenantId}/config/`);
+          const theme = res.data?.theme || {};
+          set({
+            themeConfig: {
+              primaryColor: theme.primaryColor || DEFAULT_THEME.primaryColor,
+              secondaryColor: theme.secondaryColor || DEFAULT_THEME.secondaryColor,
+              accentColor: theme.accentColor || DEFAULT_THEME.accentColor,
+              fontFamily: theme.fontFamily || DEFAULT_THEME.fontFamily,
+            },
+            themeTenantId: tenantId,
+            logoUrl: res.data?.logo_url || null,
+          });
+        } catch {
+          set({ themeConfig: null, themeTenantId: null, logoUrl: null });
+        }
+      },
+
+      updateThemeConfig: async (patch: Partial<ThemeConfig>) => {
+        const tenantId = get().activeTenantId;
+        if (!tenantId) throw new Error('No active tenant.');
+        const next: ThemeConfig = { ...DEFAULT_THEME, ...get().themeConfig, ...patch };
+        await api.patch(`/tenants/${tenantId}/theme/`, { theme_config: next });
+        set({ themeConfig: next, themeTenantId: tenantId });
+      },
+
+      uploadLogo: async (tenantId: string, file: File) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await api.post(`/tenants/${tenantId}/logo/`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        const url = res.data?.logo_url || '';
+        set({ logoUrl: url });
+        return url;
+      },
     }),
     {
       name: 'sos-tenant-storage',
+      partialize: (state) => {
+        const { draftTheme: _draft, ...rest } = state;
+        return rest;
+      },
     }
   )
 );
