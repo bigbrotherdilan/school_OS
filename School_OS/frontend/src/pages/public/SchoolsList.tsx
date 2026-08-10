@@ -15,6 +15,11 @@ export default function SchoolsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const qParam = searchParams.get('q') || '';
+  useEffect(() => {
+    setSearch(qParam);
+  }, [qParam]);
+
   useEffect(() => {
     fetchRegions().then(setRegions).catch(() => {});
   }, []);
@@ -68,8 +73,9 @@ export default function SchoolsList() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
     if (search.trim()) params.set('q', search.trim());
+    else params.delete('q');
     setSearchParams(params);
   };
 

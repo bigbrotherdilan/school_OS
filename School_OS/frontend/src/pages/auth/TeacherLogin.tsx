@@ -1,6 +1,7 @@
 ﻿import { useAuthLogin } from '../../hooks/useAuthLogin';
 import { Link } from 'react-router-dom';
 import DeviceLimitDialog from '../../components/ui/DeviceLimitDialog';
+import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function TeacherLogin() {
     const { email, setEmail, password, setPassword, error, isLoading, handleLogin, activeSessions, confirmKillSessions, cancelLogin } = useAuthLogin({ 
@@ -48,16 +49,10 @@ export default function TeacherLogin() {
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-symbols-outlined text-slate-400 text-[20px]">lock</span>
-                                </div>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors sm:text-sm"
-                                    placeholder="••••••••"
-                                    required
+                                    className="border border-slate-200 focus:ring-primary"
                                 />
                             </div>
                         </div>

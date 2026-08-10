@@ -1,6 +1,7 @@
 ﻿import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useTenantStore } from '../../stores/tenantStore';
+import { DEFAULT_THEME, contrastTextOn } from '../../utils/theme';
 
 const navItems = [
   { icon: 'dashboard', label: 'Dashboard', path: '/admin' },
@@ -19,9 +20,13 @@ const navItems = [
 export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const location = useLocation();
   const { tenants } = useAuthStore();
-  const { activeTenantId } = useTenantStore();
+  const { activeTenantId, themeConfig, draftTheme } = useTenantStore();
   const activeTenant = tenants?.find(t => t.id === activeTenantId);
   const schoolName = activeTenant?.school_name || 'School OS';
+
+  const brand = draftTheme || themeConfig || DEFAULT_THEME;
+  const primary = brand.primaryColor;
+  const onPrimary = contrastTextOn(primary);
 
   return (
     <>
@@ -33,21 +38,21 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
         />
       )}
 
-      <aside className={`fixed left-0 top-0 h-screen flex flex-col py-6 bg-slate-900 w-72 shadow-2xl z-50 transition-transform duration-300 ${
+      <aside className={`fixed left-0 top-0 h-screen flex flex-col py-6 w-72 shadow-2xl z-50 transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      }`} style={{ backgroundColor: primary }}>
         <div className="px-6 mb-6 flex-shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-              <span className="material-symbols-outlined text-white text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
+            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0 shadow-lg shadow-black/20">
+              <span className="material-symbols-outlined text-2xl" style={{ color: onPrimary, fontVariationSettings: "'FILL' 1" }}>school</span>
             </div>
-            <h1 className="text-base font-bold text-white tracking-tight leading-tight line-clamp-2">{schoolName}</h1>
+            <h1 className="text-base font-bold tracking-tight leading-tight line-clamp-2" style={{ color: onPrimary }}>{schoolName}</h1>
           </div>
-          <button onClick={onClose} className="lg:hidden p-2 text-slate-400 hover:text-white">
+          <button onClick={onClose} className="lg:hidden p-2 transition-opacity" style={{ color: onPrimary, opacity: 0.5 }}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest px-6 mb-6">School Administration</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest px-6 mb-6" style={{ color: onPrimary, opacity: 0.4 }}>School Administration</p>
         
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
           {navItems.map((item) => {
@@ -59,9 +64,10 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
                 onClick={onClose}
                 className={`${
                   isActive 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-white/20 font-semibold'
+                    : 'opacity-60 hover:opacity-100 hover:bg-white/10'
                 } rounded-xl my-0.5 px-4 py-3 flex items-center gap-3 font-sans text-sm font-medium tracking-wide transition-all duration-200 group`}
+                style={{ color: onPrimary }}
               >
                 <span className={`material-symbols-outlined text-[22px] transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1" : "" }}>
                   {item.icon}
@@ -72,12 +78,12 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
           })}
         </nav>
 
-        <div className="mt-auto border-t border-slate-800 pt-4">
-          <Link to="/admin/audit" onClick={onClose} className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 mx-2 my-1 px-4 py-3 flex items-center gap-3 font-sans text-sm font-regular tracking-wide">
+        <div className="mt-auto border-t border-white/10 pt-4">
+          <Link to="/admin/audit" onClick={onClose} className="transition-all duration-200 mx-2 my-1 px-4 py-3 flex items-center gap-3 font-sans text-sm font-regular tracking-wide opacity-60 hover:opacity-100 hover:bg-white/10" style={{ color: onPrimary }}>
             <span className="material-symbols-outlined">history</span>
             <span>Activity Log</span>
           </Link>
-          <Link to="/admin/settings" onClick={onClose} className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 mx-2 my-1 px-4 py-3 flex items-center gap-3 font-sans text-sm font-regular tracking-wide">
+          <Link to="/admin/settings" onClick={onClose} className="transition-all duration-200 mx-2 my-1 px-4 py-3 flex items-center gap-3 font-sans text-sm font-regular tracking-wide opacity-60 hover:opacity-100 hover:bg-white/10" style={{ color: onPrimary }}>
             <span className="material-symbols-outlined">manage_accounts</span>
             <span>Settings</span>
           </Link>

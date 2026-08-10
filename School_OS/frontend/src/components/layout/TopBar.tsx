@@ -3,13 +3,14 @@ import { useAuthStore } from '../../stores/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useTenantStore } from '../../stores/tenantStore';
 import { useSectionStore } from '../../stores/sectionStore';
+import { DEFAULT_THEME } from '../../utils/theme';
 import PortalSwitcher from './PortalSwitcher';
 import NotificationsDropdown from './NotificationsDropdown';
 import HelpPanel from './HelpPanel';
 
 export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, logout, tenants } = useAuthStore();
-  const { activeTenantId } = useTenantStore();
+  const { activeTenantId, themeConfig, draftTheme } = useTenantStore();
   const { sections, activeSectionId, setActiveSectionId } = useSectionStore();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -19,6 +20,9 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
   const currentYear = new Date().getFullYear();
   const academicYear = `${currentYear}-${currentYear + 1}`;
   const activeSection = sections.find(s => s.id === activeSectionId);
+
+  const brand = draftTheme || themeConfig || DEFAULT_THEME;
+  const primary = brand.primaryColor;
 
   const initials = user?.full_name
     ? user.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -41,9 +45,9 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <span className="text-xl font-bold tracking-tighter text-blue-900">School OS</span>
+        <span className="text-xl font-bold tracking-tighter" style={{ color: primary }}>School OS</span>
         <nav className="hidden md:flex items-center gap-6">
-          <a className="text-blue-700 font-semibold border-b-2 border-blue-700 font-sans text-sm tracking-tight py-5" href="#">
+          <a className="font-semibold border-b-2 font-sans text-sm tracking-tight py-5" style={{ color: primary, borderColor: primary }} href="#">
             {academicYear} Academic Year
           </a>
           <span className="text-slate-600 transition-colors font-sans text-sm font-medium tracking-tight">
@@ -57,7 +61,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-900/10 bg-white text-blue-900 hover:bg-blue-50 transition-all text-sm font-semibold"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/10 bg-white text-primary hover:bg-primary/5 transition-all text-sm font-semibold"
               title="Switch section"
             >
               <span className="w-2 h-2 bg-secondary rounded-full shrink-0"></span>
@@ -79,7 +83,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
                         key={s.id}
                         onClick={() => { setActiveSectionId(s.id); setSectionDropdownOpen(false); }}
                         className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
-                          activeSectionId === s.id ? 'bg-blue-50/50 border-l-2 border-l-primary' : 'hover:bg-slate-50'
+                          activeSectionId === s.id ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-slate-50'
                         }`}
                       >
                         <span className="font-bold text-slate-800">{s.name}</span>
@@ -105,11 +109,11 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
         
         <div className="flex items-center gap-2 lg:gap-3 cursor-pointer group">
           <div className="text-right hidden md:block">
-            <p className="text-xs font-bold text-blue-900">{user?.full_name || 'Admin User'}</p>
+            <p className="text-xs font-bold" style={{ color: primary }}>{user?.full_name || 'Admin User'}</p>
             <p className="text-[10px] text-slate-500 uppercase tracking-widest">School Admin</p>
           </div>
-          <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-primary">{initials}</span>
+          <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center" style={{ border: `2px solid ${primary}`, backgroundColor: `${primary}1A` }}>
+            <span className="text-xs font-bold" style={{ color: primary }}>{initials}</span>
           </div>
           <button 
             onClick={() => setShowLogoutConfirm(true)}

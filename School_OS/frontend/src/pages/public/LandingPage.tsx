@@ -4,172 +4,95 @@ import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 
 const stats = [
-  { value: '500+', label: 'Schools', link: '/schools' },
+  { value: '500+', label: 'Schools' },
   { value: '12K+', label: 'Educators' },
   { value: '80K+', label: 'Students' },
   { value: '21', label: 'Days Saved / Year' },
 ];
 
-const problems = [
-  { icon: 'schedule', title: '21 Days Lost Every Year', desc: '10 hours a week on paperwork. Attendance by hand. Report cards at midnight. That is 21 full days gone. Every year.' },
-  { icon: 'supervisor_account', title: 'Parents Left in the Dark', desc: '3 in 10 parents never see their child\'s report card on time. They drive to the school, wait in line, and get told "come back tomorrow."' },
-  { icon: 'money_off', title: 'Cash Envelopes, No Records', desc: 'Fees collected in cash. No receipts. No tracking. You have no idea who paid, who did not, or where the money went.' },
-  { icon: 'folder_off', title: 'Records That Vanish', desc: 'A student transfers. Their records? Lost. A parent asks for last year\'s grades? Check the notebook. If you can find it.' },
-];
-
-const comparison = [
-  { feature: 'Attendance', notebook: 'Paper roll call, 15 min per class', schoolOs: 'Digital, 30 seconds' },
-  { feature: 'Report Cards', notebook: 'Handwritten, 2 weeks per term', schoolOs: 'One-click, 30 minutes for whole school' },
-  { feature: 'Fee Tracking', notebook: 'Cash envelopes, no records', schoolOs: 'Mobile Money, real-time dashboard' },
-  { feature: 'Parent Updates', notebook: 'Notice board (if they read it)', schoolOs: 'WhatsApp, instant' },
-  { feature: 'Student Records', notebook: 'Notebooks in a drawer', schoolOs: 'Secure, searchable, always available' },
-];
-
-const features = [
-  { icon: 'groups', title: 'Student Management', desc: 'Every student\'s enrollment, grades, attendance, medical info, and guardian details -- in one place. No more digging through notebooks.', highlight: true },
-  { icon: 'how_to_reg', title: 'Digital Attendance', desc: 'Mark attendance in 30 seconds. Parents get notified automatically. No more paper roll calls eating into your teaching time.' },
-  { icon: 'payments', title: 'Fee Collection', desc: 'Automated fee bills via Mobile Money. Real-time arrears tracking. Parents pay on time. You stop chasing.' },
-  { icon: 'analytics', title: 'Report Cards', desc: 'Generate every report card for the entire school in one click. Beautiful PDFs parents actually want to keep. What used to take 2 weeks takes 30 minutes.' },
-  { icon: 'calendar_month', title: 'Timetabling', desc: 'Build clash-free timetables in minutes. No more "Sir, there is a room conflict" on Monday morning.' },
-  { icon: 'notifications_active', title: 'Parent Communication', desc: 'Announcements, fee reminders, event notifications -- delivered via WhatsApp and SMS. Parents stop calling the office. You stop repeating yourself.' },
-];
-
-const faqs = [
-  {
-    q: 'What is School OS?',
-    a: 'School OS replaces every notebook, spreadsheet, and paper system in your school with one platform. Student records, attendance, fees, report cards, timetables, parent communication -- all from a single dashboard. No more scattered data. No more midnight paperwork.',
-  },
-  {
-    q: 'Is it really free to start?',
-    a: 'Yes. 14-day free trial, no credit card. After that, plans start low enough that even the smallest private school can afford it. Because every school deserves to escape the notebook era.',
-  },
-  {
-    q: 'Does it work for schools in Cameroon?',
-    a: 'Built specifically for Cameroon. FCFA currency. English and French. GCE and BAC grading systems. Mobile Money payments via MTN and Orange. We didn\'t adapt a Western tool -- we built this from scratch for African schools.',
-  },
-  {
-    q: 'How fast can I set up?',
-    a: 'Under 5 minutes for the basics. Add your school, create one class, add a few students, generate your first report card. Most schools are fully running within 24 hours. No IT person needed.',
-  },
-  {
-    q: 'What if I\'m not good with computers?',
-    a: 'You don\'t need to be. If you can send a WhatsApp message, you can use School OS. We built it for school administrators, not software engineers. Every step is guided. Every action gives you feedback. You\'ll feel confident on day one.',
-  },
-  {
-    q: 'Can parents see their child\'s results?',
-    a: 'Yes. Parents get a portal where they see attendance, grades, report cards, and fee status -- in real time. No more driving to the school to ask "when are results ready?"',
-  },
-  {
-    q: 'Is my data secure?',
-    a: 'Enterprise-grade encryption. Automated backups. Role-based access. Your data lives on secure cloud servers, not in a notebook that can get wet, lost, or stolen.',
-  },
-  {
-    q: 'Why is your tone so aggressive?',
-    a: 'Because being polite hasn\'t fixed the problem. 80% of schools in Cameroon still run on paper. Teachers are burning out on paperwork. Parents can\'t get their children\'s results on time. That\'s not a market opportunity -- that\'s a crisis. We\'re not here to be polite. We\'re here to fix this.',
-  },
+const highlights = [
+  { icon: 'groups', title: 'Student Management', desc: 'Enrollment, grades, attendance, medical info and guardian details in one place.' },
+  { icon: 'payments', title: 'Fee Collection', desc: 'Automated fee bills via Mobile Money with real-time arrears tracking.' },
+  { icon: 'analytics', title: 'Report Cards', desc: 'Every report card for the whole school in one click. Beautiful PDFs in minutes.' },
 ];
 
 export default function LandingPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [schoolSearch, setSchoolSearch] = useState('');
   const navigate = useNavigate();
+
+  const handleSchoolSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(schoolSearch.trim() ? `/schools?q=${encodeURIComponent(schoolSearch.trim())}` : '/schools');
+  };
 
   return (
     <div className="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
       <PublicNavbar />
 
-      {/* Hero -- The Enemy */}
-      <header className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      {/* Hero */}
+      <header className="relative pt-32 pb-16 md:pt-48 md:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary-container/5 to-transparent pointer-events-none" />
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-error/10 rounded-full mb-8">
-            <span className="w-2 h-2 bg-error rounded-full animate-pulse" />
-            <span className="text-xs font-bold tracking-widest text-error uppercase">The Notebook Era Is Over</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-full mb-6">
+            <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <span className="text-xs font-bold tracking-widest text-primary uppercase">The Operating System for Schools</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold text-primary tracking-tighter mb-6 leading-[1.05]">
-            Your School Deserves Better<br />Than a Notebook
+            Run Your School Like a<br className="hidden sm:block" /> Modern Organization
           </h1>
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-on-surface-variant mb-10 leading-relaxed">
-            Paper registers. Lost records. Midnight report cards. Cash envelopes with no receipts. <strong className="text-on-surface">Your school is bigger than a notebook.</strong> It's time to act like it.
+            School OS brings student records, attendance, fees, report cards, timetables, and parent
+            communication into one secure platform -- so nothing falls through the cracks.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
+
+          {/* Centered login CTA -- visible on mobile without opening the menu */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-14">
             <Link
               to="/login"
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 text-center"
+              className="w-full sm:w-auto px-10 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 text-center"
             >
-              Stop the Chaos -- Start Free
+              Login to Your School
             </Link>
-            <a
-              href="#the-cost"
-              className="w-full sm:w-auto px-8 py-4 bg-white text-primary rounded-xl font-bold text-lg border border-outline-variant hover:bg-surface-container-low transition-all text-center"
+            <Link
+              to="/schools"
+              className="w-full sm:w-auto px-10 py-4 bg-white text-primary rounded-xl font-bold text-lg border border-outline-variant hover:bg-surface-container-low transition-all text-center"
             >
-              See What You're Escaping From
-            </a>
+              Explore Schools
+            </Link>
           </div>
 
           {/* Stats strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mb-16">
             {stats.map((stat, i) => (
-              stat.link ? (
-                <Link
-                  key={i}
-                  to={stat.link}
-                  className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-outline-variant/20 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
-                >
-                  <div className="text-3xl font-extrabold text-primary group-hover:scale-105 transition-transform">{stat.value}</div>
-                  <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mt-1">{stat.label}</div>
-                </Link>
-              ) : (
-                <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-outline-variant/20 shadow-sm">
-                  <div className="text-3xl font-extrabold text-primary">{stat.value}</div>
-                  <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mt-1">{stat.label}</div>
-                </div>
-              )
+              <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-outline-variant/20 shadow-sm">
+                <div className="text-3xl font-extrabold text-primary">{stat.value}</div>
+                <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mt-1">{stat.label}</div>
+              </div>
             ))}
           </div>
-        </div>
-      </header>
 
-      {/* Find Your School -- Search Section */}
-      <section aria-labelledby="find-school-heading" className="py-16 bg-surface-container-low border-y border-outline-variant/20">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 id="find-school-heading" className="text-3xl md:text-4xl font-bold text-primary mb-3 tracking-tight">
-            Find Your School
-          </h2>
-          <p className="text-on-surface-variant mb-8 max-w-lg mx-auto">
-            Search over 500 schools on School OS. View programs, fees, enroll online, and more.
-          </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (schoolSearch.trim()) {
-                navigate(`/schools?q=${encodeURIComponent(schoolSearch.trim())}`);
-              } else {
-                navigate('/schools');
-              }
-            }}
-            className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto"
-          >
+          {/* Find your school -- compact search */}
+          <form onSubmit={handleSchoolSearch} className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
               <input
                 type="text"
                 value={schoolSearch}
                 onChange={(e) => setSchoolSearch(e.target.value)}
-                placeholder="Search by school name, location, or region..."
+                placeholder="Find your school by name, city, or region..."
                 className="w-full pl-12 pr-4 py-4 rounded-xl border border-outline-variant/30 bg-white text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-base"
               />
             </div>
             <button
               type="submit"
-              className="px-8 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-base hover:shadow-lg transition-all active:scale-95 whitespace-nowrap"
+              className="px-8 py-4 bg-secondary text-white rounded-xl font-bold text-base hover:opacity-90 transition-all active:scale-95 whitespace-nowrap"
             >
               Search Schools
             </button>
           </form>
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
             <span className="text-xs text-on-surface-variant">Popular:</span>
-            {['Buea', 'Douala', 'Yaounde', 'Bamenda', 'Private Schools'].map((tag) => (
+            {['Buea', 'Douala', 'Yaounde', 'Bamenda'].map((tag) => (
               <button
                 key={tag}
                 onClick={() => navigate(`/schools?q=${encodeURIComponent(tag)}`)}
@@ -180,180 +103,15 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* The Enemy -- What The Notebook Costs You */}
-      <section id="the-cost" aria-labelledby="problems-heading" className="py-24 bg-surface-container-low">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="text-error font-bold tracking-widest text-xs uppercase">The Enemy</span>
-            <h2 id="problems-heading" className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">
-              What The Notebook Costs You
-            </h2>
-            <p className="text-on-surface-variant mt-4 max-w-xl mx-auto">
-              Every day your school runs on paper, you're paying for it -- in time, money, and trust.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {problems.map((item, i) => (
-              <article key={i} className="p-8 bg-surface-container-lowest rounded-2xl shadow-sm border-l-4 border-error group hover:shadow-md transition-shadow">
-                <span className="material-symbols-outlined text-error text-4xl mb-4 group-hover:scale-110 transition-transform inline-block">{item.icon}</span>
-                <h3 className="text-xl font-bold text-primary mb-2">{item.title}</h3>
-                <p className="text-on-surface-variant text-sm leading-relaxed">{item.desc}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pick a Side */}
-      <section aria-labelledby="pick-side-heading" className="py-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-widest text-xs uppercase">Choose Your Side</span>
-            <h2 id="pick-side-heading" className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">
-              The Notebook vs. School OS
-            </h2>
-            <p className="text-on-surface-variant mt-4 max-w-xl mx-auto">
-              Every school uses one of these. The question is: which one are you still using?
-            </p>
-          </div>
-
-          {/* Desktop: Table */}
-          <div className="hidden md:block bg-white rounded-3xl border border-outline-variant/20 shadow-lg overflow-hidden">
-            <div className="grid grid-cols-3 border-b border-outline-variant/20">
-              <div className="p-5" />
-              <div className="p-5 text-center bg-error/5 border-x border-outline-variant/20">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-error">note</span>
-                  <span className="font-bold text-error text-lg">The Notebook</span>
-                </div>
-              </div>
-              <div className="p-5 text-center bg-primary/5">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-primary">school</span>
-                  <span className="font-bold text-primary text-lg">School OS</span>
-                </div>
-              </div>
-            </div>
-            {comparison.map((row, i) => (
-              <div key={i} className={`grid grid-cols-3 ${i < comparison.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
-                <div className="p-5 flex items-center">
-                  <span className="font-semibold text-on-surface">{row.feature}</span>
-                </div>
-                <div className="p-5 text-center bg-error/5 border-x border-outline-variant/20 flex items-center justify-center">
-                  <span className="text-sm text-on-surface-variant">{row.notebook}</span>
-                </div>
-                <div className="p-5 text-center bg-primary/5 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary">{row.schoolOs}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile: Cards */}
-          <div className="md:hidden space-y-4">
-            {comparison.map((row, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
-                <div className="px-5 py-3 bg-primary/5 border-b border-outline-variant/10">
-                  <span className="font-bold text-primary text-sm">{row.feature}</span>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-error text-lg shrink-0 mt-0.5">note</span>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-error/70 block mb-0.5">The Notebook</span>
-                      <span className="text-sm text-on-surface-variant">{row.notebook}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-primary text-lg shrink-0 mt-0.5">school</span>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70 block mb-0.5">School OS</span>
-                      <span className="text-sm font-medium text-primary">{row.schoolOs}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link
-              to="/login"
-              className="inline-block px-10 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              Choose Your Side -- Start Free
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Bento Grid -- The Solution */}
-      <section aria-labelledby="features-heading" id="features" className="py-24 bg-surface-container-low">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div className="max-w-xl">
-              <span className="text-secondary font-bold tracking-widest text-xs uppercase">The Escape Plan</span>
-              <h2 id="features-heading" className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">
-                Everything Your School Needs
-              </h2>
-              <p className="text-on-surface-variant text-lg mt-4">
-                One platform. Every system. No notebooks. No spreadsheets. No midnight grading.
-              </p>
-            </div>
-            <Link to="/schools" className="text-primary font-bold flex items-center gap-2 hover:gap-4 transition-all">
-              Explore Schools <span className="material-symbols-outlined">arrow_forward</span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {/* Main Feature */}
-            <article className="md:col-span-2 bg-primary p-10 rounded-3xl text-white relative overflow-hidden flex flex-col justify-between min-h-[340px]">
-              <div className="relative z-10">
-                <span className="material-symbols-outlined text-5xl mb-4">{features[0].icon}</span>
-                <h3 className="text-3xl font-bold mb-3">{features[0].title}</h3>
-                <p className="opacity-80 text-base max-w-md leading-relaxed">{features[0].desc}</p>
-              </div>
-              <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl" />
-              <Link to="/find-teachers" className="relative z-10 self-start text-white flex items-center gap-2 mt-6 hover:gap-4 transition-all font-semibold">
-                Explore Marketplace <span className="material-symbols-outlined">arrow_forward</span>
-              </Link>
-            </article>
-
-            {/* Side features */}
-            <div className="flex flex-col gap-4 md:gap-6">
-              {features.slice(1, 3).map((f, i) => (
-                <article key={i} className="bg-surface-container-high p-8 rounded-3xl flex-1 flex flex-col justify-between group hover:bg-primary hover:text-white transition-colors duration-300">
-                  <div>
-                    <span className="material-symbols-outlined text-3xl mb-3 text-primary group-hover:text-white transition-colors">{f.icon}</span>
-                    <h3 className="text-xl font-bold mb-2 text-primary group-hover:text-white transition-colors">{f.title}</h3>
-                    <p className="text-sm text-on-surface-variant group-hover:text-white/80 transition-colors">{f.desc}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            {/* Bottom row */}
-            {features.slice(3).map((f, i) => (
-              <article key={i} className="bg-surface-container-high p-8 rounded-3xl group hover:bg-primary hover:text-white transition-colors duration-300">
-                <span className="material-symbols-outlined text-3xl mb-3 text-primary group-hover:text-white transition-colors">{f.icon}</span>
-                <h3 className="text-xl font-bold mb-2 text-primary group-hover:text-white transition-colors">{f.title}</h3>
-                <p className="text-sm text-on-surface-variant group-hover:text-white/80 transition-colors">{f.desc}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trusted By / Social Proof */}
-      <section aria-labelledby="trusted-heading" className="py-16 border-y border-outline-variant/20">
+      {/* Trusted by / social proof */}
+      <section aria-labelledby="trusted-heading" className="py-14 border-y border-outline-variant/20">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 id="trusted-heading" className="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-10">
-            Schools That Escaped the Notebook
+          <h2 id="trusted-heading" className="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-8">
+            Trusted by Schools Across Cameroon
           </h2>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50">
             {['Greenfield Academy', 'St. Mary\'s International', 'Bright Future Schools', 'Heritage Bilingual', 'Cameroon Bilingual'].map((name, i) => (
               <span key={i} className="text-lg md:text-xl font-bold text-primary whitespace-nowrap">{name}</span>
             ))}
@@ -361,124 +119,59 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section aria-labelledby="testimonials-heading" className="py-24 bg-primary text-white overflow-hidden relative">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-secondary/10 rounded-full blur-3xl" />
-        </div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <span className="text-secondary-fixed font-bold tracking-widest text-xs uppercase">What They Say After Switching</span>
-            <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-bold tracking-tight mt-2">
-              Schools That Made the Jump
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { quote: 'We threw away 12 notebooks in the first month. Teachers stopped staying late. The attendance system alone saved us 3 hours every day.', author: 'Principal, Greenfield Academy' },
-              { quote: 'Fee collection went from chasing parents to parents paying on their own. Mobile Money reminders did what years of announcements couldn\'t.', author: 'Bursar, St. Mary\'s International' },
-              { quote: 'Report cards used to take 2 weeks. Now it\'s 30 minutes. I used to grade at midnight. Now I\'m home by 5.', author: 'VP Admin, Bright Future Schools' },
-            ].map((t, i) => (
-              <blockquote key={i} className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/10">
-                <span className="material-symbols-outlined text-secondary-fixed text-3xl mb-4">format_quote</span>
-                <p className="text-lg leading-relaxed mb-6">{t.quote}</p>
-                <footer className="text-sm font-semibold text-white/60">-- {t.author}</footer>
-              </blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works -- Sharpened */}
-      <section aria-labelledby="how-it-works-heading" className="py-24">
+      {/* Feature highlights -- teaser linking to the Features page */}
+      <section aria-labelledby="highlights-heading" className="py-24 bg-surface-container-low">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-widest text-xs uppercase">5 Minutes. That's It.</span>
-            <h2 id="how-it-works-heading" className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">
-              Escape the Notebook in 3 Steps
+            <span className="text-secondary font-bold tracking-widest text-xs uppercase">Why Schools Switch</span>
+            <h2 id="highlights-heading" className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">
+              One Platform, Every School System
             </h2>
             <p className="text-on-surface-variant mt-4 max-w-xl mx-auto">
-              No IT department. No training manual. If you can send a WhatsApp, you can do this.
+              Stop juggling notebooks, spreadsheets, and cash envelopes. School OS runs it all.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { step: '01', icon: 'person_add', title: 'Add Your School', desc: 'Type your school name. Upload a logo if you want. Takes 60 seconds. Done.' },
-              { step: '02', icon: 'group_add', title: 'Add Students & Classes', desc: 'One class, a few students. Or import your whole school from Excel. Your choice.' },
-              { step: '03', icon: 'rocket_launch', title: 'Generate Your First Report Card', desc: 'Click one button. Watch a beautiful PDF appear. That\'s the moment you never go back to the notebook.' },
-            ].map((item, i) => (
-              <article key={i} className="relative text-center p-8">
-                <div className="text-6xl font-extrabold text-primary/10 mb-4">{item.step}</div>
-                <span className="material-symbols-outlined text-primary text-5xl mb-4 inline-block">{item.icon}</span>
-                <h3 className="text-xl font-bold text-primary mb-3">{item.title}</h3>
-                <p className="text-on-surface-variant leading-relaxed">{item.desc}</p>
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-0.5 bg-outline-variant" />
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {highlights.map((h, i) => (
+              <article key={i} className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all group">
+                <span className="material-symbols-outlined text-primary text-4xl mb-4 inline-block bg-primary/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">{h.icon}</span>
+                <h3 className="text-xl font-bold text-primary mb-2">{h.title}</h3>
+                <p className="text-on-surface-variant text-sm leading-relaxed">{h.desc}</p>
               </article>
             ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link to="/features" className="inline-flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all">
+              Explore all features <span className="material-symbols-outlined">arrow_forward</span>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section aria-labelledby="faq-heading" className="py-24 bg-surface-container-low">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-widest text-xs uppercase">Still Thinking?</span>
-            <h2 id="faq-heading" className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">
-              Questions We Get a Lot
-            </h2>
-          </div>
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <article key={i} className="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden shadow-sm">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between p-6 text-left hover:bg-surface-container-low transition-colors"
-                  aria-expanded={openFaq === i}
-                >
-                  <h3 className="text-lg font-bold text-primary pr-4">{faq.q}</h3>
-                  <span className={`material-symbols-outlined text-on-surface-variant transition-transform duration-200 shrink-0 ${openFaq === i ? 'rotate-180' : ''}`}>
-                    expand_more
-                  </span>
-                </button>
-                {openFaq === i && (
-                  <div className="px-6 pb-6">
-                    <p className="text-on-surface-variant leading-relaxed">{faq.a}</p>
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA -- Final Push */}
+      {/* CTA */}
       <section aria-labelledby="cta-heading" className="py-24">
         <div className="max-w-5xl mx-auto px-6">
           <div className="bg-gradient-to-br from-primary to-primary-container rounded-[2rem] p-12 md:p-16 text-center text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             <h2 id="cta-heading" className="text-4xl md:text-5xl font-bold mb-6 relative z-10 tracking-tight">
-              The Notebook Era Is Over
+              Ready to Make the Switch?
             </h2>
             <p className="text-lg opacity-80 mb-10 max-w-xl mx-auto relative z-10">
-              500+ schools already made the switch. They stopped losing records, stopped grading at midnight, and stopped guessing who paid. Your turn.
+              500+ schools already made the jump. Set up yours in under 5 minutes -- free for 14 days, no credit card.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 relative z-10">
               <Link
                 to="/login"
                 className="w-full sm:w-auto px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-surface-container-low transition-colors shadow-lg text-center"
               >
-                Start Free -- No Credit Card
+                Login to Your School
               </Link>
               <Link
-                to="/schools"
+                to="/features"
                 className="w-full sm:w-auto px-10 py-4 bg-secondary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-center"
               >
-                Explore Schools
+                See the Features
               </Link>
             </div>
           </div>

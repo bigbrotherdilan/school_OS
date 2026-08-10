@@ -5,7 +5,9 @@ const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Find Schools', to: '/schools' },
   { label: 'Teacher Marketplace', to: '/find-teachers' },
-  { label: 'Features', to: '/#features' },
+  { label: 'Features', to: '/features' },
+  { label: 'About', to: '/about' },
+  { label: 'Contact', to: '/contact' },
 ];
 
 export default function PublicNavbar() {
@@ -35,7 +37,7 @@ export default function PublicNavbar() {
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-7">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -49,28 +51,29 @@ export default function PublicNavbar() {
                 {link.label}
               </Link>
             ))}
-            <a className="text-slate-600 hover:text-blue-900 transition-colors" href="#contact">Contact</a>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="text-slate-600 hover:text-blue-900 transition-colors font-medium">
+          <div className="flex items-center space-x-3">
+            <Link
+              to="/login"
+              className="px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
+            >
               Login
             </Link>
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden p-2 -mr-2 text-slate-600 hover:text-blue-900 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <span className="material-symbols-outlined text-2xl">{mobileOpen ? 'close' : 'menu'}</span>
+            </button>
           </div>
-
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 -mr-2 text-slate-600 hover:text-blue-900 transition-colors"
-            aria-label="Toggle menu"
-          >
-            <span className="material-symbols-outlined text-2xl">{mobileOpen ? 'close' : 'menu'}</span>
-          </button>
         </div>
       </nav>
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="absolute top-0 right-0 w-72 h-full bg-surface shadow-2xl p-6 pt-20 animate-in slide-in-from-right duration-200">
             <div className="flex flex-col space-y-1">
@@ -88,18 +91,6 @@ export default function PublicNavbar() {
                   {link.label}
                 </Link>
               ))}
-              <a href="#contact" onClick={() => setMobileOpen(false)} className="text-slate-600 hover:bg-slate-50 rounded-xl px-4 py-3 transition-colors">
-                Contact
-              </a>
-            </div>
-            <div className="mt-6 pt-6 border-t border-outline-variant/20 space-y-3">
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="block w-full text-center px-6 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
-              >
-                Login
-              </Link>
             </div>
           </div>
         </div>

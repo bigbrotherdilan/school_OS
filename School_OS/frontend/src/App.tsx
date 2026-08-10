@@ -10,6 +10,9 @@ import TeacherLogin from './pages/auth/TeacherLogin';
 import AdminLogin from './pages/auth/AdminLogin';
 import BursarLogin from './pages/auth/BursarLogin';
 import LandingPage from './pages/public/LandingPage';
+import FeaturesPage from './pages/public/FeaturesPage';
+import AboutPage from './pages/public/AboutPage';
+import ContactPage from './pages/public/ContactPage';
 import TrustPage from './pages/public/TrustPage';
 import SchoolTemplate from './pages/public/SchoolTemplate';
 import SchoolsList from './pages/public/SchoolsList';
@@ -18,6 +21,8 @@ import TeacherMarketplace from './pages/public/TeacherMarketplace';
 import ForcePasswordChange from './pages/ForcePasswordChange';
 import { useAuthStore } from './stores/authStore';
 import ToastContainer from './components/ui/ToastContainer';
+import ThemeBridge from './components/ui/ThemeBridge';
+import { useTenantTheme } from './hooks/useTenantTheme';
 
 // Portal pages — code-split so each portal loads its own chunk on demand.
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
@@ -37,6 +42,7 @@ const AcademicSetup = lazy(() => import('./pages/admin/academic/AcademicSetup'))
 const AuditLogs = lazy(() => import('./pages/admin/audit/AuditLogs'));
 const Settings = lazy(() => import('./pages/admin/settings/Settings'));
 const EmailSettings = lazy(() => import('./pages/admin/settings/EmailSettings'));
+const Integrations = lazy(() => import('./pages/admin/settings/Integrations'));
 const AddStudentPage = lazy(() => import('./pages/admin/academic/students/AddStudentPage'));
 const RecordTransactionPage = lazy(() => import('./pages/admin/finance/RecordTransactionPage'));
 const AddFacultyPage = lazy(() => import('./pages/admin/operations/AddFacultyPage'));
@@ -184,6 +190,8 @@ export default function App() {
   const logout = useAuthStore(state => state.logout);
   const tenants = useAuthStore(state => state.tenants);
 
+  useTenantTheme();
+
   useEffect(() => {
     if (!token) return;
     api.get('/auth/me/').then(({ data }) => {
@@ -197,12 +205,16 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ThemeBridge />
       <ToastContainer />
       <ScrollManager />
       <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/trust" element={<TrustPage />} />
         <Route path="/templates/school" element={<SchoolTemplate />} />
         <Route path="/schools" element={<SchoolsList />} />
@@ -265,6 +277,7 @@ export default function App() {
           <Route path="audit" element={<AuditLogs />} />
           <Route path="settings" element={<Settings />} />
           <Route path="settings/email" element={<EmailSettings />} />
+          <Route path="settings/integrations" element={<Integrations />} />
         </Route>
         
         <Route path="/teacher" element={
