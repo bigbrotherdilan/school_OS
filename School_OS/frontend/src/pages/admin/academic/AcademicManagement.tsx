@@ -15,6 +15,16 @@ export default function AcademicManagement() {
     addToast(`${featureName} module is subject to deployment in upcoming sprint.`, 'info');
   };
 
+  const activateStudent = async (studentId: string) => {
+    try {
+      const res = await api.post(`/students/students/${studentId}/verify/`);
+      addToast(res.data.message || 'Student activated.', 'success');
+      setStudents(prev => prev.map((s: any) => s.id === studentId ? { ...s, status: 'active' } : s));
+    } catch (error: any) {
+      addToast(error.response?.data?.detail || 'Failed to activate student.', 'error');
+    }
+  };
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -144,9 +154,31 @@ export default function AcademicManagement() {
                     </div>
                   </td>
                   <td className="p-6 text-right">
-                    <button onClick={() => handlePendingFeature('Student Options')} className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-outline group-hover:text-primary">
-                      <span className="material-symbols-outlined">more_horiz</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => navigate('/admin/finance/transactions/new', { state: { studentId: stu.id } })}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-secondary/10 text-secondary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-secondary/20 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">payments</span>
+                        Record Payment
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/academic/students/${stu.id}/edit`)}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-primary/20 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                        Edit
+                      </button>
+                      {stu.status === 'registered' && (
+                        <button
+                          onClick={() => activateStudent(stu.id)}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-primary/20 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-sm">verified_user</span>
+                          Activate
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

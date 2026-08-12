@@ -68,21 +68,46 @@ class StudentInvoiceLineItemSerializer(serializers.ModelSerializer):
 class PaymentTransactionSerializer(serializers.ModelSerializer):
     invoice_number = serializers.CharField(source='invoice.invoice_number', read_only=True)
     student_name = serializers.CharField(source='invoice.student.full_name', read_only=True)
+    fee_category_name = serializers.CharField(source='fee_category.name', read_only=True, default=None)
     recorded_by_name = serializers.SerializerMethodField()
+    balance_after = serializers.SerializerMethodField()
+    receipt_url = serializers.SerializerMethodField()
 
     class Meta:
         model = PaymentTransaction
         fields = [
             'id', 'invoice', 'invoice_number', 'student_name', 'receipt_number',
             'amount', 'payment_date', 'method', 'reference', 'recorded_by', 'recorded_by_name',
-            'notes'
+            'amount_paid_after', 'balance_after', 'receipt_url', 'notes',
+            'fee_category', 'fee_category_name'
         ]
         read_only_fields = ['receipt_number', 'payment_date', 'recorded_by']
+
+    def validate_fee_category(self, value):
+        if value is None:
+            return None
+        request = self.context.get('request')
+        if request and hasattr(request, 'tenant'):
+            if value.tenant != request.tenant:
+                raise serializers.ValidationError('Fee category does not belong to this school.')
+        return value
 
     def get_recorded_by_name(self, obj):
         if obj.recorded_by:
             return obj.recorded_by.full_name
         return None
+
+    def get_balance_after(self, obj):
+        if obj.amount_paid_after is None:
+            return None
+        return obj.invoice.total_amount - obj.amount_paid_after
+
+    def get_receipt_url(self, obj):
+        request = self.context.get('request')
+        path = f'/api/v1/finance/transactions/{obj.id}/receipt/'
+        if request:
+            return request.build_absolute_uri(path)
+        return path
 
     @transaction.atomic
     def create(self, validated_data):
@@ -96,6 +121,7 @@ class PaymentTransactionSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user'):
             validated_data['recorded_by'] = request.user
 
+        validated_data['amount_paid_after'] = invoice.amount_paid + amount
         transaction_obj = super().create(validated_data)
 
         invoice.amount_paid += amount

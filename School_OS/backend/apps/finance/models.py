@@ -95,7 +95,12 @@ class PaymentTransaction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='transactions')
     invoice = models.ForeignKey(StudentInvoice, on_delete=models.CASCADE, related_name='transactions')
-    
+    fee_category = models.ForeignKey(
+        FeeCategory, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='payment_transactions',
+        help_text="What kind of fee this payment was for (Tuition, Registration, etc.)",
+    )
+
     receipt_number = models.CharField(max_length=50, unique=True, editable=False)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_date = models.DateTimeField(auto_now_add=True)
@@ -103,6 +108,11 @@ class PaymentTransaction(models.Model):
     reference = models.CharField(max_length=255, blank=True, help_text="Transaction ID from Momo/Bank")
     recorded_by = models.ForeignKey('authentication.User', on_delete=models.SET_NULL, null=True)
     notes = models.TextField(blank=True)
+    amount_paid_after = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text="Snapshot of the invoice's cumulative amount paid after this transaction. "
+                  "Used so receipts always print the correct running balance for an installment.",
+    )
 
     class Meta:
         db_table = 'finance_payment_transactions'

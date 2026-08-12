@@ -1,7 +1,8 @@
 ﻿import React, { useEffect, useState, useMemo } from 'react';
-import { parentApi } from '../../services/parentApi';
+import { parentApi, type ReceiptRecord } from '../../services/parentApi';
 import { useParentStore } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
+import { downloadPdf, openPdfInNewTab } from '../../utils/pdf';
 
 interface Invoice {
     id: string;
@@ -36,16 +37,19 @@ const ParentFees: React.FC = () => {
     const { schoolConfig } = useTenantStore();
     const wards = dashboardData?.wards || [];
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [receipts, setReceipts] = useState<ReceiptRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
     const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
     const fetchFees = async () => {
         try {
-            const data = await parentApi.getFees();
+            const [data, receiptData] = await Promise.all([parentApi.getFees(), parentApi.getReceipts()]);
             setInvoices(Array.isArray(data) ? data : []);
+            setReceipts(Array.isArray(receiptData) ? receiptData : []);
         } catch {
             setInvoices([]);
+            setReceipts([]);
         } finally {
             setLoading(false);
         }
@@ -199,6 +203,7 @@ const ParentFees: React.FC = () => {
                                 <InvoiceCard
                                     key={inv.id}
                                     invoice={inv}
+                                    receipts={receipts.filter(r => r.invoice === inv.id)}
                                     onPay={() => setPayingInvoice(inv)}
                                 />
                             ))}
@@ -229,12 +234,16 @@ const ParentFees: React.FC = () => {
     );
 };
 
-function InvoiceCard({ invoice, onPay }: { invoice: Invoice; onPay: () => void }) {
+function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts: ReceiptRecord[]; onPay: () => void }) {
     const { schoolConfig } = useTenantStore();
     const balance = parseFloat(invoice.balance || '0');
     const total = parseFloat(invoice.total_amount || '0');
     const paid = parseFloat(invoice.amount_paid || '0');
     const isPaid = invoice.status === 'paid';
+
+    const handleStatement = () => {
+        openPdfInNewTab(parentApi.statementUrl(invoice.id), `statement_${invoice.invoice_number}.pdf`);
+    };
 
     return (
         <div className={`bg-white rounded-2xl p-4 border shadow-sm ${isPaid ? 'border-slate-100' : 'border-red-200'}`}>
@@ -250,7 +259,7 @@ function InvoiceCard({ invoice, onPay }: { invoice: Invoice; onPay: () => void }
                     invoice.status === 'partial' ? 'bg-amber-100 text-amber-700' :
                     'bg-red-100 text-red-700'
                 }`}>
-                    {isPaid ? 'Paid' : invoice.status === 'partial' ? 'Partial' : 'Unpaid'}
+                    {isPaid ? 'Paid' : invoice.status === 'partial' ? 'Incomplete Payment' : 'Unpaid'}
                 </span>
             </div>
 
@@ -275,6 +284,50 @@ function InvoiceCard({ invoice, onPay }: { invoice: Invoice; onPay: () => void }
                 </p>
             )}
 
+            {receipts.length > 0 && (
+                <div className="border-t border-slate-100 pt-3 mt-3">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+                        Receipts ({receipts.length})
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                        {receipts.map(r => (
+                            <div key={r.id} className="flex items-center justify-between gap-2 py-1.5 px-3 rounded-xl bg-slate-50">
+                                <div className="min-w-0">
+                                    <p className="font-mono text-xs font-bold text-slate-800 truncate">{r.receipt_number}</p>
+                                    <p className="text-[11px] text-slate-400">
+                                        {new Date(r.payment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                        {' · '}{r.method}{r.balance_after !== null && Number(r.balance_after) > 0 ? ` · bal ${Number(r.balance_after).toLocaleString()}` : ''}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                        onClick={() => downloadPdf(parentApi.receiptDownloadUrl(r.id), `receipt_${r.receipt_number}.pdf`)}
+                                        className="p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors"
+                                        title="Download receipt"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">download</span>
+                                    </button>
+                                    <button
+                                        onClick={() => openPdfInNewTab(parentApi.receiptDownloadUrl(r.id), `receipt_${r.receipt_number}.pdf`)}
+                                        className="p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors"
+                                        title="Print receipt"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">print</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <button
+                        onClick={handleStatement}
+                        className="mt-2 w-full py-2 text-xs font-bold text-blue-900 border border-blue-100 bg-blue-50/50 rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                        <span className="material-symbols-outlined text-base">description</span>
+                        Download Statement
+                    </button>
+                </div>
+            )}
+
             {!isPaid && (
                 <button
                     onClick={onPay}
@@ -297,6 +350,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
     const [submitting, setSubmitting] = useState(false);
     const [step, setStep] = useState<'form' | 'confirming' | 'success' | 'error'>('form');
     const [refNumber, setRefNumber] = useState('');
+    const [transactionId, setTransactionId] = useState('');
 
     const handleSubmit = async () => {
         setSubmitting(true);
@@ -308,6 +362,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                 phone_number: phone,
             });
             setRefNumber(res.reference_number || 'N/A');
+            setTransactionId(res.transaction_id || '');
             setStep('success');
         } catch {
             setStep('error');
@@ -394,6 +449,10 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none"
                             />
                             <p className="text-xs text-slate-400 mt-1">Maximum: {balance.toLocaleString()} {schoolConfig.currency_symbol}</p>
+                            <p className="text-xs text-blue-900/70 mt-1 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">install_mobile</span>
+                                You can pay in installments — each payment gets its own official receipt.
+                            </p>
                         </div>
 
                         <button
@@ -426,20 +485,38 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
                             <span className="material-symbols-outlined text-emerald-600 text-3xl">check_circle</span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900">Payment Initiated</h3>
+                        <h3 className="text-xl font-bold text-slate-900">Payment Received</h3>
                         <p className="text-sm text-slate-500">
-                            Your payment of {parseFloat(amount).toLocaleString()} {schoolConfig.currency_symbol} via {methodLabels[method]} is being processed.
+                            Your payment of {parseFloat(amount).toLocaleString()} {schoolConfig.currency_symbol} via {methodLabels[method]} has been recorded.
                         </p>
                         <div className="bg-slate-50 rounded-xl px-4 py-3 mt-2">
-                            <p className="text-xs text-slate-500">Reference Number</p>
+                            <p className="text-xs text-slate-500">Receipt Number</p>
                             <p className="font-mono font-bold text-slate-900">{refNumber}</p>
                         </div>
+                        {transactionId && (
+                            <div className="w-full flex flex-col gap-2 mt-1">
+                                <button
+                                    onClick={() => openPdfInNewTab(parentApi.receiptDownloadUrl(transactionId), `receipt_${refNumber}.pdf`)}
+                                    className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">print</span>
+                                    Print Receipt
+                                </button>
+                                <button
+                                    onClick={() => downloadPdf(parentApi.receiptDownloadUrl(transactionId), `receipt_${refNumber}.pdf`)}
+                                    className="w-full py-3 border border-slate-200 rounded-xl font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">download</span>
+                                    Download Receipt
+                                </button>
+                            </div>
+                        )}
                         <p className="text-xs text-slate-400">
-                            You will receive an SMS confirmation shortly.
+                            Your receipts are always available under Receipts on the parent portal.
                         </p>
                         <button
                             onClick={() => { onSuccess(); }}
-                            className="mt-4 px-8 py-3 bg-blue-900 text-white rounded-xl font-bold active:scale-95 transition-transform"
+                            className="mt-1 px-8 py-3 bg-blue-900 text-white rounded-xl font-bold active:scale-95 transition-transform"
                         >
                             Done
                         </button>

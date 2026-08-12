@@ -34,8 +34,65 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class StudentCreateSerializer(StudentSerializer):
+    # Optional registration-time parent account. All-or-nothing: if any parent
+    # field is sent, all three (name/phone/email) must be present or the
+    # registration fails instead of silently dropping the guardian.
+    parent_name = serializers.CharField(max_length=300, required=False, allow_blank=True, write_only=True)
+    parent_phone = serializers.CharField(max_length=30, required=False, allow_blank=True, write_only=True)
+    parent_email = serializers.EmailField(required=False, allow_blank=True, write_only=True)
+    relationship_type = serializers.ChoiceField(
+        choices=['father', 'mother', 'guardian'], required=False, write_only=True)
+
     class Meta(StudentSerializer.Meta):
         read_only_fields = ['id', 'tenant', 'admission_number', 'created_at']
+        fields = StudentSerializer.Meta.fields + [
+            'parent_name', 'parent_phone', 'parent_email', 'relationship_type',
+        ]
+        extra_kwargs = {
+            'current_class': {'required': False, 'allow_null': True},
+            'stream': {'required': False, 'allow_null': True},
+            'series': {'required': False, 'allow_null': True},
+        }
+
+    def validate(self, attrs):
+        parent_name = (attrs.get('parent_name') or '').strip()
+        parent_email = (attrs.get('parent_email') or '').strip()
+        parent_phone = (attrs.get('parent_phone') or '').strip()
+        any_parent_field = bool(parent_name or parent_email or parent_phone)
+        if any_parent_field and not (parent_name and parent_email):
+            raise serializers.ValidationError(
+                'To create the parent account, name and email are required '
+                '(phone is optional). Leave all parent fields blank to register '
+                'without a parent account.'
+            )
+
+        request = self.context.get('request')
+        tenant = getattr(request, 'tenant', None)
+        if tenant is not None:
+            for field in ('current_class', 'stream', 'series'):
+                obj = attrs.get(field)
+                if obj is not None and obj.tenant_id != tenant.id:
+                    raise serializers.ValidationError({field: 'Must belong to this school.'})
+
+            stream = attrs.get('stream')
+            current_class = attrs.get('current_class')
+            if current_class is not None and current_class.stream_id and stream and current_class.stream_id != stream.id:
+                raise serializers.ValidationError(
+                    {'stream': 'The section must match the class section.'}
+                )
+
+            series = attrs.get('series')
+            if series is not None and stream is not None:
+                if series.stream_id and series.stream_id != stream.id:
+                    raise serializers.ValidationError(
+                        {'series': 'The series must belong to the selected section.'}
+                    )
+        return attrs
+
+    def create(self, validated_data):
+        for field in ('parent_name', 'parent_phone', 'parent_email', 'relationship_type'):
+            validated_data.pop(field, None)
+        return super().create(validated_data)
 
 
 class ParentStudentLinkSerializer(serializers.ModelSerializer):

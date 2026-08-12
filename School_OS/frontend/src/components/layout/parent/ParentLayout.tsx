@@ -33,6 +33,7 @@ const ParentLayout: React.FC = () => {
     const navLinks = [
         { name: 'Home', path: '/parent', icon: 'home' },
         { name: 'Fees', path: '/parent/fees', icon: 'payments' },
+        { name: 'Receipts', path: '/parent/receipts', icon: 'receipt_long' },
         { name: 'Reports', path: '/parent/reports', icon: 'description' },
         { name: 'Grades', path: '/parent/analytics', icon: 'analytics' },
         { name: 'Settings', path: '/parent/settings', icon: 'settings' },

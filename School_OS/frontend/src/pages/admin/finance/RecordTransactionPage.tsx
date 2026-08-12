@@ -1,10 +1,11 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Wallet, Receipt, CheckCircle, Loader2, Lock } from 'lucide-react';
+import { ArrowLeft, Wallet, Receipt, CheckCircle, Loader2, Lock, User, GraduationCap, Search, RefreshCw } from 'lucide-react';
 import { useToastStore } from '../../../stores/toastStore';
 import { api } from '../../../services/api';
 import { useAuthStore } from '../../../stores/authStore';
 import { useCanRecordFinance } from '../../../hooks/useCanRecordFinance';
+import { downloadPdf, openPdfInNewTab } from '../../../utils/pdf';
 
 export default function RecordTransactionPage() {
   const navigate = useNavigate();
@@ -14,83 +15,199 @@ export default function RecordTransactionPage() {
   const isBursar = roles?.some((r) => r.role === 'bursar');
   const canRecord = useCanRecordFinance();
   const backPath = isBursar ? '/bursar' : '/admin/finance';
+  const preSelectedStudentId = (location.state as any)?.studentId || '';
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
-  const [invoiceError, setInvoiceError] = useState('');
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState<any | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const [sections, setSections] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [feeCategories, setFeeCategories] = useState<any[]>([]);
+
+  const [selectedSection, setSelectedSection] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState(preSelectedStudentId);
+  const [quote, setQuote] = useState<any | null>(null);
+  const [quoteError, setQuoteError] = useState('');
+
   const [formData, setFormData] = useState({
-    invoice_id: (location.state as any)?.invoiceId || '',
     amount: '',
     method: 'cash',
     reference: '',
-    notes: ''
+    notes: '',
+    fee_category: ''
   });
 
   useEffect(() => {
-    const fetchInvoices = async () => {
-      setIsLoadingInvoices(true);
-      setInvoiceError('');
+    const fetchOptions = async () => {
+      setIsLoading(true);
       try {
-        const response = await api.get('/finance/invoices/');
-        const data = response.data.results || response.data;
-        const unpaid = data.filter((inv: any) => inv.status !== 'paid');
-        setInvoices(unpaid);
-        if (unpaid.length === 0) {
-          setInvoiceError('No unpaid fees found. Generate fees first from the Fees page.');
-        }
+        const [sectionsRes, classesRes, categoriesRes] = await Promise.all([
+          api.get('/academic/sections/'),
+          api.get('/academic/classes/'),
+          api.get('/finance/categories/')
+        ]);
+        setSections(sectionsRes.data.results || sectionsRes.data);
+        setClasses(classesRes.data.results || classesRes.data);
+        setFeeCategories(categoriesRes.data.results || categoriesRes.data);
       } catch (error: any) {
-        console.error("Failed to fetch invoices:", error);
-        setInvoiceError('Failed to load invoices. Check your connection and try again.');
+        addToast(error.response?.data?.detail || 'Failed to load academic data.', 'error');
       } finally {
-        setIsLoadingInvoices(false);
+        setIsLoading(false);
       }
     };
-    fetchInvoices();
+    fetchOptions();
+  }, [addToast]);
+
+  const fetchQuote = useCallback(async (studentId: string) => {
+    if (!studentId) return;
+    setIsLoading(true);
+    setQuoteError('');
+    try {
+      const response = await api.get(`/finance/payments/quote/?student=${studentId}`);
+      setQuote(response.data);
+      const invoice = response.data.invoice;
+      const categories = response.data.categories || [];
+      const due = invoice ? invoice.balance : response.data.total;
+      if (due && parseFloat(due) > 0) {
+        setFormData(prev => ({ ...prev, amount: due }));
+      }
+      if (categories.length > 0) {
+        const first = categories[0];
+        const prefilled = parseFloat(first.remaining) > 0 ? first.remaining : due;
+        setFormData(prev => ({ ...prev, fee_category: first.id, amount: prefilled }));
+      }
+    } catch (error: any) {
+      console.error("Quote error:", error);
+      setQuoteError(error.response?.data?.detail || 'Failed to load fee breakdown.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (preSelectedStudentId) {
+      setSelectedStudentId(preSelectedStudentId);
+      fetchQuote(preSelectedStudentId);
+    }
+  }, [preSelectedStudentId, fetchQuote]);
+
+  useEffect(() => {
+    if (!selectedClass) {
+      setStudents([]);
+      setSelectedStudentId('');
+      setQuote(null);
+      return;
+    }
+    const fetchStudents = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get(`/students/students/?current_class=${selectedClass}&page_size=100`);
+        setStudents(response.data.results || response.data);
+      } catch (error: any) {
+        addToast(error.response?.data?.detail || 'Failed to load students.', 'error');
+        setStudents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStudents();
+  }, [selectedClass, addToast]);
+
+  const handleSelectStudent = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setQuote(null);
+    setFormData(prev => ({ ...prev, amount: '' }));
+    fetchQuote(studentId);
+  };
+
+  const resetLocator = () => {
+    setSelectedSection('');
+    setSelectedClass('');
+    setSelectedStudentId('');
+    setQuote(null);
+    setQuoteError('');
+    setFormData({ amount: '', method: 'cash', reference: '', notes: '', fee_category: '' });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => {
-        const newData = { ...prev, [name]: value };
-        // If invoice is selected, we could potentially pre-fill the balance
-        if (name === 'invoice_id') {
-            const selectedInv = invoices.find(inv => inv.id === value);
-            if (selectedInv) newData.amount = selectedInv.balance;
-        }
-        return newData;
-    });
+    if (name === 'fee_category') {
+      const selected = quote?.categories?.find((c: any) => c.id === value);
+      if (selected && parseFloat(selected.remaining) > 0) {
+        setFormData(prev => ({ ...prev, fee_category: value, amount: selected.remaining }));
+        return;
+      }
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedStudentId) {
+      addToast('Select a student first.', 'error');
+      return;
+    }
     setIsSubmitting(true);
-    
     try {
-      const response = await api.post('/finance/transactions/', {
-        invoice: formData.invoice_id,
+      const response = await api.post('/finance/payments/record/', {
+        student_id: selectedStudentId,
         amount: parseFloat(formData.amount),
         method: formData.method,
         reference: formData.reference,
-        notes: formData.notes
+        notes: formData.notes,
+        fee_category_id: formData.fee_category || undefined
       });
-      
-      addToast(`Payment of CFA ${response.data.amount} recorded. Receipt: ${response.data.receipt_number}`, 'success');
-      navigate(backPath);
+      setSuccess(response.data);
+      addToast(`Payment of CFA ${response.data.transaction.amount} recorded. Receipt: ${response.data.transaction.receipt_number}`, 'success');
     } catch (error: any) {
       console.error("Payment error:", error);
-      const detail = error.response?.data?.detail || error.response?.data?.amount?.[0] || 'Failed to record payment.';
+      const data = error.response?.data;
+      const detail = data?.detail || data?.amount?.[0] || 'Failed to record payment.';
       addToast(detail, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const selectedInvoiceDetails = invoices.find(inv => inv.id === formData.invoice_id);
+  const selectedStudent = quote?.student || students.find((s: any) => s.id === selectedStudentId);
+  const amountDue = quote?.invoice ? quote.invoice.balance : quote?.total || '';
+  const noFeeConfig = quote && !quote.has_invoice && ((!quote.fees || quote.fees.length === 0) && (!quote.categories || quote.categories.length === 0));
+
+  const handlePrintReceipt = async () => {
+    const txn = success?.transaction;
+    if (!txn?.id) return;
+    setIsPrinting(true);
+    try {
+      await openPdfInNewTab(`/finance/transactions/${txn.id}/receipt/`, `receipt_${txn.receipt_number}.pdf`);
+    } catch (error: any) {
+      console.error("Receipt error:", error);
+      addToast(error.response?.data?.detail || 'Failed to open receipt.', 'error');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    const txn = success?.transaction;
+    if (!txn?.id) return;
+    setIsPrinting(true);
+    try {
+      await downloadPdf(`/finance/transactions/${txn.id}/receipt/`, `receipt_${txn.receipt_number}.pdf`);
+    } catch (error: any) {
+      console.error("Receipt error:", error);
+      addToast(error.response?.data?.detail || 'Failed to download receipt.', 'error');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   return (
     <div className="p-4 lg:p-12 max-w-[1000px] mx-auto bg-surface min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <button 
+      <button
         onClick={() => navigate(backPath)}
         className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all mb-8 group"
       >
@@ -100,7 +217,7 @@ export default function RecordTransactionPage() {
       <section className="mb-12">
         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary/80 block mb-3">Treasury Operations</span>
         <h1 className="text-4xl font-black tracking-tight text-on-surface">Record Payment</h1>
-        <p className="text-on-surface-variant mt-2 text-lg">Process institutional fee collections and generate official receipts.</p>
+        <p className="text-on-surface-variant mt-2 text-lg">Locate a student by class and collect their fees instantly — no invoice needed.</p>
       </section>
 
       {!canRecord && (
@@ -125,79 +242,236 @@ export default function RecordTransactionPage() {
         </div>
       )}
 
+      {success ? (
+        <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/10 shadow-sm overflow-hidden">
+          <div className="bg-emerald-600 p-10 text-center text-white">
+            <div className="w-20 h-20 mx-auto rounded-full bg-white/15 flex items-center justify-center mb-6">
+              <CheckCircle className="w-10 h-10" />
+            </div>
+            <h2 className="text-3xl font-black tracking-tight">Payment Recorded</h2>
+            <p className="text-emerald-100 mt-2 font-bold">
+              CFA {parseFloat(success.transaction.amount).toLocaleString()} credited to {success.transaction.student_name}
+            </p>
+            <p className="mt-6 inline-block px-5 py-2 bg-white/10 rounded-full font-mono text-sm tracking-widest">
+              Official Receipt: {success.transaction.receipt_number}
+            </p>
+            {success.transaction.fee_category_name && (
+              <p className="mt-3 inline-block px-5 py-2 bg-white/10 rounded-full text-xs font-black uppercase tracking-widest">
+                Fee Category: {success.transaction.fee_category_name}
+              </p>
+            )}
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {success.created_invoice && (
+                <span className="px-4 py-1.5 bg-white/15 rounded-full text-xs font-black uppercase tracking-widest">
+                  Invoice auto-created
+                </span>
+              )}
+              {success.activated && (
+                <span className="px-4 py-1.5 bg-white/15 rounded-full text-xs font-black uppercase tracking-widest">
+                  Student activated
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="p-10 flex flex-col gap-3">
+            <button
+              onClick={handlePrintReceipt}
+              disabled={isPrinting}
+              className="flex items-center justify-center gap-3 px-8 py-4 bg-secondary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-secondary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50"
+            >
+              {isPrinting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Receipt className="w-5 h-5" />}
+              Print Receipt Now
+            </button>
+            <button
+              onClick={handleDownloadReceipt}
+              disabled={isPrinting}
+              className="flex items-center justify-center gap-3 px-8 py-4 border-2 border-secondary/30 text-secondary rounded-xl font-black text-xs uppercase tracking-widest hover:bg-secondary/5 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <Wallet className="w-5 h-5" />
+              Download Receipt PDF
+            </button>
+            <button
+              onClick={() => { setSuccess(null); resetLocator(); }}
+              className="flex items-center justify-center gap-3 px-8 py-4 text-on-surface-variant rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-high transition-all"
+            >
+              Record Another Payment
+            </button>
+            <button
+              onClick={() => navigate(backPath)}
+              className="flex items-center justify-center gap-3 px-8 py-4 text-on-surface-variant rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-high transition-all"
+            >
+              Back to Treasury
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Form Area */}
         <div className={`md:col-span-2 space-y-8 ${!canRecord ? 'pointer-events-none opacity-40 select-none' : ''}`}>
           <form onSubmit={handleSubmit} className="bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm space-y-8">
-            
+
+            {/* Step 1: Locate student */}
             <div className="space-y-6 border-b border-outline-variant/10 pb-8">
+              <h3 className="text-xl font-bold tracking-tight flex items-center gap-3">
+                <User className="text-secondary w-6 h-6" /> Locate Student
+              </h3>
+
+              {selectedStudent ? (
+                <div className="rounded-2xl border border-secondary/20 bg-secondary-container/15 p-5 space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center">
+                        <User className="w-6 h-6 text-secondary" />
+                      </div>
+                      <div>
+                        <p className="font-black text-on-surface">{selectedStudent.full_name || `${selectedStudent.first_name} ${selectedStudent.last_name}`}</p>
+                        <p className="text-xs font-bold text-on-surface-variant">
+                          {selectedStudent.admission_number || '—'}
+                          {selectedStudent.class_display ? ` · ${selectedStudent.class_display}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <button type="button" onClick={resetLocator} className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-secondary hover:underline">
+                      <RefreshCw className="w-3 h-3" /> Change
+                    </button>
+                  </div>
+
+                  {isLoading && (
+                    <p className="flex items-center gap-2 text-xs font-bold text-secondary"><Loader2 className="w-3 h-3 animate-spin" /> Loading fee breakdown...</p>
+                  )}
+
+                  {quote && !noFeeConfig && (
+                    <div className="pt-3 border-t border-secondary/10 space-y-3">
+                      {quote.invoice && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Invoice {quote.invoice.invoice_number} · {quote.invoice.status === 'partial' ? 'Incomplete Payment' : quote.invoice.status}</span>
+                          <span className="font-black text-secondary">Due: CFA {parseFloat(quote.invoice.balance).toLocaleString()}</span>
+                        </div>
+                      )}
+                      {(quote.categories?.length > 0 || quote.fees?.length > 0) && (
+                        <div className="rounded-xl border border-secondary/10 bg-secondary-container/20 divide-y divide-secondary/10 overflow-hidden">
+                          {quote.categories?.map((cat: any) => (
+                            <div key={cat.id} className="px-4 py-2 flex items-center justify-between gap-3 text-xs">
+                              <span className="font-bold text-on-surface truncate">
+                                {cat.name}
+                                <span className={`ml-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${cat.is_mandatory ? 'bg-secondary/15 text-secondary' : 'bg-amber-100 text-amber-700'}`}>
+                                  {cat.is_mandatory ? 'Mandatory' : 'Optional'}
+                                </span>
+                              </span>
+                              <span className="font-black text-on-surface-variant shrink-0">
+                                CFA {parseFloat(cat.amount).toLocaleString()}
+                                {parseFloat(cat.paid) > 0 && (
+                                  <span className="text-[10px] font-bold text-secondary/70 ml-1.5">paid {parseFloat(cat.paid).toLocaleString()}</span>
+                                )}
+                                {parseFloat(cat.remaining) > 0 && (
+                                  <span className="text-[10px] font-bold text-amber-600 ml-1.5">remaining {parseFloat(cat.remaining).toLocaleString()}</span>
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                          {!quote.categories?.length && quote.fees?.map((fee: any, idx: number) => (
+                            <div key={idx} className="px-4 py-2 flex items-center justify-between gap-3 text-xs">
+                              <span className="font-bold text-on-surface truncate">{fee.category}</span>
+                              <span className="font-black text-on-surface-variant shrink-0">CFA {parseFloat(fee.amount).toLocaleString()}</span>
+                            </div>
+                          ))}
+                          <div className="px-4 py-2 flex items-center justify-between gap-3 text-xs bg-secondary/5">
+                            <span className="font-black uppercase tracking-widest text-on-surface-variant">Total</span>
+                            <span className="font-black text-secondary">CFA {parseFloat(quote.total).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {noFeeConfig && (
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <span className="material-symbols-outlined text-amber-600 text-sm mt-0.5">info</span>
+                      <p className="text-xs font-medium text-amber-700">
+                        No fee structure is configured for this student's class yet. Set one up under Finance → Fee Setup before collecting payment.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Section</label>
+                    <select
+                      value={selectedSection}
+                      onChange={(e) => { setSelectedSection(e.target.value); setSelectedClass(''); setStudents([]); setQuote(null); }}
+                      disabled={isLoading}
+                      className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">All Sections</option>
+                      {sections.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Grade Level / Class</label>
+                    <select
+                      value={selectedClass}
+                      onChange={(e) => setSelectedClass(e.target.value)}
+                      disabled={isLoading}
+                      className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">-- Select Class --</option>
+                      {classes
+                        .filter((c: any) => !selectedSection || c.stream == selectedSection)
+                        .map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Student</label>
+                    <div className="relative">
+                      <select
+                        value={selectedStudentId}
+                        onChange={(e) => handleSelectStudent(e.target.value)}
+                        disabled={isLoading || !selectedClass || students.length === 0}
+                        className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {isLoading ? 'Loading...' : students.length === 0 ? 'No students in this class' : '-- Choose Student --'}
+                        </option>
+                        {students.map((s: any) => (
+                          <option key={s.id} value={s.id}>
+                            {s.full_name} ({s.admission_number || '—'})
+                          </option>
+                        ))}
+                      </select>
+                      {!isLoading && selectedClass && students.length > 0 && (
+                        <Search className="w-4 h-4 text-on-surface-variant/40 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {quoteError && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <span className="material-symbols-outlined text-red-600 text-sm mt-0.5">error</span>
+                  <p className="text-xs font-medium text-red-700">{quoteError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Step 2: Payment details */}
+            <div className="space-y-6">
               <h3 className="text-xl font-bold tracking-tight flex items-center gap-3">
                 <Wallet className="text-secondary w-6 h-6" /> Payment Details
               </h3>
-              
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Select Fee</label>
-                <div className="relative">
-                    <select
-                        required
-                        name="invoice_id"
-                        value={formData.invoice_id}
-                        onChange={handleChange}
-                        disabled={isLoadingInvoices || invoices.length === 0}
-                        className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <option value="">
-                          {isLoadingInvoices ? 'Loading fees...' : '-- Choose Fee to Credit --'}
-                        </option>
-                        {invoices.map((inv) => (
-                            <option key={inv.id} value={inv.id}>
-                                {inv.student_name} - {inv.invoice_number} (Bal: CFA {parseFloat(inv.balance).toLocaleString()})
-                            </option>
-                        ))}
-                    </select>
-                    {isLoadingInvoices && (
-                        <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                            <Loader2 className="w-4 h-4 animate-spin text-secondary" />
-                        </div>
-                    )}
-                </div>
-                {invoiceError && !isLoadingInvoices && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                        <span className="material-symbols-outlined text-amber-600 text-sm mt-0.5">info</span>
-                        <p className="text-xs font-medium text-amber-700">{invoiceError}</p>
-                    </div>
-                )}
-                {selectedInvoiceDetails && (
-                  <div className="mt-3">
-                    <p className="text-xs font-bold text-secondary flex items-center gap-2">
-                      <CheckCircle className="w-3 h-3" />
-                      Selected: {selectedInvoiceDetails.student_name} - Amount Due: CFA {parseFloat(selectedInvoiceDetails.balance).toLocaleString()}
-                    </p>
-                    {selectedInvoiceDetails.line_items?.length > 0 && (
-                      <div className="mt-3 rounded-xl border border-secondary/10 bg-secondary-container/20 divide-y divide-secondary/10 overflow-hidden">
-                        {selectedInvoiceDetails.line_items.map((li: any, idx: number) => (
-                          <div key={idx} className="px-4 py-2 flex items-center justify-between gap-3 text-xs">
-                            <span className="font-bold text-on-surface truncate">
-                              {li.label || li.category}
-                              <span className={`ml-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${li.is_mandatory ? 'bg-secondary/15 text-secondary' : 'bg-amber-100 text-amber-700'}`}>
-                                {li.is_mandatory ? 'Mandatory' : 'Optional'}
-                              </span>
-                            </span>
-                            <span className="font-black text-on-surface-variant shrink-0">CFA {parseFloat(li.amount).toLocaleString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Amount Received (CFA)</label>
                   <input required type="number" step="0.01" min="1" name="amount" value={formData.amount} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-black text-secondary shadow-inner transition-all placeholder:text-secondary/40" placeholder="0.00" />
+                  {amountDue && parseFloat(amountDue) > 0 && (
+                    <p className="text-[11px] font-bold text-secondary/70">
+                      Balance due: CFA {parseFloat(amountDue).toLocaleString()}
+                    </p>
+                  )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Payment Method</label>
                   <select name="method" value={formData.method} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer">
@@ -207,6 +481,31 @@ export default function RecordTransactionPage() {
                     <option value="cheque">Certified Cheque</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Fee Category</label>
+                <select name="fee_category" value={formData.fee_category} onChange={handleChange} disabled={isLoading || feeCategories.length === 0} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-secondary focus:ring-4 focus:ring-secondary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                  <option value="">Whole balance / Not specified</option>
+                  {feeCategories.map((cat: any) => {
+                    const quoteCat = quote?.categories?.find((c: any) => c.id === cat.id);
+                    const status = quoteCat
+                      ? parseFloat(quoteCat.remaining) > 0
+                        ? `— remaining CFA ${parseFloat(quoteCat.remaining).toLocaleString()}`
+                        : '— paid in full'
+                      : '— not on this invoice';
+                    return (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name} {status}
+                      </option>
+                    );
+                  })}
+                </select>
+                {feeCategories.length > 0 && (
+                  <p className="text-[11px] font-bold text-secondary/70">
+                    Pick which fee this payment settles (Tuition, Registration, etc.). The receipt will show it.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -221,7 +520,7 @@ export default function RecordTransactionPage() {
             </div>
 
             <div className="flex justify-end pt-2">
-              <button disabled={isSubmitting || !formData.amount || !formData.invoice_id} type="submit" className="flex items-center gap-3 px-8 py-4 bg-secondary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-secondary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              <button disabled={isSubmitting || !formData.amount || !selectedStudentId || noFeeConfig} type="submit" className="flex items-center gap-3 px-8 py-4 bg-secondary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-secondary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 {isSubmitting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
@@ -237,20 +536,20 @@ export default function RecordTransactionPage() {
         <div className="md:col-span-1 space-y-6">
           <div className="bg-secondary-container/30 p-8 rounded-[2rem] border border-secondary/10 shadow-sm">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-on-secondary-container mb-6 flex items-center gap-2">
-              <Receipt className="w-4 h-4" /> Ledger Rules
+              <GraduationCap className="w-4 h-4" /> Class → Student Flow
             </h4>
             <ul className="space-y-6 text-xs font-bold text-on-secondary-container/70 leading-relaxed">
               <li className="flex items-start gap-4">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary mt-1 shrink-0 shadow-[0_0_8px_rgba(0,107,95,0.4)]"></span>
-                Transactions are immutable once processed to ensure audit compliance.
+                Pick a section and class, then choose the student. Their fee balance is shown automatically.
               </li>
               <li className="flex items-start gap-4">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary mt-1 shrink-0 shadow-[0_0_8px_rgba(0,107,95,0.4)]"></span>
-                Official receipts are automatically dispatched to parent contact emails upon success.
+                No manual invoice step — the payable is built from the class fee structures the moment payment is recorded.
               </li>
               <li className="flex items-start gap-4">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary mt-1 shrink-0 shadow-[0_0_8px_rgba(0,107,95,0.4)]"></span>
-                Mobile money transactions must wait for gateway confirmation.
+                The first payment automatically activates a newly registered student.
               </li>
             </ul>
           </div>
@@ -267,6 +566,7 @@ export default function RecordTransactionPage() {
         </div>
 
       </div>
+      )}
     </div>
   );
 }

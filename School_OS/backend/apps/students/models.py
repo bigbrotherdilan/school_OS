@@ -76,9 +76,8 @@ class Student(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.admission_number:
-            from django.utils import timezone
-            year = timezone.now().year
-            self.admission_number = f"SOS-{year}-{str(uuid.uuid4())[:8].upper()}"
+            from apps.students.utils import generate_admission_number
+            self.admission_number = generate_admission_number(self)
         super().save(*args, **kwargs)
 
     @property

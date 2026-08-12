@@ -4,7 +4,8 @@ from apps.finance.views import (
     FeeCategoryViewSet, FeeStructureViewSet,
     StudentInvoiceViewSet, PaymentTransactionViewSet,
     ExpenseCategoryViewSet, ExpenseViewSet,
-    finance_summary, initiate_payment
+    finance_summary, receipt_verify,
+    PaymentQuoteView, PaymentRecordView
 )
 
 router = DefaultRouter()
@@ -17,6 +18,8 @@ router.register(r'expenses', ExpenseViewSet, basename='expense')
 
 urlpatterns = [
     path('summary/', finance_summary, name='finance-summary'),
-    path('payments/initiate/', initiate_payment, name='initiate-payment'),
+    path('receipts/verify/<str:receipt_number>/', receipt_verify, name='receipt-verify'),
+    path('payments/quote/', PaymentQuoteView.as_view(), name='payment-quote'),
+    path('payments/record/', PaymentRecordView.as_view(), name='payment-record'),
     path('', include(router.urls)),
 ]

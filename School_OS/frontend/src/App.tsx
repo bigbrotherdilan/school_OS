@@ -14,6 +14,7 @@ import FeaturesPage from './pages/public/FeaturesPage';
 import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage';
 import TrustPage from './pages/public/TrustPage';
+import ReceiptVerify from './pages/public/ReceiptVerify';
 import SchoolTemplate from './pages/public/SchoolTemplate';
 import SchoolsList from './pages/public/SchoolsList';
 import SchoolProfile from './pages/public/SchoolProfile';
@@ -44,6 +45,7 @@ const Settings = lazy(() => import('./pages/admin/settings/Settings'));
 const EmailSettings = lazy(() => import('./pages/admin/settings/EmailSettings'));
 const Integrations = lazy(() => import('./pages/admin/settings/Integrations'));
 const AddStudentPage = lazy(() => import('./pages/admin/academic/students/AddStudentPage'));
+const EditStudentPage = lazy(() => import('./pages/admin/academic/students/EditStudentPage'));
 const RecordTransactionPage = lazy(() => import('./pages/admin/finance/RecordTransactionPage'));
 const AddFacultyPage = lazy(() => import('./pages/admin/operations/AddFacultyPage'));
 const AddBursarPage = lazy(() => import('./pages/admin/operations/AddBursarPage'));
@@ -81,6 +83,7 @@ const TeacherProfileEdit = lazy(() => import('./pages/teacher/settings/TeacherPr
 const ParentLayout = lazy(() => import('./components/layout/parent/ParentLayout'));
 const ParentDashboard = lazy(() => import('./pages/parent/ParentDashboard'));
 const ParentFees = lazy(() => import('./pages/parent/ParentFees'));
+const ParentReceipts = lazy(() => import('./pages/parent/ParentReceipts'));
 const ParentReports = lazy(() => import('./pages/parent/ParentReports'));
 const ParentAnalytics = lazy(() => import('./pages/parent/ParentAnalytics'));
 const ParentSettings = lazy(() => import('./pages/parent/ParentSettings'));
@@ -216,6 +219,7 @@ export default function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/trust" element={<TrustPage />} />
+        <Route path="/verify-receipt" element={<ReceiptVerify />} />
         <Route path="/templates/school" element={<SchoolTemplate />} />
         <Route path="/schools" element={<SchoolsList />} />
         <Route path="/schools/:schoolId" element={<SchoolProfile />} />
@@ -240,6 +244,7 @@ export default function App() {
           <Route index element={<DashboardHome />} />
           <Route path="academic" element={<AcademicManagement />} />
           <Route path="academic/students/new" element={<AddStudentPage />} />
+          <Route path="academic/students/:id/edit" element={<EditStudentPage />} />
           <Route path="academic/students/import" element={<BulkImportStudents />} />
           <Route path="operations" element={<OperationsCenter />} />
           <Route path="operations/faculty" element={<TeacherDirectory />} />
@@ -302,6 +307,7 @@ export default function App() {
         }>
           <Route index element={<ParentDashboard />} />
           <Route path="fees" element={<ParentFees />} />
+          <Route path="receipts" element={<ParentReceipts />} />
           <Route path="reports" element={<ParentReports />} />
           <Route path="analytics" element={<ParentAnalytics />} />
           <Route path="settings" element={<ParentSettings />} />

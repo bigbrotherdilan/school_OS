@@ -112,6 +112,128 @@ export function useTeacherData() {
     }
   }, []);
 
+  const fetchSchemes = useCallback(async (filters?: { subject?: string; class_obj?: string; term?: string; academic_year?: string; status?: string; week_number?: string | number }) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters?.subject) params.append('subject', filters.subject);
+      if (filters?.class_obj) params.append('class_obj', filters.class_obj);
+      if (filters?.term) params.append('term', filters.term);
+      if (filters?.academic_year) params.append('academic_year', filters.academic_year);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.week_number !== undefined) params.append('week_number', String(filters.week_number));
+      const url = `/logbook/schemes/?${params.toString()}`;
+      const response = await api.get(url);
+      return response.data.results || response.data;
+    } catch (error) {
+      console.error("Error fetching schemes:", error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const saveScheme = useCallback(async (data: any) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/logbook/schemes/', data);
+      return response.data;
+    } catch (error) {
+      console.error("Error saving scheme:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateScheme = useCallback(async (id: string, data: any) => {
+    setLoading(true);
+    try {
+      const response = await api.patch(`/logbook/schemes/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating scheme:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteScheme = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      await api.delete(`/logbook/schemes/${id}/`);
+    } catch (error) {
+      console.error("Error deleting scheme:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const markTaught = useCallback(async (id: string) => {
+    try {
+      const response = await api.post(`/logbook/schemes/${id}/mark_taught/`);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking scheme taught:", error);
+      throw error;
+    }
+  }, []);
+
+  const markPlanned = useCallback(async (id: string) => {
+    try {
+      const response = await api.post(`/logbook/schemes/${id}/mark_planned/`);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking scheme planned:", error);
+      throw error;
+    }
+  }, []);
+
+  const generateSchemes = useCallback(async (payload: any) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/logbook/schemes/generate/', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Error generating schemes:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const importSchemes = useCallback(async (payload: any) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/logbook/schemes/import/', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Error importing schemes:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchCoverage = useCallback(async (filters?: { term?: string; academic_year?: string }) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters?.term) params.append('term', filters.term);
+      if (filters?.academic_year) params.append('academic_year', filters.academic_year);
+      const url = `/logbook/schemes/coverage/?${params.toString()}`;
+      const response = await api.get(url);
+      return response.data.results || response.data;
+    } catch (error) {
+      console.error("Error fetching coverage:", error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const fetchTerms = useCallback(async (): Promise<Term[]> => {
     setLoading(true);
     try {
@@ -232,6 +354,15 @@ export function useTeacherData() {
     fetchTimetables,
     saveLessonPlan,
     submitLogbookEntry,
+    fetchSchemes,
+    saveScheme,
+    updateScheme,
+    deleteScheme,
+    markTaught,
+    markPlanned,
+    generateSchemes,
+    importSchemes,
+    fetchCoverage,
     fetchTerms,
     checkMarkWindowStatus,
     fetchExams,
