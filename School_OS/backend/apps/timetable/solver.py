@@ -561,6 +561,8 @@ class SchoolSolver:
     #  Materialise the solution into TimeSlot rows                       #
     # ------------------------------------------------------------------ #
     def _materialise(self, solver):
+        from django.db import transaction
+
         periods, days = self.grid()
         D, P = days, len(periods)
         target_ids = self.target_ids
@@ -601,38 +603,39 @@ class SchoolSolver:
             period = periods[p]
             by_tt[lesson.timetable_id].append((lesson, d, p, period))
 
-        results = []
-        for tt in self.timetables:
-            if tt.id not in target_ids:
-                continue
-            tt.slots.exclude(id__in=locked_by_tt.get(tt.id, set())).delete()
-            created = []
-            for lesson, d, p, period in by_tt.get(tt.id, []):
-                created.append(tt.slots.create(
-                    day_of_week=d,
-                    start_time=_to_time(period['start']),
-                    end_time=_to_time(period['end']),
-                    subject=lesson.subject,
-                    teacher=lesson.teacher,
-                    classroom=lesson.note or '',
-                    lesson=lesson,
-                ))
-            tt.generation_status = tt.GenerationStatus.GENERATED
-            tt.generation_message = (
-                f'Scheduled {len(created)} lesson periods. Optimised globally across '
-                f'all classes — teachers have no clashes, gaps and working days minimised.'
-            )
-            tt.generation_score = int(round(solver.ObjectiveValue()))
-            tt.last_generated_at = timezone.now()
-            tt.save(update_fields=[
-                'generation_status', 'generation_message', 'generation_score',
-                'last_generated_at', 'updated_at',
-            ])
-            results.append({
-                'class_name': tt.class_obj.name,
-                'slots': len(created),
-                'status': tt.generation_status,
-            })
+        with transaction.atomic():
+            results = []
+            for tt in self.timetables:
+                if tt.id not in target_ids:
+                    continue
+                tt.slots.exclude(id__in=locked_by_tt.get(tt.id, set())).delete()
+                created = []
+                for lesson, d, p, period in by_tt.get(tt.id, []):
+                    created.append(tt.slots.create(
+                        day_of_week=d,
+                        start_time=_to_time(period['start']),
+                        end_time=_to_time(period['end']),
+                        subject=lesson.subject,
+                        teacher=lesson.teacher,
+                        classroom=lesson.note or '',
+                        lesson=lesson,
+                    ))
+                tt.generation_status = tt.GenerationStatus.GENERATED
+                tt.generation_message = (
+                    f'Scheduled {len(created)} lesson periods. Optimised globally across '
+                    f'all classes — teachers have no clashes, gaps and working days minimised.'
+                )
+                tt.generation_score = int(round(solver.ObjectiveValue()))
+                tt.last_generated_at = timezone.now()
+                tt.save(update_fields=[
+                    'generation_status', 'generation_message', 'generation_score',
+                    'last_generated_at', 'updated_at',
+                ])
+                results.append({
+                    'class_name': tt.class_obj.name,
+                    'slots': len(created),
+                    'status': tt.generation_status,
+                })
 
         return {
             'ok': True,

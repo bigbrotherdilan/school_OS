@@ -220,9 +220,16 @@ class TimetableViewSet(viewsets.ModelViewSet):
                 tt.periods = periods if periods is not None else tt.periods
                 tt.working_days = working_days if working_days is not None else tt.working_days
 
+        force = bool(request.data.get('force'))
         skipped = []
         ready = []
         for tt in timetables:
+            if tt.generation_status == Timetable.GenerationStatus.PUBLISHED and not force:
+                skipped.append({
+                    'class_name': tt.class_obj.name,
+                    'reason': 'already published — unpublish it or regenerate with force to replace it.',
+                })
+                continue
             if not tt.lessons.exists():
                 created, total, doubles, error = suggest_lessons_for(tt)
                 if error:
@@ -266,6 +273,116 @@ class TimetableViewSet(viewsets.ModelViewSet):
             'count': len(issues),
         })
 
+    @action(detail=False, methods=['post'])
+    def validate_section(self, request):
+        """
+        Validation report for a whole section (plan section 36): teacher
+        conflicts across all classes, availability, boundaries and weekly
+        volume, so the admin sees exactly what is wrong before/after generation.
+        """
+        from .section_tools import validate_section
+        term = self._section_term(request)
+        classes = self._section_classes(request, term)
+        timetables = list(Timetable.objects.filter(
+            tenant_id=request.tenant_id,
+            term_id=term.id,
+            class_obj__in=classes,
+        ).select_related('class_obj', 'term'))
+        if not timetables:
+            raise ValidationError('No timetables exist yet for this section. Open the workspace first.')
+        return Response(validate_section(timetables))
+
+    @action(detail=False, methods=['post'])
+    def section_data(self, request):
+        """
+        "Load Section Data" preview (plan section 30): classes, teachers,
+        subjects, assignments and required lesson volume for the section.
+        """
+        from .section_tools import section_generation_data
+        from apps.staff.models import TeachingAssignment
+        from apps.academic.models import ClassSubject
+        term = self._section_term(request)
+        classes = self._section_classes(request, term)
+        class_subjects = ClassSubject.objects.filter(
+            academic_class__in=classes, weekly_hours__gt=0
+        ).select_related('subject')
+        assignments = TeachingAssignment.objects.filter(
+            academic_class__in=classes
+        ).select_related('teacher', 'subject')
+        return Response(section_generation_data(classes, class_subjects, assignments))
+
+    @action(detail=False, methods=['post'])
+    def check_section(self, request):
+        """
+        Pre-generation feasibility check (plan section 31): class capacity,
+        missing teacher assignment, teacher capacity after availability.
+        """
+        from .section_tools import section_feasibility
+        term = self._section_term(request)
+        classes = self._section_classes(request, term)
+        periods, working_days = _parse_week(request.data)
+        issues = section_feasibility(request.tenant_id, classes, periods, working_days)
+        return Response({
+            'ready': not any(i['severity'] == 'error' for i in issues),
+            'issues': issues,
+            'count': len(issues),
+        })
+
+    @action(detail=False, methods=['post'])
+    def publish(self, request):
+        """
+        Publish the generated timetables of a section (plan sections 60-61):
+        they become the official schedule and cannot be silently overwritten.
+        """
+        term = self._section_term(request)
+        classes = self._section_classes(request, term)
+        unpublished = [c.name for c in classes]
+        count = Timetable.objects.filter(
+            tenant_id=request.tenant_id, term_id=term.id, class_obj__in=classes,
+        ).exclude(generation_status__in=[
+            Timetable.GenerationStatus.PUBLISHED, Timetable.GenerationStatus.ARCHIVED,
+        ]).update(generation_status=Timetable.GenerationStatus.PUBLISHED)
+        return Response({
+            'published': count,
+            'message': f'Published {count} timetable(s) for this section. '
+                       f'New generations will only update published classes after explicit approval.',
+        })
+
+    @action(detail=False, methods=['post'])
+    def unpublish(self, request):
+        term = self._section_term(request)
+        classes = self._section_classes(request, term)
+        count = Timetable.objects.filter(
+            tenant_id=request.tenant_id, term_id=term.id, class_obj__in=classes,
+        ).filter(generation_status=Timetable.GenerationStatus.PUBLISHED).update(
+            generation_status=Timetable.GenerationStatus.GENERATED
+        )
+        return Response({
+            'unpublished': count,
+            'message': f'Unpublished {count} timetable(s) for this section.',
+        })
+
+    def _section_term(self, request):
+        term_id = request.data.get('term') or request.query_params.get('term')
+        if not term_id:
+            raise ValidationError('Select a term.')
+        term = Term.objects.filter(
+            id=term_id, academic_year__tenant_id=request.tenant_id
+        ).first()
+        if not term:
+            raise ValidationError('Select a valid term for your school.')
+        return term
+
+    def _section_classes(self, request, term):
+        stream_id = request.data.get('stream') or request.query_params.get('stream')
+        classes = Class.objects.filter(tenant_id=request.tenant_id).select_related('stream')
+        if stream_id:
+            classes = classes.filter(stream_id=stream_id)
+        classes = list(classes.order_by('cycle__order', 'level_order', 'name'))
+        if not classes:
+            raise ValidationError('No classes found for the selected section.')
+        return classes
+
 
 class TimeSlotViewSet(viewsets.ModelViewSet):
     serializer_class = TimeSlotSerializer
@@ -279,8 +396,8 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             qs = qs.filter(timetable_id=timetable_id)
         return qs
 
-    def _check_conflicts(self, day, start, end, teacher_id, classroom, exclude_id=None):
-        """Prevent a teacher or classroom being double-booked at the same time."""
+    def _check_conflicts(self, timetable, day, start, end, teacher_id, classroom, exclude_id=None):
+        """Prevent a teacher, classroom or class being double-booked at the same time."""
         qs = TimeSlot.objects.filter(
             timetable__tenant_id=self.request.tenant_id,
             day_of_week=day,
@@ -296,6 +413,12 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
                 if classroom and slot.classroom and slot.classroom.strip().lower() == classroom.strip().lower():
                     raise ValidationError(
                         f'Classroom "{classroom}" is already used by {slot.subject.name} '
+                        f'({slot.timetable.class_obj.name}) at {slot.start_time.strftime("%H:%M")} '
+                        f'on {slot.get_day_of_week_display()}.'
+                    )
+                if timetable is not None and slot.timetable_id == timetable.id:
+                    raise ValidationError(
+                        f'Conflict: {slot.subject.name} already occupies this class '
                         f'({slot.timetable.class_obj.name}) at {slot.start_time.strftime("%H:%M")} '
                         f'on {slot.get_day_of_week_display()}.'
                     )
@@ -317,6 +440,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         data = serializer.validated_data
         self._check_conflicts(
+            data['timetable'],
             data['day_of_week'],
             data['start_time'],
             data['end_time'],
@@ -333,6 +457,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
         instance = serializer.instance
         data = serializer.validated_data
         self._check_conflicts(
+            instance.timetable,
             data.get('day_of_week', instance.day_of_week),
             data.get('start_time', instance.start_time),
             data.get('end_time', instance.end_time),

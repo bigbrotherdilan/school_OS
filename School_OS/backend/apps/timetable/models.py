@@ -25,6 +25,8 @@ class Timetable(models.Model):
         GENERATED = 'generated', 'Generated'
         RELAXED = 'relaxed', 'Relaxed (has clashes)'
         INFEASIBLE = 'infeasible', 'Infeasible'
+        PUBLISHED = 'published', 'Published'
+        ARCHIVED = 'archived', 'Archived'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey('tenants.Tenant', on_delete=models.CASCADE, related_name='timetables')

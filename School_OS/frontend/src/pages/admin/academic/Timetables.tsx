@@ -2,7 +2,7 @@
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { useSectionStore } from '../../../stores/sectionStore';
-import { ArrowLeft, Trash2, Pencil, CalendarDays, PlusCircle, Sparkles, Lock, Unlock, AlertTriangle, CheckCircle2, Wand2, CalendarRange, LayoutGrid, BookOpen, GraduationCap, Clock } from 'lucide-react';
+import { ArrowLeft, Trash2, Pencil, CalendarDays, PlusCircle, Sparkles, Lock, Unlock, AlertTriangle, CheckCircle2, Wand2, CalendarRange, LayoutGrid, BookOpen, GraduationCap, Clock, Shield, ClipboardCheck, Globe } from 'lucide-react';
 
 const DAYS = [
   { value: 1, label: 'Monday' },
@@ -151,6 +151,12 @@ export default function Timetables() {
   const [generatingSection, setGeneratingSection] = useState(false);
   const [schoolResult, setSchoolResult] = useState<any>(null);
 
+  const [sectionSummary, setSectionSummary] = useState<any>(null);
+  const [sectionChecks, setSectionChecks] = useState<any>(null);
+  const [sectionReport, setSectionReport] = useState<any>(null);
+  const [checkingSection, setCheckingSection] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
   const [lessonForm, setLessonForm] = useState(EMPTY_LESSON_FORM);
   const [lessonModal, setLessonModal] = useState(false);
   const [savingLesson, setSavingLesson] = useState(false);
@@ -279,6 +285,11 @@ export default function Timetables() {
     return m;
   }, [timetables, termFilter]);
 
+  const publishedCount = useMemo(
+    () => workspaceClasses.filter((c: any) => ttByClass.get(String(c.id))?.generation_status === 'published').length,
+    [workspaceClasses, ttByClass]
+  );
+
   const sectionOf = (tt: any) => {
     const cls = classes.find((c: any) => c.id === tt?.class_obj);
     return cls?.section_id ? String(cls.section_id) : null;
@@ -317,8 +328,18 @@ export default function Timetables() {
     if (!workspaceSection || termFilter === 'all') return;
     api
       .post('/timetable/timetables/create_for_section/', { term: termFilter, stream: workspaceSection })
-      .then(fetchData)
-      .catch((e: any) => addToast(e.response?.data?.detail || 'Could not prepare class timetables.', 'error'));
+      .then(() => {
+        fetchData();
+        addToast('Timetables prepared for this section.', 'success');
+      })
+      .catch((e: any) => {
+        addToast(e.response?.data?.detail || 'Could not prepare class timetables. Please check that classes exist for this section and term.', 'error');
+      })
+      .finally(() => {
+        setWsLoading(false);
+        refreshWsSubjects().finally(() => setWsLoading(false));
+      });
+    loadSectionSummary(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceSection, termFilter]);
 
@@ -370,6 +391,79 @@ export default function Timetables() {
       addToast(msg, 'error');
     } finally {
       setGeneratingSection(false);
+    }
+  };
+
+  const loadSectionSummary = async (silent = false) => {
+    if (!workspaceSection || !termFilter || termFilter === 'all' || !silent) setCheckingSection(true);
+    try {
+      const res = await api.post('/timetable/timetables/section_data/', { term: termFilter, stream: workspaceSection });
+      setSectionSummary(res.data);
+    } catch (e: any) {
+      if (!silent) addToast(e.response?.data?.detail || 'Could not load the section summary.', 'error');
+    } finally {
+      if (!silent) setCheckingSection(false);
+    }
+  };
+
+  const runSectionCheck = async () => {
+    if (!workspaceSection || !termFilter || termFilter === 'all') return;
+    setCheckingSection(true);
+    try {
+      const res = await api.post('/timetable/timetables/check_section/', {
+        term: termFilter,
+        stream: workspaceSection,
+        periods: buildPeriods(weekForm),
+        working_days: weekForm.days.map(Number),
+      });
+      setSectionChecks({ ...res.data, ran: true });
+      addToast(res.data.ready ? 'Section is ready — requirements fit the week.' : `${res.data.count} problem(s) found. Read them before generating.`, res.data.ready ? 'success' : 'info');
+    } catch (e: any) {
+      addToast(e.response?.data?.detail || 'Feasibility check failed.', 'error');
+    } finally {
+      setCheckingSection(false);
+    }
+  };
+
+  const runSectionValidate = async () => {
+    if (!workspaceSection || !termFilter || termFilter === 'all') return;
+    setValidating(true);
+    try {
+      const res = await api.post('/timetable/timetables/validate_section/', { term: termFilter, stream: workspaceSection });
+      setSectionReport(res.data);
+      addToast(res.data.valid ? 'Section timetable is valid — 0 hard violations.' : `${res.data.count} issue(s) found in the validation report.`, res.data.valid ? 'success' : 'info');
+    } catch (e: any) {
+      addToast(e.response?.data?.detail || 'Validation failed.', 'error');
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handlePublishSection = async () => {
+    if (!workspaceSection || !termFilter || termFilter === 'all') return;
+    setPublishing(true);
+    try {
+      const res = await api.post('/timetable/timetables/publish/', { term: termFilter, stream: workspaceSection });
+      addToast(res.data.message, 'success');
+      await fetchData();
+    } catch (e: any) {
+      addToast(e.response?.data?.detail || 'Publishing failed.', 'error');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleUnpublishSection = async () => {
+    if (!workspaceSection || !termFilter || termFilter === 'all') return;
+    setPublishing(true);
+    try {
+      const res = await api.post('/timetable/timetables/unpublish/', { term: termFilter, stream: workspaceSection });
+      addToast(res.data.message, 'success');
+      await fetchData();
+    } catch (e: any) {
+      addToast(e.response?.data?.detail || 'Unpublishing failed.', 'error');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -578,14 +672,53 @@ export default function Timetables() {
     }
     setSavingWeek(true);
     try {
-      if (weekScope === 'class' && selected) {
-        await api.patch(`/timetable/timetables/${selected.id}/`, { periods, working_days: workingDays });
-      } else {
-        const tts = workspaceClasses
-          .map((c: any) => ttByClass.get(String(c.id)))
-          .filter((tt) => tt);
-        if (!tts.length) throw new Error('No class timetables yet — generate the section first.');
-        await Promise.all(tts.map((tt) => api.patch(`/timetable/timetables/${tt.id}/`, { periods, working_days: workingDays })));
+if (weekScope === 'class' && selected) {
+      // Ensure timetable exists for the class
+      if (!selected) {
+        throw new Error('No class selected. Please select a class first.');
+      }
+      if (!ttByClass.get(String(selected.id))) {
+        // Try to create timetable for this class
+        try {
+          await api.post('/timetable/timetables/create_for_section/', { 
+            term: termFilter, 
+            stream: workspaceSection 
+          });
+          await fetchData(); // Refresh timetable data
+        } catch (createError) {
+          throw new Error('Failed to create timetable for this class. Please try creating it manually first.');
+        }
+      }
+      await api.patch(`/timetable/timetables/${selected.id}/`, { periods, working_days: workingDays });
+} else {
+    // Ensure timetables exist for all classes in the section
+    const missingTimetables = workspaceClasses
+      .map((c: any) => ttByClass.get(String(c.id)))
+      .filter((tt) => !tt);
+    
+    if (missingTimetables.length > 0) {
+      // Try to create missing timetables
+      try {
+        await api.post('/timetable/timetables/create_for_section/', { 
+          term: termFilter, 
+          stream: workspaceSection 
+        });
+        await fetchData(); // Refresh timetable data
+      } catch (createError) {
+        throw new Error('Failed to create timetables for this section. Please try creating them manually first.');
+      }
+    }
+    
+    // Refresh the timetable references
+    const tts = workspaceClasses
+      .map((c: any) => ttByClass.get(String(c.id)))
+      .filter((tt) => tt);
+      
+    if (!tts.length) {
+      throw new Error('Could not create or find timetables for this section. Please check that classes exist for this section and term.');
+    }
+    
+    await Promise.all(tts.map((tt) => api.patch(`/timetable/timetables/${tt.id}/`, { periods, working_days: workingDays })));
       }
       addToast(weekScope === 'class' ? 'School week updated for this class.' : 'School week updated for the whole section.', 'success');
       setWeekModal(false);
@@ -759,6 +892,12 @@ export default function Timetables() {
   // ---------------------------------------------------------------- //
   const statusPill = (tt: any) => {
     const st = tt?.generation_status;
+    if (st === 'published')
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700">
+          <Globe className="w-3 h-3" /> Published
+        </span>
+      );
     if (st === 'generated')
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-green-100 text-green-700">
@@ -955,6 +1094,7 @@ export default function Timetables() {
                   .map((c: any) => ttByClass.get(String(c.id)))
                   .filter((tt) => tt);
                 const generated = tts.filter((tt) => tt.generation_status === 'generated').length;
+                const published = tts.filter((tt) => tt.generation_status === 'published').length;
                 const needsAttention = tts.filter((tt) => tt.generation_status === 'infeasible').length;
                 return (
                   <div key={sec.id} className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm p-6 hover:border-primary/30 transition-all">
@@ -972,6 +1112,9 @@ export default function Timetables() {
                         {needsAttention > 0 && (
                           <span className="px-2 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider">{needsAttention} attention</span>
                         )}
+                        {published > 0 && (
+                          <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider">{published} published</span>
+                        )}
                         {generated > 0 && (
                           <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-wider">{generated} generated</span>
                         )}
@@ -983,7 +1126,7 @@ export default function Timetables() {
                         return (
                           <span
                             key={c.id}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${tt?.generation_status === 'generated' ? 'bg-green-50 text-green-700 border border-green-200' : tt?.generation_status === 'infeasible' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-surface-container text-on-surface-variant'}`}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${tt?.generation_status === 'published' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : tt?.generation_status === 'generated' ? 'bg-green-50 text-green-700 border border-green-200' : tt?.generation_status === 'infeasible' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-surface-container text-on-surface-variant'}`}
                           >
                             {c.name}
                           </span>
@@ -1065,6 +1208,92 @@ export default function Timetables() {
                       </>
                     ) : (
                       <p className="font-bold whitespace-pre-line">{schoolResult.error || schoolResult.message}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Section data preview — plan §30-31 */}
+                {sectionSummary && (
+                  <div className="rounded-2xl bg-white/10 border border-white/25 p-4 text-sm space-y-3 backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/80">Section data</p>
+                      <button
+                        onClick={() => { setSectionSummary(null); setSectionChecks(null); setSectionReport(null); }}
+                        className="text-white/70 hover:text-white text-xs font-bold"
+                      >
+                        Hide
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2 text-center">
+                      {[
+                        ['Classes', sectionSummary.classes],
+                        ['Teachers', sectionSummary.teachers],
+                        ['Subjects', sectionSummary.subjects],
+                        ['Assignments', sectionSummary.assignments],
+                        ['Required', `${sectionSummary.required_lessons} h/wk`],
+                      ].map(([label, value]) => (
+                        <div key={label as string} className="bg-white/10 rounded-xl py-2">
+                          <p className="text-lg font-black">{value}</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-white/70">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={runSectionCheck}
+                        disabled={checkingSection || termFilter === 'all'}
+                        className="flex-1 bg-white/10 border border-white/30 rounded-xl py-2.5 text-xs font-black uppercase tracking-widest hover:bg-white/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        {checkingSection ? 'Checking...' : 'Check readiness'}
+                      </button>
+                      <button
+                        onClick={runSectionValidate}
+                        disabled={validating || termFilter === 'all'}
+                        className="flex-1 bg-white/10 border border-white/30 rounded-xl py-2.5 text-xs font-black uppercase tracking-widest hover:bg-white/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        <ClipboardCheck className="w-3.5 h-3.5" />
+                        {validating ? 'Validating...' : 'Validate'}
+                      </button>
+                    </div>
+                    {sectionChecks?.ran && (
+                      <div className={`rounded-xl p-3 text-xs space-y-1.5 ${sectionChecks.ready ? 'bg-green-500/20' : 'bg-amber-500/20'}`}>
+                        <p className={`font-black uppercase tracking-widest text-[10px] ${sectionChecks.ready ? 'text-green-200' : 'text-amber-200'}`}>
+                          {sectionChecks.ready ? 'Ready to generate' : `${sectionChecks.issues.length} issue(s) to fix first`}
+                        </p>
+                        {sectionChecks.issues.map((issue: any, i: number) => (
+                          <p key={i} className="text-white/90 leading-snug">• {issue.message}</p>
+                        ))}
+                      </div>
+                    )}
+                    {sectionReport && (
+                      <div className={`rounded-xl p-3 text-xs space-y-1.5 ${sectionReport.valid ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                        <p className={`font-black uppercase tracking-widest text-[10px] ${sectionReport.valid ? 'text-green-200' : 'text-red-200'}`}>
+                          Validation: {sectionReport.valid ? 'VALID — 0 errors' : `${sectionReport.count} error(s)`}
+                        </p>
+                        {sectionReport.issues.map((issue: any, i: number) => (
+                          <p key={i} className="text-white/90 leading-snug">• {issue.message}</p>
+                        ))}
+                        {sectionReport.valid && publishedCount > 0 ? (
+                          <button
+                            onClick={handleUnpublishSection}
+                            disabled={publishing}
+                            className="mt-1 w-full bg-white/15 border border-white/30 text-white rounded-lg py-2 font-black uppercase tracking-widest text-[11px] hover:bg-white/25 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          >
+                            <Unlock className="w-3.5 h-3.5" />
+                            {publishing ? 'Unpublishing...' : 'Unpublish — allow new generation'}
+                          </button>
+                        ) : sectionReport.valid ? (
+                          <button
+                            onClick={handlePublishSection}
+                            disabled={publishing}
+                            className="mt-1 w-full bg-white text-primary rounded-lg py-2 font-black uppercase tracking-widest text-[11px] hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          >
+                            <Globe className="w-3.5 h-3.5" />
+                            {publishing ? 'Publishing...' : 'Publish — official timetable'}
+                          </button>
+                        ) : null}
+                      </div>
                     )}
                   </div>
                 )}
