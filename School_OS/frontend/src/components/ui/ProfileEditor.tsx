@@ -35,7 +35,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
   const getPhotoUrl = () => {
     if (!profilePhoto) return null;
     if (profilePhoto.startsWith('http')) return profilePhoto;
-    if (profilePhoto.startsWith('media/')) return `http://localhost:8000/${profilePhoto}`;
+    if (profilePhoto.startsWith('media/')) {
+      const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1$/, '');
+      return `${apiBase}/${profilePhoto}`;
+    }
     return profilePhoto;
   };
 

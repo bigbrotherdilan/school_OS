@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, GraduationCap, ShieldAlert, Heart, Users, Camera, X, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Save, User, GraduationCap, ShieldAlert, Heart, Users, Camera, X, RotateCcw, CheckCircle2, CreditCard } from 'lucide-react';
 import { useToastStore } from '../../../../stores/toastStore';
 import { api } from '../../../../services/api';
 
@@ -9,6 +9,7 @@ export default function AddStudentPage() {
   const { addToast } = useToastStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
+  const [registeredStudent, setRegisteredStudent] = useState<any>(null);
 
   const [series, setSeries] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -138,6 +139,21 @@ export default function AddStudentPage() {
     });
   };
 
+  const goToPlacement = () => {
+    const hasParentInfo = !!(formData.parent_name.trim() || formData.parent_phone.trim() || formData.parent_email.trim());
+    if (hasParentInfo) {
+      if (!formData.parent_name.trim()) {
+        addToast('Parent name is required to create a parent account.', 'error');
+        return;
+      }
+      if (!formData.parent_email.trim()) {
+        addToast('Parent email is required to create a parent account. Leave all parent fields blank to register without one.', 'error');
+        return;
+      }
+    }
+    setStep(4);
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -171,8 +187,8 @@ export default function AddStudentPage() {
       if (formData.relationship_type) payload.relationship_type = formData.relationship_type;
 
       const response = await api.post('/students/students/', payload);
+      setRegisteredStudent(response.data);
       addToast(`Welcome aboard! ${response.data.first_name} is now registered. Admission #${response.data.admission_number || 'Generated'}`, 'success');
-      navigate('/admin/academic');
     } catch (error: any) {
       const data = error.response?.data;
       let detail = 'Failed to register student.';
@@ -227,6 +243,84 @@ export default function AddStudentPage() {
       </div>
 
       <div className="bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm max-w-3xl">
+        {registeredStudent ? (
+          <div className="space-y-8 animate-in fade-in text-on-surface">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-success/15 flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-success" />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight">Registration Complete</h3>
+              <p className="text-on-surface-variant text-sm font-bold">
+                {registeredStudent.first_name} {registeredStudent.last_name} is now in the registry.
+              </p>
+            </div>
+
+            <div className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant/20 space-y-4 shadow-inner">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Admission No</span>
+                <span className="text-sm font-black text-primary">{registeredStudent.admission_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Status</span>
+                <span className="text-sm font-black text-secondary">Registered (Pending)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Placement</span>
+                <span className="text-sm font-black">
+                  {registeredStudent.section_display || '—'}
+                  <span className="mx-2 opacity-20">/</span>
+                  {registeredStudent.class_display || '—'}
+                  {registeredStudent.series_code && (
+                    <>
+                      <span className="mx-2 opacity-20">/</span>
+                      {registeredStudent.series_code}
+                    </>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            {registeredStudent.parent && (
+              <div className="p-6 bg-secondary-container/20 rounded-2xl border border-secondary/10 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-secondary">
+                  <Users className="w-4 h-4" /> Parent Account Created
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">Email</p>
+                    <p className="font-black">{registeredStudent.parent.email}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">Temporary Password</p>
+                    <p className="font-black text-secondary select-all">{registeredStudent.parent.temp_password}</p>
+                  </div>
+                </div>
+                <p className="text-[11px] font-bold text-on-secondary-container/70">
+                  Share these credentials with the parent. They can change the password on first login.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button
+                onClick={() => navigate('/admin/finance/transactions/new', { state: { studentId: registeredStudent.id } })}
+                className="flex-1 flex items-center justify-center gap-3 px-8 py-4 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all"
+              >
+                <CreditCard className="w-5 h-5" /> Record Payment
+              </button>
+              <button
+                onClick={() => navigate('/admin/academic')}
+                className="flex-1 px-8 py-4 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all"
+              >
+                Back to Registry
+              </button>
+            </div>
+            <p className="text-[11px] font-bold text-on-surface-variant/60 text-center">
+              No invoice needed — the system will build the payable from the class fee structures when you record the first payment.
+            </p>
+          </div>
+        ) : (
+        <>
         {/* Step 1: Personal Info */}
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
@@ -347,17 +441,21 @@ export default function AddStudentPage() {
             </div>
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent Phone</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent Phone <span className="text-on-surface-variant/40 normal-case tracking-normal">(optional)</span></label>
                 <input type="tel" name="parent_phone" value={formData.parent_phone} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="+237 6XX XXX XXX" />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent Email (optional)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent Email</label>
                 <input type="email" name="parent_email" value={formData.parent_email} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="email@example.com" />
               </div>
             </div>
+            <p className="text-[11px] font-bold text-on-surface-variant/60 leading-relaxed">
+              To create a parent login, <span className="text-primary">name and email are required</span> (phone is optional). Leave all
+              parent fields blank to register the student without a parent account — you can link one later.
+            </p>
             <div className="flex justify-between pt-6">
               <button onClick={() => setStep(2)} className="px-8 py-4 bg-surface-container-low text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-high transition-all">Back</button>
-              <button onClick={() => setStep(4)} className="px-8 py-4 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">
+              <button onClick={goToPlacement} className="px-8 py-4 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">
                 Next: Academic Placement
               </button>
             </div>
@@ -442,13 +540,13 @@ export default function AddStudentPage() {
               <div className="flex justify-between items-center pt-3 border-t border-dashed border-outline-variant/20">
                 <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Placement</span>
                 <span className="text-sm font-black text-primary">
-                  {sections.find(s => s.id === formData.section)?.name === 'anglophone' ? 'Anglo' : sections.find(s => s.id === formData.section)?.name === 'francophone' ? 'Franco' : 'Not Set'}
+                  {sections.find(s => String(s.id) === formData.section)?.name || 'Not Set'}
                   <span className="mx-2 opacity-20">/</span>
-                  {classes.find(c => c.id === formData.current_class)?.name || 'Unassigned'}
+                  {classes.find(c => String(c.id) === formData.current_class)?.name || 'Unassigned'}
                   {formData.series && (
                     <>
                       <span className="mx-2 opacity-20">/</span>
-                      {series.find(s => s.id === formData.series)?.code || ''}
+                      {series.find(s => String(s.id) === formData.series)?.code || ''}
                     </>
                   )}
                 </span>
@@ -471,6 +569,7 @@ export default function AddStudentPage() {
             </div>
           </div>
         )}
+        </>)}
       </div>
     </div>
   );

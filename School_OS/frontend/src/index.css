@@ -5,6 +5,53 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary: 0 35 111;
+  --color-on-primary: 255 255 255;
+  --color-secondary: 0 107 95;
+  --color-surface-tint: 64 89 170;
+  --color-primary-container: 30 58 138;
+  --color-on-primary-container: 255 255 255;
+  --color-on-surface: 25 28 30;
+  --color-on-surface-variant: 68 70 81;
+  --color-on-background: 25 28 30;
+  --color-background: 247 249 251;
+  --color-surface: 247 249 251;
+  --color-surface-bright: 247 249 251;
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 242 244 246;
+  --color-surface-container: 236 238 240;
+  --color-surface-container-high: 230 232 234;
+  --color-surface-dim: 216 218 220;
+  --color-surface-variant: 224 227 229;
+  --color-outline: 117 118 130;
+  --color-outline-variant: 197 197 211;
+  --color-secondary-container: 109 245 225;
+  --color-on-secondary-container: 0 111 100;
+  --color-blue-50: 240 242 246;
+  --color-blue-100: 224 229 238;
+  --color-blue-200: 194 202 220;
+  --color-blue-300: 153 167 197;
+  --color-blue-400: 107 127 171;
+  --color-blue-500: 56 83 143;
+  --color-blue-600: 20 53 123;
+  --color-blue-700: 0 35 111;
+  --color-blue-800: 0 25 80;
+  --color-blue-900: 0 17 53;
+  --color-indigo-50: 240 242 246;
+  --color-indigo-100: 224 229 238;
+  --color-indigo-200: 194 202 220;
+  --color-indigo-300: 153 167 197;
+  --color-indigo-400: 107 127 171;
+  --color-indigo-500: 56 83 143;
+  --color-indigo-600: 20 53 123;
+  --color-indigo-700: 0 35 111;
+  --color-indigo-800: 0 25 80;
+  --color-indigo-900: 0 17 53;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+  --font-headline: 'Inter', 'Segoe UI', sans-serif;
+}
+
 @layer base {
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;

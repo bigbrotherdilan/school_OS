@@ -1,249 +1,323 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { useToastStore } from '../../../stores/toastStore';
-import { useTeacherData } from '../../../hooks/useTeacherData';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTeacherStore } from '../../../stores/teacherStore';
+import { useTeacherData } from '../../../hooks/useTeacherData';
+import { useToastStore } from '../../../stores/toastStore';
+
+interface SchemeWeek {
+  id: string;
+  week_number: number;
+  topic: string;
+  objectives: string;
+  expected_outcome: string;
+  essential_knowledge: string;
+  homework: string;
+  status: 'planned' | 'taught';
+  taught_at: string | null;
+  teacher_name: string | null;
+  notes: string;
+  term: string;
+  term_name: string;
+}
+
+interface Term {
+  id: string;
+  name: string;
+  order_number: number;
+  academic_year: string;
+  start_date: string | null;
+  end_date: string | null;
+}
+
+type SaveState = 'saved' | 'saving' | 'unsaved';
 
 export default function TeacherPlannerPage() {
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
-  const { addToast } = useToastStore();
-  const { saveLessonPlan } = useTeacherData();
   const { activeAssignment } = useTeacherStore();
-  const [plan, setPlan] = useState({
-    title: 'Introduction to Linear Algebra',
-    duration: '55 Mins',
-    objectives: 'By the end of this lesson, students will be able to:\n1. Define a matrix and identify its dimensions.\n2. Perform basic scalar multiplication.\n3. Identify RLS applications of matrices in image processing.',
-    engage: 'Show a zoomed-in pixelated image on the projector. Ask students how computers represent these images (as grids of numbers).',
-    explore: 'Group activity: Distribute worksheets with small "image grids". Have students apply a scalar multiplier to increase the "brightness" of the image.',
-    explain: 'Formalize the concept of a Matrix. Introduce terminology: rows, columns, dimensions, elements, scalar multiplication.',
-    elaborate: 'Provide a real-world scenario from tech (storing data in arrays). Have students construct a matrix representing sales data for a school club over 3 days.',
-    evaluate: 'Exit ticket: 3 short questions on identifying matrix dimensions and one scalar multiplication problem.',
-  });
+  const { fetchSchemes, updateScheme, markTaught, markPlanned, fetchTerms } = useTeacherData();
+  const { addToast } = useToastStore();
 
-  const planRef = useRef(plan);
-  useEffect(() => { planRef.current = plan; }, [plan]);
+  const [terms, setTerms] = useState<Term[]>([]);
+  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const [weeks, setWeeks] = useState<SchemeWeek[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<Record<string, SaveState>>({});
 
+  const notesRef = useRef<Record<string, string>>({});
+  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Load terms once (for the assignment's academic year)
   useEffect(() => {
-    // Attempt to load existing plan from DB
-    const loadExistingPlan = async () => {
-       try {
-         // In a real scenario, we'd fetch for specific week/class
-         // const data = await fetchSchemeOfWork(14);
-         // if (data) setPlan({...plan, title: data.topic, objectives: data.objectives});
-         console.log("TeacherPlannerPage: Ready for dynamic synchronization.");
-       } catch (e) {
-         console.error(e);
-       }
-    };
-    loadExistingPlan();
+    let cancelled = false;
+    fetchTerms().then((all) => {
+      if (cancelled) return;
+      const mine = all.filter((t) => t.academic_year === activeAssignment?.academic_year);
+      setTerms(mine);
+      setSelectedTerm((prev) => prev || currentTerm(mine) || mine[0]?.id || '');
+    });
+    return () => { cancelled = true; };
+  }, [activeAssignment?.academic_year]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const currentTerm = (list: Term[]) =>
+    list.find((t) => {
+      if (!t.start_date || !t.end_date) return false;
+      const now = new Date();
+      return new Date(t.start_date) <= now && now <= new Date(t.end_date);
+    })?.id;
+
+  // Load the plan for the selected term
+  useEffect(() => {
+    if (!activeAssignment || !selectedTerm) return;
+    let cancelled = false;
+    setLoading(true);
+    fetchSchemes({
+      subject: activeAssignment.subject,
+      class_obj: activeAssignment.academic_class,
+      term: selectedTerm,
+    }).then((rows) => {
+      if (cancelled) return;
+      setWeeks(rows);
+      rows.forEach((r: SchemeWeek) => { notesRef.current[r.id] = r.notes || ''; });
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [activeAssignment, selectedTerm, fetchSchemes]);
+
+  // Cleanup timers on unmount
+  useEffect(() => () => {
+    Object.values(timersRef.current).forEach(clearTimeout);
   }, []);
 
-  useEffect(() => {
-    if (saveStatus === 'unsaved') {
-      const timer = setTimeout(async () => {
-        setSaveStatus('saving');
-        try {
-          // Collapse the 5E into the standard objectives field for the SchemeOfWork model
-          const unifiedObjective = `${planRef.current.objectives}\n\n### Engage:\n${planRef.current.engage}\n\n### Explore:\n${planRef.current.explore}\n\n### Explain:\n${planRef.current.explain}`;
-          await saveLessonPlan({
-            topic: planRef.current.title,
-            objectives: unifiedObjective,
-            week_number: 14, // Mock current week
-            subject_id: activeAssignment?.subject,
-            class_id: activeAssignment?.academic_class
-          });
-          setSaveStatus('saved');
-        } catch (error) {
-          console.error("Save plan failed", error);
-          setSaveStatus('unsaved');
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
+  const doSaveNotes = useCallback(async (id: string) => {
+    const value = notesRef.current[id] || '';
+    setSaveState((s) => ({ ...s, [id]: 'saving' }));
+    try {
+      await updateScheme(id, { notes: value });
+      setSaveState((s) => ({ ...s, [id]: 'saved' }));
+    } catch {
+      setSaveState((s) => ({ ...s, [id]: 'unsaved' }));
+      addToast('Could not save your notes. Will retry when you type again.', 'error');
     }
-  }, [saveStatus, saveLessonPlan]);
+  }, [updateScheme, addToast]);
 
-  const handleChange = (field: string, value: string) => {
-    setPlan({ ...plan, [field]: value });
-    setSaveStatus('unsaved');
+  const handleNotesChange = (id: string, value: string) => {
+    notesRef.current[id] = value;
+    setWeeks((prev) => prev.map((w) => (w.id === id ? { ...w, notes: value } : w)));
+    setSaveState((s) => ({ ...s, [id]: 'unsaved' }));
+    if (timersRef.current[id]) clearTimeout(timersRef.current[id]);
+    timersRef.current[id] = setTimeout(() => doSaveNotes(id), 2000);
   };
 
-  const handleExport = () => {
-    addToast('Lesson Plan exported as PDF.', 'success');
+  const handleToggle = async (week: SchemeWeek, toTaught: boolean) => {
+    if (busyId) return;
+    setBusyId(week.id);
+    if (timersRef.current[week.id]) {
+      clearTimeout(timersRef.current[week.id]);
+      delete timersRef.current[week.id];
+      await updateScheme(week.id, { notes: notesRef.current[week.id] || '' }).catch(() => {});
+      setSaveState((s) => ({ ...s, [week.id]: 'saved' }));
+    }
+    try {
+      const updated = toTaught ? await markTaught(week.id) : await markPlanned(week.id);
+      setWeeks((prev) => prev.map((w) => (w.id === updated.id ? updated : w)));
+      notesRef.current[updated.id] = updated.notes || '';
+      if (toTaught) addToast(`Week ${week.week_number} marked as taught.`, 'success');
+      else addToast(`Week ${week.week_number} returned to planned.`, 'info');
+    } catch (e: any) {
+      addToast(e.response?.data?.detail || 'Could not update this week.', 'error');
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const handleSaveToLibrary = () => {
-    addToast('Lesson plan saved to your library.', 'success');
-  };
+  const taughtCount = weeks.filter((w) => w.status === 'taught').length;
+  const progress = weeks.length ? Math.round((taughtCount / weeks.length) * 100) : 0;
 
-  const handleAddMaterial = () => {
-    addToast('Upload material feature coming soon.', 'info');
-  };
+  const weekOfToday = (() => {
+    const term = terms.find((t) => t.id === selectedTerm);
+    if (!term?.start_date) return null;
+    const diff = Math.floor((Date.now() - new Date(term.start_date).getTime()) / (7 * 86400000));
+    return Math.max(0, diff) + 1;
+  })();
+
+  if (!activeAssignment) {
+    return (
+      <div className="p-10 text-center text-slate-500 font-medium">
+        No active class/subject selected. Pick an assignment to see your lesson plan.
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-12 animate-in fade-in duration-500">
-      <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-8 pb-12 animate-in fade-in duration-500">
+      {/* Header */}
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Lesson Planner</h2>
-          <p className="text-on-surface-variant text-sm mt-1">Design and align curriculum delivery</p>
+          <p className="text-slate-500 text-sm mt-1">
+            {activeAssignment.class_name} &bull; {activeAssignment.subject_name} — your plan for the term
+          </p>
         </div>
-        
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-300 ${
-            saveStatus === 'saved' ? 'bg-secondary/10 text-secondary' : 
-            saveStatus === 'saving' ? 'bg-primary/10 text-primary' : 
-            'bg-slate-100 text-slate-400'
+          <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
+            Term
+            <select
+              value={selectedTerm}
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+            >
+              {terms.length === 0 && <option value="">No terms</option>}
+              {terms.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+          <div className={`flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-full ${
+            progress === 100 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-secondary/10 text-secondary'
           }`}>
-            {saveStatus === 'saved' && <><span className="material-symbols-outlined text-[14px]">cloud_done</span> Saved</>}
-            {saveStatus === 'saving' && <><span className="material-symbols-outlined text-[14px] animate-spin">sync</span></>}
-            {saveStatus === 'unsaved' && <><span className="material-symbols-outlined text-[14px]">edit</span> Draft</>}
+            <span className="material-symbols-outlined text-sm">trending_up</span>
+            {taughtCount}/{weeks.length} weeks • {progress}%
           </div>
-          <button onClick={handleExport} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-50 shadow-sm flex items-center gap-2 min-h-[44px]">
-            <span className="material-symbols-outlined text-sm">download</span> <span className="hidden sm:inline">Export PDF</span><span className="sm:hidden">Export</span>
-          </button>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-        {/* Planner Workspace (Left) */}
-        <section className="lg:col-span-8 space-y-6">
-          <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6 sm:space-y-8">
-            <div className="flex items-start gap-4 pb-6 border-b border-slate-100">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>architecture</span>
-              </div>
-              <div className="flex-1 space-y-4">
-                <input 
-                  type="text" 
-                  value={plan.title}
-                  onChange={(e) => handleChange('title', e.target.value)}
-                  className="w-full text-2xl font-bold text-slate-900 bg-transparent border-none p-0 focus:ring-0 placeholder-slate-300 transition-colors hover:text-primary focus:text-primary"
-                  placeholder="Lesson Title..."
-                />
-                <div className="flex flex-wrap gap-2 text-sm text-slate-500 font-medium">
-                  <span className="flex items-center gap-1 bg-slate-50 px-3 py-1 rounded-full"><span className="material-symbols-outlined text-[16px]">school</span> {activeAssignment?.class_name || 'Loading...'}</span>
-                  <span className="flex items-center gap-1 bg-slate-50 px-3 py-1 rounded-full"><span className="material-symbols-outlined text-[16px]">menu_book</span> {activeAssignment?.subject_name || 'Loading...'}</span>
-                  <span className="flex items-center gap-1 bg-slate-50 px-3 py-1 rounded-full"><span className="material-symbols-outlined text-[16px]">timer</span> {plan.duration}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">outbound</span> Learning Objectives
-              </label>
-              <textarea 
-                value={plan.objectives}
-                onChange={(e) => handleChange('objectives', e.target.value)}
-                rows={4}
-                className="w-full bg-surface-container-low border-none rounded-xl p-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all leading-relaxed resize-y"
-              />
-            </div>
-
-            <div className="grid gap-6">
-              <PlannerSection 
-                title="1. Engage (Introduction)" 
-                icon="lightbulb" 
-                value={plan.engage} 
-                onChange={(v) => handleChange('engage', v)} 
-              />
-              <PlannerSection 
-                title="2. Explore (Activity)" 
-                icon="explore" 
-                value={plan.explore} 
-                onChange={(v) => handleChange('explore', v)} 
-              />
-              <PlannerSection 
-                title="3. Explain (Concept)" 
-                icon="psychology" 
-                value={plan.explain} 
-                onChange={(v) => handleChange('explain', v)} 
-              />
-              <PlannerSection 
-                title="4. Elaborate (Application/RLS)" 
-                icon="public" 
-                value={plan.elaborate} 
-                color="text-secondary"
-                onChange={(v) => handleChange('elaborate', v)} 
-              />
-              <PlannerSection 
-                title="5. Evaluate (Assessment)" 
-                icon="fact_check" 
-                value={plan.evaluate} 
-                onChange={(v) => handleChange('evaluate', v)} 
-              />
-            </div>
-            
-            <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <span className="text-xs font-bold text-slate-400">Last edited just now</span>
-              <button onClick={handleSaveToLibrary} className="px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-md hover:-translate-y-0.5 transition-all text-sm min-h-[44px] w-full sm:w-auto">
-                Save to Library
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Resources Panel (Right) */}
-        <section className="lg:col-span-4 space-y-6">
-          <div className="bg-surface-container-high p-6 rounded-2xl shadow-sm border border-slate-50">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-6">
-              <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>gpp_good</span>
-              CBA Framework Alignment
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-white rounded-xl border border-secondary/20 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 mb-1">Target Competency</h4>
-                <p className="text-sm font-medium text-slate-800">C3: Solving complex problems using mathematical representations.</p>
-              </div>
-              <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 mb-1">Recommended RLS</h4>
-                <p className="text-sm text-slate-600">Digital networks, Cryptography basics, Resource allocation in business.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-              <span className="material-symbols-outlined text-tertiary-fixed-dim" style={{ fontVariationSettings: "'FILL' 1" }}>folder_open</span>
-              Attached Resources
-            </h3>
-            <ul className="space-y-2">
-              <li className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-error">picture_as_pdf</span>
-                  <span className="text-sm font-medium text-slate-700">Matrix_Worksheet_01.pdf</span>
-                </div>
-                <span className="material-symbols-outlined text-sm text-slate-300 group-hover:text-primary transition-colors">download</span>
-              </li>
-              <li className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-blue-500">slideshow</span>
-                  <span className="text-sm font-medium text-slate-700">Intro_Slides.pptx</span>
-                </div>
-                <span className="material-symbols-outlined text-sm text-slate-300 group-hover:text-primary transition-colors">download</span>
-              </li>
-            </ul>
-            <button onClick={handleAddMaterial} className="w-full mt-4 py-3 border-2 border-dashed border-slate-200 text-slate-500 rounded-xl font-bold text-xs hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 min-h-[44px]">
-              <span className="material-symbols-outlined text-sm">add</span> Add Material
-            </button>
-          </div>
-        </section>
+      {/* Progress bar */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
+        <div className="flex items-center justify-between text-sm font-bold text-slate-600 mb-3">
+          <span>Term progress</span>
+          <span className="text-primary">{progress}% covered</span>
+        </div>
+        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+          <div className="bg-gradient-to-r from-primary to-secondary h-full rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="text-xs text-slate-400 mt-3">
+          Mark a week <b>Done</b> when you have covered it — this is your signature of record for work coverage.
+        </p>
       </div>
+
+      {/* Weeks */}
+      {loading ? (
+        <div className="flex items-center justify-center p-16 text-slate-400 font-medium">
+          <span className="material-symbols-outlined animate-spin text-3xl text-primary mr-3">sync</span>
+          Loading your lesson plan...
+        </div>
+      ) : weeks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-slate-100 shadow-sm">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-3xl text-slate-300">menu_book</span>
+          </div>
+          <h4 className="text-lg font-bold text-slate-800 mb-2">No lessons planned yet</h4>
+          <p className="text-sm text-slate-500 max-w-md">
+            Your school office hasn't filled in the year plan for this class and subject yet.
+            Once they do, every week will show up here for you to mark as done.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {weeks.map((week) => {
+            const isThisWeek = weekOfToday === week.week_number;
+            return (
+              <div key={week.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
+                isThisWeek ? 'border-primary/40 ring-1 ring-primary/20' : 'border-slate-100'
+              }`}>
+                <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className={`shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center font-black ${
+                    week.status === 'taught' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    <span className="text-lg leading-none">{week.week_number}</span>
+                    <span className="text-[9px] uppercase tracking-wider">Week</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-lg font-bold text-slate-900 leading-tight">{week.topic}</h4>
+                      {isThisWeek && (
+                        <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">This week</span>
+                      )}
+                      {week.status === 'taught' ? (
+                        <span className="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">verified</span> Done
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Planned</span>
+                      )}
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                      {week.objectives && <Field icon="outbound" label="Objectives" value={week.objectives} />}
+                      {week.expected_outcome && <Field icon="flag" label="Expected outcome" value={week.expected_outcome} />}
+                      {week.essential_knowledge && <Field icon="lightbulb" label="Essential knowledge" value={week.essential_knowledge} />}
+                      {week.homework && <Field icon="home_work" label="Homework" value={week.homework} />}
+                    </div>
+                    {week.status === 'taught' && week.teacher_name && (
+                      <p className="mt-3 text-xs text-slate-400 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">how_to_reg</span>
+                        Recorded by {week.teacher_name} on {week.taught_at ? new Date(week.taught_at).toLocaleString() : ''}
+                      </p>
+                    )}
+                    <div className="mt-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 mb-1.5">
+                        <span className="material-symbols-outlined text-sm">edit_note</span> My teaching notes
+                      </label>
+                      <textarea
+                        value={week.notes}
+                        onChange={(e) => handleNotesChange(week.id, e.target.value)}
+                        rows={2}
+                        placeholder="What actually happened in class, anything to remember..."
+                        className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all leading-relaxed resize-y"
+                      />
+                      <SaveChip state={saveState[week.id] || 'saved'} />
+                    </div>
+                  </div>
+                  <div className="sm:ml-auto">
+                    {week.status === 'taught' ? (
+                      <button
+                        onClick={() => handleToggle(week, false)}
+                        disabled={busyId === week.id}
+                        className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 shadow-sm flex items-center gap-2 disabled:opacity-50 min-h-[44px]"
+                      >
+                        <span className="material-symbols-outlined text-sm">undo</span> Undo
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleToggle(week, true)}
+                        disabled={busyId === week.id}
+                        className="px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 shadow-md shadow-primary/20 flex items-center gap-2 disabled:opacity-50 min-h-[44px]"
+                      >
+                        {busyId === week.id
+                          ? <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                          : <span className="material-symbols-outlined text-sm">check_circle</span>}
+                        Mark as Done
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function PlannerSection({ title, icon, value, color = 'text-slate-400', onChange }: { title: string, icon: string, value: string, color?: string, onChange: (val: string) => void }) {
+function Field({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
-    <div className="space-y-2 group">
-      <label className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors ${color} group-focus-within:text-primary`}>
-        <span className={`material-symbols-outlined text-sm ${title.includes('4') ? 'text-secondary' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span> {title}
-      </label>
-      <textarea 
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={2}
-        className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all leading-relaxed resize-y group-hover:bg-slate-100"
-      />
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 mb-1">
+        <span className="material-symbols-outlined text-sm">{icon}</span> {label}
+      </p>
+      <p className="text-sm text-slate-700 whitespace-pre-line">{value}</p>
+    </div>
+  );
+}
+
+function SaveChip({ state }: { state: SaveState }) {
+  if (state === 'saved') return null;
+  return (
+    <div className={`mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${
+      state === 'saving' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
+    }`}>
+      <span className={`material-symbols-outlined text-sm ${state === 'saving' ? 'animate-spin' : ''}`}>
+        {state === 'saving' ? 'sync' : 'edit'}
+      </span>
+      {state === 'saving' ? 'Saving...' : 'Unsaved changes'}
     </div>
   );
 }

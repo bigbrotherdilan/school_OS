@@ -1,9 +1,11 @@
-const CACHE = 'school-os-v1';
+const CACHE = 'school-os-v3';
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/favicon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((cache) => cache.addAll(APP_SHELL).catch(() => {}))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -22,6 +24,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // API calls bypass the cache entirely — never serve stale data.
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/pub/')) return;
+
+  // Navigations are network-first so the app shell is always current.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -35,18 +41,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/pub/')) return;
-
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
+  // Hashed production build assets are immutable → cache-first for speed.
+  const isHashedAsset = /^\/assets\/.*\.(js|css|woff2?|png|svg|ico|jpg|jpeg|webp|gif)$/.test(url.pathname);
+  if (isHashedAsset) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetch(request).then((response) => {
         if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
         }
         return response;
-      });
-    })
+      }))
+    );
+    return;
+  }
+
+  // Everything else (dev modules, unhashed files) is network-first so the
+  // app can never go stale — this is what kept serving the old UI.
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });

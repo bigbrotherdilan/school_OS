@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+﻿import axios, { type AxiosResponse } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { useTenantStore } from '../stores/tenantStore';
 
@@ -92,3 +92,20 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export async function apiFetchAll<T = any>(url: string, params: Record<string, any> = {}): Promise<T[]> {
+  const all: T[] = [];
+  let pageUrl: string | null = url;
+  let first = true;
+  while (pageUrl) {
+    const res: AxiosResponse = await api.get(pageUrl, first ? { params } : {});
+    first = false;
+    const data = res.data;
+    if (Array.isArray(data)) {
+      return data;
+    }
+    all.push(...(data.results || []));
+    pageUrl = data.next || null;
+  }
+  return all;
+}

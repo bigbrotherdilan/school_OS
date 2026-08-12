@@ -2,6 +2,7 @@
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { useCanRecordFinance } from '../../../hooks/useCanRecordFinance';
+import { openPdfInNewTab } from '../../../utils/pdf';
 
 export default function InvoiceManagement() {
   const { addToast } = useToastStore();
@@ -75,6 +76,14 @@ export default function InvoiceManagement() {
       addToast(err.response?.data?.detail || 'Failed to send reminder.', 'error');
     } finally {
       setReminderLoading(null);
+    }
+  };
+
+  const handleStatement = async (inv: any) => {
+    try {
+      await openPdfInNewTab(`/finance/invoices/${inv.id}/statement/`, `statement_${inv.invoice_number}.pdf`);
+    } catch (err: any) {
+      addToast(err.response?.data?.detail || 'Failed to open statement.', 'error');
     }
   };
 
@@ -176,7 +185,7 @@ export default function InvoiceManagement() {
                       <td className="px-6 py-4 text-sm">CFA {inv.total_amount.toLocaleString()}</td>
                       <td className="px-6 py-4 text-sm">CFA {inv.amount_paid.toLocaleString()}</td>
                       <td className="px-6 py-4 text-sm font-bold">{inv.balance === '0.00' ? <span className="text-secondary">Settled</span> : `CFA ${parseFloat(inv.balance).toLocaleString()}`}</td>
-                      <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${statusColor(inv.status)}`}>{inv.status}</span></td>
+                      <td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${statusColor(inv.status)}`}>{inv.status === 'partial' ? 'Incomplete Payment' : inv.status}</span></td>
                       <td className="px-6 py-4 text-sm text-on-surface-variant">{new Date(inv.due_date).toLocaleDateString()}</td>
                       <td className="px-6 py-4">
                         <button
@@ -188,11 +197,18 @@ export default function InvoiceManagement() {
                         </button>
                       </td>
                       <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleStatement(inv)}
+                          className="px-3 py-1.5 bg-primary/5 text-primary rounded-lg text-xs font-bold hover:bg-primary/10 transition-colors flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-sm">description</span>
+                          Statement
+                        </button>
                         {inv.status !== 'paid' && (
                           <button
                             onClick={() => handleSendReminder(inv.id)}
                             disabled={reminderLoading === inv.id}
-                            className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50 flex items-center gap-1"
+                            className="ml-1 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50 flex items-center gap-1"
                           >
                             <span className="material-symbols-outlined text-sm">{reminderLoading === inv.id ? 'sync' : 'mail'}</span>
                             {reminderLoading === inv.id ? 'Sending...' : 'Remind'}

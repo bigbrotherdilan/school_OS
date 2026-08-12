@@ -195,6 +195,27 @@ STORAGES = {
     },
 }
 
+# ──────────────────────────────────────────────
+# Object storage (S3-compatible buckets: AWS S3, Cloudflare R2,
+# DigitalOcean Spaces, MinIO, ...). Files live in the bucket; only the
+# resulting URL is persisted in the database. Falls back to the local
+# filesystem when no bucket is configured.
+# ──────────────────────────────────────────────
+if os.environ.get('AWS_STORAGE_BUCKET_NAME'):
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        'OPTIONS': {
+            'access_key': os.environ.get('AWS_ACCESS_KEY_ID', ''),
+            'secret_key': os.environ.get('AWS_SECRET_ACCESS_KEY', ''),
+            'bucket_name': os.environ.get('AWS_STORAGE_BUCKET_NAME'),
+            'region_name': os.environ.get('AWS_S3_REGION_NAME') or None,
+            'endpoint_url': os.environ.get('AWS_S3_ENDPOINT_URL') or None,
+            'custom_domain': os.environ.get('AWS_S3_CUSTOM_DOMAIN') or None,
+            'default_acl': os.environ.get('AWS_S3_DEFAULT_ACL', 'public-read'),
+            'querystring_auth': os.environ.get('AWS_S3_QUERYSTRING_AUTH', 'false').lower() == 'true',
+        },
+    }
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ──────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { useCanRecordFinance } from '../../../hooks/useCanRecordFinance';
+import { downloadPdf, openPdfInNewTab } from '../../../utils/pdf';
 
 const modules = [
   {
@@ -53,6 +54,14 @@ const modules = [
     color: 'from-cyan-600 to-cyan-700',
     write: true,
   },
+  {
+    icon: 'verified',
+    title: 'Verify Receipt',
+    desc: 'Public authenticity check for any printed fee receipt.',
+    path: '/verify-receipt',
+    color: 'from-sky-600 to-sky-700',
+    write: false,
+  },
 ];
 
 export default function FinanceTreasury() {
@@ -87,6 +96,18 @@ export default function FinanceTreasury() {
       a.click(); a.remove();
       addToast('Ledger exported.', 'success');
     } catch { addToast('Export failed.', 'error'); }
+  };
+
+  const handlePrintReceipt = async (tx: any) => {
+    try {
+      await openPdfInNewTab(`/finance/transactions/${tx.id}/receipt/`, `receipt_${tx.receipt_number}.pdf`);
+    } catch { addToast('Failed to open receipt.', 'error'); }
+  };
+
+  const handleDownloadReceipt = async (tx: any) => {
+    try {
+      await downloadPdf(`/finance/transactions/${tx.id}/receipt/`, `receipt_${tx.receipt_number}.pdf`);
+    } catch { addToast('Failed to download receipt.', 'error'); }
   };
 
   return (
@@ -187,6 +208,7 @@ export default function FinanceTreasury() {
                 <th className="px-6 py-3">Amount</th>
                 <th className="px-6 py-3">Method</th>
                 <th className="px-6 py-3">Date</th>
+                <th className="px-6 py-3 text-right">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/5">
@@ -197,6 +219,20 @@ export default function FinanceTreasury() {
                   <td className="px-6 py-3 text-sm font-bold">CFA {tx.amount.toLocaleString()}</td>
                   <td className="px-6 py-3 text-xs uppercase font-bold">{tx.method}</td>
                   <td className="px-6 py-3 text-sm text-on-surface-variant">{new Date(tx.payment_date).toLocaleDateString()}</td>
+                  <td className="px-6 py-3 text-right whitespace-nowrap">
+                    <button
+                      onClick={() => handlePrintReceipt(tx)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">print</span> Print
+                    </button>
+                    <button
+                      onClick={() => handleDownloadReceipt(tx)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">download</span>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.db import transaction
 from django.db.models import Q, Avg, Count
+from django.utils import timezone
 from django.core.mail import send_mail
 from apps.staff.models import Teacher, TeachingAssignment, PerformanceReview
 from apps.staff.serializers import (
@@ -145,55 +146,18 @@ def onboard_parent(request):
 
     try:
         with transaction.atomic():
-            tenant = request.tenant
+            from apps.authentication.services import create_parent_account
 
-            alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-            temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
-
-            user = User.objects.create_user(
-                email=data['email'],
-                username=data['email'],
+            user, temp_password, created_links = create_parent_account(
+                request.tenant,
                 first_name=data['first_name'],
                 last_name=data['last_name'],
-                password=temp_password,
+                email=data['email'],
                 phone=data.get('phone', ''),
                 default_language=data.get('default_language', 'en'),
-            )
-            user.must_change_password = True
-            user.save(update_fields=['must_change_password'])
-
-            UserRoleMapping.objects.create(
-                user=user,
-                tenant=tenant,
-                role='parent',
+                links=data.get('links', []),
                 assigned_by=request.user,
             )
-
-            # Validate + create student links (students must belong to the
-            # requesting school; the parent can later be linked to other
-            # schools' students by those schools' admins).
-            created_links = []
-            for link in data.get('links', []):
-                student_id = link.get('student_id')
-                relationship_type = link.get('relationship_type', 'guardian')
-                if not student_id:
-                    continue
-                try:
-                    student = Student.objects.get(id=student_id, tenant_id=tenant.id)
-                except (Student.DoesNotExist, ValueError):
-                    raise drf_serializers.ValidationError({
-                        'links': f'Student {student_id} does not exist in this school.'
-                    })
-                if relationship_type not in ('father', 'mother', 'guardian'):
-                    raise drf_serializers.ValidationError({
-                        'links': f'Invalid relationship_type: {relationship_type}.'
-                    })
-                rel, rel_created = ParentStudentRelationship.objects.get_or_create(
-                    parent_user=user, student=student,
-                    defaults={'relationship_type': relationship_type},
-                )
-                if rel_created:
-                    created_links.append(str(student.id))
 
             return Response({
                 "message": f"Parent {user.full_name} created. "
@@ -204,7 +168,7 @@ def onboard_parent(request):
                     "full_name": user.full_name,
                     "email": user.email,
                     "phone": user.phone,
-                    "home_school": tenant.school_name,
+                    "home_school": request.tenant.school_name,
                 },
                 "linked_students": created_links,
             }, status=status.HTTP_201_CREATED)
@@ -224,6 +188,20 @@ class TeacherViewSet(BaseTenantViewSet):
     permission_classes = [IsAdminOrTeacher]
     filterset_fields = ['is_active', 'availability', 'public_profile', 'department']
     search_fields = ['user__first_name', 'user__last_name', 'employee_id', 'department']
+
+    def perform_destroy(self, instance):
+        """
+        Remove the teacher profile. If the linked user has no other teacher
+        profiles or role mappings in other tenants, deactivate the user to
+        prevent orphaned login credentials.
+        """
+        user = instance.user
+        instance.delete()
+        other_profiles = Teacher.objects.filter(user=user).exists()
+        other_roles = user.role_mappings.exclude(tenant=self.request.tenant).exists()
+        if not other_profiles and not other_roles:
+            user.is_active = False
+            user.save(update_fields=['is_active'])
 
     @action(detail=False, methods=['post'], permission_classes=[IsSchoolAdmin])
     def onboard(self, request):
@@ -466,6 +444,12 @@ class PerformanceReviewViewSet(viewsets.ModelViewSet):
     serializer_class = PerformanceReviewSerializer
     permission_classes = [IsSchoolAdmin]
     filterset_fields = ['teacher']
+
+    def perform_create(self, serializer):
+        serializer.save(
+            reviewer=self.request.user,
+            review_date=serializer.validated_data.get('review_date') or timezone.now().date(),
+        )
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id

@@ -118,21 +118,25 @@ def notify_payment_received(payment, created_by=None):
     student_name = student.full_name if student else 'a student'
     amount = _format_amount(payment.amount)
     balance = _format_amount(invoice.balance) if invoice else 'N/A'
+    category_name = payment.fee_category.name if payment.fee_category else 'Fees'
 
     parent_title = f"Payment Confirmed: {payment.receipt_number}"
     parent_body = (
         f"A payment of {amount} has been recorded for {student_name} "
-        f"(Invoice: {invoice.invoice_number}). Remaining balance: {balance}."
+        f"toward {category_name} (Invoice: {invoice.invoice_number}). "
+        f"Remaining balance: {balance}. "
+        f"Your official receipt is available on the parent portal."
     )
     parent_notifs = notify_student_parents(
         payment.tenant, student, Notification.Category.PAYMENT,
-        parent_title, parent_body, link='/parent/fees', created_by=created_by,
+        parent_title, parent_body, link='/parent/receipts', created_by=created_by,
     )
 
     admin_title = f"Payment Received: {payment.receipt_number}"
     admin_body = (
         f"A payment of {amount} has been received from {student_name} "
-        f"(Invoice: {invoice.invoice_number}). Reference: {payment.reference or payment.receipt_number}."
+        f"for {category_name} (Invoice: {invoice.invoice_number}). "
+        f"Reference: {payment.reference or payment.receipt_number}."
     )
     admin_notifs = notify_tenant_admins(
         payment.tenant, Notification.Category.PAYMENT,

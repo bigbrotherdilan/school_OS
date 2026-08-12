@@ -84,6 +84,46 @@ class StudentViewSet(BaseTenantViewSet):
             return StudentCreateSerializer
         return StudentSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        parent_result = None
+        with db_transaction.atomic():
+            student = serializer.save(tenant_id=request.tenant_id)
+
+            parent_email = serializer.validated_data.get('parent_email')
+            if parent_email:
+                from apps.authentication.services import create_parent_account
+
+                full_name = (serializer.validated_data.get('parent_name') or '').strip()
+                parts = full_name.split(maxsplit=1)
+                first = parts[0] if parts else parent_email.split('@')[0]
+                last = parts[1] if len(parts) > 1 else ''
+
+                user, temp_password, created_links = create_parent_account(
+                    request.tenant,
+                    first_name=first,
+                    last_name=last,
+                    email=parent_email,
+                    phone=serializer.validated_data.get('parent_phone', ''),
+                    assigned_by=request.user,
+                    links=[{
+                        'student_id': str(student.id),
+                        'relationship_type': serializer.validated_data.get('relationship_type', 'guardian'),
+                    }],
+                )
+                parent_result = {
+                    'email': user.email,
+                    'full_name': user.full_name,
+                    'temp_password': temp_password,
+                    'linked_student_ids': created_links,
+                }
+
+        data = StudentSerializer(student, context=self.get_serializer_context()).data
+        data['parent'] = parent_result
+        return Response(data, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['post'], permission_classes=[IsSchoolAdmin])
     def set_status(self, request, pk=None):
         """Manually update student status (e.g., Promote, Graduate)."""
@@ -1144,6 +1184,7 @@ class ParentPaymentView(APIView):
                 method=method,
                 reference=f"{payment_method.upper()}-{get_random_string(12).upper()}",
                 recorded_by=user,
+                amount_paid_after=invoice.amount_paid + Decimal(str(amount)),
                 notes=f"Parent payment via {payment_method}. Phone: {phone_number}" if phone_number else f"Parent payment via {payment_method}",
             )
 
@@ -1162,11 +1203,125 @@ class ParentPaymentView(APIView):
             pass
 
         return Response({
+            "transaction_id": str(payment.id),
             "reference_number": payment.receipt_number,
+            "receipt_url": f"/api/v1/students/parent-receipts/download/{payment.id}/",
             "status": "completed",
             "amount": amount,
             "payment_method": payment_method,
             "invoice_balance": float(invoice.balance),
         }, status=201)
+
+
+class ParentReceiptListView(APIView):
+    """
+    Receipt archive for a parent — every payment across all linked wards.
+    Read-only; each row links to a downloadable/printable PDF.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        linked_student_ids = ParentStudentRelationship.objects.filter(
+            parent_user=user
+        ).values_list('student_id', flat=True)
+
+        if not linked_student_ids:
+            return Response([])
+
+        from apps.finance.models import PaymentTransaction
+        txs = PaymentTransaction.objects.filter(
+            invoice__student_id__in=linked_student_ids
+        ).select_related(
+            'invoice', 'invoice__student', 'invoice__academic_year'
+        ).order_by('-payment_date')
+
+        data = []
+        for tx in txs:
+            data.append({
+                "id": str(tx.id),
+                "receipt_number": tx.receipt_number,
+                "amount": str(tx.amount),
+                "amount_paid_after": str(tx.amount_paid_after) if tx.amount_paid_after is not None else None,
+                "balance_after": str(tx.invoice.total_amount - tx.amount_paid_after) if tx.amount_paid_after is not None else None,
+                "payment_date": tx.payment_date.isoformat(),
+                "method": tx.get_method_display(),
+                "method_key": tx.method,
+                "reference": tx.reference or "",
+                "invoice": str(tx.invoice_id),
+                "invoice_number": tx.invoice.invoice_number,
+                "student_id": str(tx.invoice.student_id) if tx.invoice.student_id else None,
+                "student_name": tx.invoice.student.full_name if tx.invoice.student else "Unknown",
+                "academic_year": tx.invoice.academic_year.name if tx.invoice.academic_year else "",
+                "download_url": f"/api/v1/students/parent-receipts/download/{tx.id}/",
+            })
+
+        return Response(data)
+
+
+class ParentReceiptDownloadView(APIView):
+    """Download / print a single payment receipt PDF (authorization enforced)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, transaction_id):
+        from apps.finance.models import PaymentTransaction
+        user = request.user
+        linked_student_ids = ParentStudentRelationship.objects.filter(
+            parent_user=user
+        ).values_list('student_id', flat=True)
+
+        tx = PaymentTransaction.objects.select_related(
+            'invoice', 'invoice__student', 'invoice__tenant', 'recorded_by'
+        ).filter(
+            id=transaction_id,
+            invoice__student_id__in=linked_student_ids,
+        ).first()
+
+        if not tx:
+            return Response({'detail': 'Receipt not found or not authorized.'}, status=404)
+
+        from apps.finance.utils import generate_payment_receipt_pdf
+        try:
+            pdf_bytes = generate_payment_receipt_pdf(tx)
+        except Exception as e:
+            return Response({'detail': f'Failed to generate receipt: {str(e)}'}, status=500)
+
+        from django.http import HttpResponse
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="receipt_{tx.receipt_number}.pdf"'
+        return response
+
+
+class ParentStatementView(APIView):
+    """Download / print a fee statement (invoice payment history) for a linked ward."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, invoice_id):
+        from apps.finance.models import StudentInvoice
+        user = request.user
+        linked_student_ids = ParentStudentRelationship.objects.filter(
+            parent_user=user
+        ).values_list('student_id', flat=True)
+
+        invoice = StudentInvoice.objects.select_related(
+            'student', 'academic_year', 'tenant'
+        ).filter(
+            id=invoice_id,
+            student_id__in=linked_student_ids,
+        ).first()
+
+        if not invoice:
+            return Response({'detail': 'Statement not found or not authorized.'}, status=404)
+
+        from apps.finance.utils import generate_invoice_statement_pdf
+        try:
+            pdf_bytes = generate_invoice_statement_pdf(invoice)
+        except Exception as e:
+            return Response({'detail': f'Failed to generate statement: {str(e)}'}, status=500)
+
+        from django.http import HttpResponse
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="statement_{invoice.invoice_number}.pdf"'
+        return response
 
 

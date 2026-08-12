@@ -170,7 +170,13 @@ export default function NotificationsDropdown() {
       setLoading(true);
       const fresh = await fetchItems();
       await markAllRead();
-      setItems(fresh.map((n) => ({ ...n, data: { ...n.data, is_read: true } })));
+      setItems(
+        fresh.map((n): NotificationItem => {
+          if (n.type === 'announcement') return { ...n, data: { ...n.data, is_read: true } };
+          if (n.type === 'message') return { ...n, data: { ...n.data, is_read: true } };
+          return { ...n, data: { ...n.data, is_read: true } };
+        }),
+      );
       setLoading(false);
     } else {
       fetchItems();

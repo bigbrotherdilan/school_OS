@@ -42,6 +42,9 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
 class TeacherSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)
     assignments = TeachingAssignmentSerializer(many=True, read_only=True)
+    first_name = serializers.CharField(source='user.first_name', max_length=150, required=False, write_only=True)
+    last_name = serializers.CharField(source='user.last_name', max_length=150, required=False, write_only=True)
+    email = serializers.EmailField(source='user.email', required=False, write_only=True)
 
     class Meta:
         model = Teacher
@@ -52,8 +55,18 @@ class TeacherSerializer(serializers.ModelSerializer):
             'specializations', 'certifications', 'teaching_philosophy',
             'achievements', 'availability', 'public_profile', 'hourly_rate',
             'subjects_taught', 'languages_spoken', 'average_rating', 'total_reviews',
+            'first_name', 'last_name', 'email',
         ]
         read_only_fields = ['id', 'tenant', 'average_rating', 'total_reviews']
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save()
+        return super().update(instance, validated_data)
 
 
 class TeacherOnboardSerializer(serializers.Serializer):

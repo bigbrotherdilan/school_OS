@@ -33,6 +33,7 @@ const ParentLayout: React.FC = () => {
     const navLinks = [
         { name: 'Home', path: '/parent', icon: 'home' },
         { name: 'Fees', path: '/parent/fees', icon: 'payments' },
+        { name: 'Receipts', path: '/parent/receipts', icon: 'receipt_long' },
         { name: 'Reports', path: '/parent/reports', icon: 'description' },
         { name: 'Grades', path: '/parent/analytics', icon: 'analytics' },
         { name: 'Settings', path: '/parent/settings', icon: 'settings' },
@@ -43,7 +44,7 @@ const ParentLayout: React.FC = () => {
     const hasMultipleChildren = wards.length > 1;
 
     return (
-        <div className="min-h-screen bg-[#F7F9FB] font-sans">
+        <div className="min-h-screen bg-surface font-sans">
             {/* Top Navigation Bar */}
             <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
                 <div className="flex justify-between items-center px-4 lg:px-12 py-3 max-w-[1600px] mx-auto">

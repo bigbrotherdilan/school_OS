@@ -22,7 +22,7 @@ export default function PublicFooter() {
           <div>
             <h4 className="font-bold text-primary mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li><Link to="/#features" className="hover:text-primary transition-colors">Features</Link></li>
+              <li><Link to="/features" className="hover:text-primary transition-colors">Features</Link></li>
               <li><Link to="/schools" className="hover:text-primary transition-colors">Find Schools</Link></li>
               <li><Link to="/find-teachers" className="hover:text-primary transition-colors">Teacher Marketplace</Link></li>
               <li><Link to="/login" className="hover:text-primary transition-colors">Login</Link></li>
@@ -33,7 +33,9 @@ export default function PublicFooter() {
             <h4 className="font-bold text-primary mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
-              <li><a href="#contact" className="hover:text-primary transition-colors">Contact</a></li>
+              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link to="/verify-receipt" className="hover:text-primary transition-colors">Verify Receipt</Link></li>
+              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
             </ul>
           </div>
 

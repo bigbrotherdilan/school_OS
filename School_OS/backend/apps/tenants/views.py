@@ -3,6 +3,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from PIL import Image
+import os
+import uuid
 from apps.tenants.models import Tenant, TenantConfig
 from apps.authentication.permissions import IsPlatformAdmin, IsSchoolAdmin
 from apps.tenants.serializers import (
@@ -49,6 +53,10 @@ class TenantViewSet(viewsets.ModelViewSet):
         self._resolve_tenant_context()
         if self.action in ['list', 'retrieve', 'config']:
             return [IsAuthenticated()]
+        if self.action == 'theme':
+            return [IsAuthenticated(), IsSchoolAdmin()]
+        if self.action == 'logo':
+            return [IsAuthenticated(), IsSchoolAdmin()]
         if self.action == 'school_config':
             if self.request.method == 'PATCH':
                 return [IsAuthenticated(), IsSchoolAdmin()]
@@ -96,6 +104,42 @@ class TenantViewSet(viewsets.ModelViewSet):
             'theme': tenant.default_theme,
             'logo_url': tenant.logo_url or '',
             'motto': tenant.motto,
+        })
+
+    @action(detail=True, methods=['post'])
+    def logo(self, request, id=None):
+        """
+        Upload a school logo to object storage (S3-compatible bucket).
+        Only the resulting URL is stored in the database.
+        POST /tenants/{id}/logo/  (multipart 'file')
+        """
+        tenant = self.get_object()
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'detail': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            img = Image.open(file)
+            img.verify()
+        except Exception:
+            return Response(
+                {'detail': 'Upload a valid image file (PNG, JPG, WebP, GIF or SVG).'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        file.seek(0)
+
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext not in ('.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'):
+            ext = '.png'
+
+        fname = f'{tenant.slug}-{uuid.uuid4().hex[:10]}{ext}'
+        path = default_storage.save(f'logos/{fname}', file)
+        tenant.logo_url = default_storage.url(path)
+        tenant.save()
+
+        return Response({
+            'logo_url': tenant.logo_url,
+            'logo_path': path,
         })
 
     @action(detail=True, methods=['get', 'patch'])

@@ -1,6 +1,24 @@
 ﻿import { api } from './api';
 import type { ParentDashboardData, ChildComparison } from '../stores/parentStore';
 
+export interface ReceiptRecord {
+    id: string;
+    receipt_number: string;
+    amount: string;
+    amount_paid_after: string | null;
+    balance_after: string | null;
+    payment_date: string;
+    method: string;
+    method_key: string;
+    reference: string;
+    invoice: string;
+    invoice_number: string;
+    student_id: string | null;
+    student_name: string;
+    academic_year: string;
+    download_url: string;
+}
+
 export interface ChildSummary {
     student: {
         id: string;
@@ -61,8 +79,13 @@ export const parentApi = {
         return response.data;
     },
 
-    getTransactions: async () => {
-        const response = await api.get('/students/parent-fees/');
+    getTransactions: async (): Promise<ReceiptRecord[]> => {
+        const response = await api.get('/students/parent-receipts/');
+        return response.data;
+    },
+
+    getReceipts: async (): Promise<ReceiptRecord[]> => {
+        const response = await api.get('/students/parent-receipts/');
         return response.data;
     },
 
@@ -96,8 +119,12 @@ export const parentApi = {
         amount: number;
         payment_method: string;
         phone_number: string;
-    }): Promise<{ reference_number: string; status: string }> => {
+    }): Promise<{ transaction_id?: string; reference_number: string; receipt_url?: string; status: string }> => {
         const response = await api.post('/students/parent-payment/', paymentData);
         return response.data;
     },
+
+    receiptDownloadUrl: (transactionId: string) => `/students/parent-receipts/download/${transactionId}/`,
+
+    statementUrl: (invoiceId: string) => `/students/parent-receipts/statement/${invoiceId}/`,
 };

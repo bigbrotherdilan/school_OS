@@ -5,9 +5,11 @@ import { useToastStore } from '../../../stores/toastStore';
 import { 
   Search, MoreVertical, Mail, BadgeCheck, UserPlus, Upload,
   GraduationCap, ChevronRight, ShieldCheck, ShieldX, Loader2, Settings2,
-  Star, Globe, Briefcase, Languages, BookOpen, MapPin, KeyRound
+  Star, Globe, Briefcase, Languages, BookOpen, MapPin, KeyRound,
+  UserPen, Trash2, AlertCircle
 } from 'lucide-react';
 import TeachingAssignmentModal from '../../../components/admin/staff/TeachingAssignmentModal';
+import EditTeacherModal from '../../../components/admin/staff/EditTeacherModal';
 import CredentialsCard from '../../../components/ui/CredentialsCard';
 
 export default function TeacherDirectory() {
@@ -18,6 +20,8 @@ export default function TeacherDirectory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
   const [profileTeacher, setProfileTeacher] = useState<any | null>(null);
+  const [editTeacher, setEditTeacher] = useState<any | null>(null);
+  const [removeTeacher, setRemoveTeacher] = useState<any | null>(null);
   const [filterTab, setFilterTab] = useState<'all' | 'active' | 'public'>('all');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [resetResult, setResetResult] = useState<any>(null);
@@ -56,6 +60,16 @@ export default function TeacherDirectory() {
       fetchTeachers();
     } catch (error) {
       addToast('Failed to update teacher status.', 'error');
+    }
+  };
+
+  const handleRemoveTeacher = async (teacherId: string) => {
+    try {
+      await api.delete(`/staff/teachers/${teacherId}/`);
+      addToast('Teacher removed.', 'success');
+      fetchTeachers();
+    } catch (error) {
+      addToast('Failed to remove teacher.', 'error');
     }
   };
 
@@ -201,9 +215,12 @@ export default function TeacherDirectory() {
                     <MoreVertical className="w-5 h-5 text-on-surface-variant" />
                   </button>
                   {openMenuId === teacher.id && (
-                    <div className="absolute right-0 top-full mt-1 w-52 bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant/15 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="absolute right-0 top-full mt-1 w-56 bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant/15 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                       <button onClick={() => { setOpenMenuId(null); setProfileTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
                         <span className="material-symbols-outlined text-lg text-primary">person</span> View Profile
+                      </button>
+                      <button onClick={() => { setOpenMenuId(null); setEditTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
+                        <UserPen className="w-4 h-4 text-primary" /> Edit Profile
                       </button>
                       <button onClick={() => { setOpenMenuId(null); setSelectedTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
                         <Settings2 className="w-4 h-4 text-primary" /> Manage Assignment
@@ -218,6 +235,10 @@ export default function TeacherDirectory() {
                       <button onClick={() => { setOpenMenuId(null); handleToggleStatus(teacher.id, teacher.is_active); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left ${teacher.is_active ? 'text-error' : 'text-secondary'}`}>
                         {teacher.is_active ? <ShieldX className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                         {teacher.is_active ? 'Deactivate' : 'Restore'}
+                      </button>
+                      <div className="border-t border-outline-variant/10 my-1" />
+                      <button onClick={() => { setOpenMenuId(null); setRemoveTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left text-error">
+                        <Trash2 className="w-4 h-4" /> Remove Teacher
                       </button>
                     </div>
                   )}
@@ -495,6 +516,50 @@ export default function TeacherDirectory() {
                   Done
                 </button>
               </div>
+          </div>
+        </div>
+      )}
+
+      {editTeacher && (
+        <EditTeacherModal 
+          teacher={editTeacher}
+          onClose={() => setEditTeacher(null)}
+          onUpdate={fetchTeachers}
+        />
+      )}
+
+      {removeTeacher && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-surface-container-lowest w-full max-w-md rounded-[40px] shadow-2xl border border-outline-variant/10 overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-error/5">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-error/60 block mb-1">Warning</span>
+                <h2 className="text-2xl font-black text-on-surface tracking-tight">Remove Teacher</h2>
+                <p className="text-xs text-on-surface-variant font-medium mt-1 uppercase tracking-widest">{removeTeacher.user_details?.full_name} (<span className="text-primary">{removeTeacher.employee_id}</span>)</p>
+              </div>
+            </div>
+            <div className="p-8 space-y-6 text-center">
+              <AlertCircle className="w-16 h-16 text-error mx-auto" />
+              <p className="text-on-surface-variant leading-relaxed">
+                This will permanently remove the teacher profile and deactivate their login access.
+                <br />
+                <span className="font-bold text-error">This action cannot be undone.</span>
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => setRemoveTeacher(null)}
+                  className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { handleRemoveTeacher(removeTeacher.id); setRemoveTeacher(null); }}
+                  className="px-6 py-3 bg-error text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:shadow-lg hover:shadow-error/20 transition-all active:scale-95"
+                >
+                  <Trash2 className="w-3 h-3" /> Remove Permanently
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

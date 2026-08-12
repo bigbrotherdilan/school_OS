@@ -18,6 +18,7 @@ TENANT_EXEMPT_PATHS = [
     '/api/v1/tenants',
     '/api/v1/gov/',
     '/api/v1/health',
+    '/api/v1/finance/receipts/',
     '/pub/',
     '/admin/',
     '/static/',
@@ -32,6 +33,7 @@ PARENT_GLOBAL_PATHS = [
     '/api/v1/students/parent-fees/',
     '/api/v1/students/parent-analytics/',
     '/api/v1/students/parent-payment/',
+    '/api/v1/students/parent-receipts/',
     '/api/v1/students/parent-child-summary/',
     '/api/v1/students/parent-comparison/',
 ]
