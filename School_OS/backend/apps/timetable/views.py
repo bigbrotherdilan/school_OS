@@ -246,8 +246,11 @@ class TimetableViewSet(viewsets.ModelViewSet):
         target_ids = {tt.id for tt in ready}
         if stream_id:
             others = _same_term_timetables(request, term, exclude_ids=target_ids)
+            cross_count = TimeSlot.objects.filter(timetable__in=others).count()
             solver = SchoolSolver(ready + others, target_ids=target_ids)
         else:
+            others = []
+            cross_count = 0
             solver = SchoolSolver(ready, target_ids=target_ids)
 
         result = solver.solve()
@@ -256,11 +259,19 @@ class TimetableViewSet(viewsets.ModelViewSet):
             result['generated_classes'] = [r['class_name'] for r in result.get('classes', [])]
             if stream_id:
                 section_name = classes[0].stream.name if classes[0].stream else ''
-                result['message'] = (
+                msg = (
                     f'Scheduled {result["placed_periods"]} lesson periods across '
-                    f'{len(target_ids)} class(es) in {section_name}. Teachers shared '
-                    f'with other sections are never double-booked.'
+                    f'{len(target_ids)} class(es) in {section_name}. '
                 )
+                if cross_count:
+                    msg += (
+                        f'{cross_count} existing slot(s) from other sections were '
+                        f'respected — shared teachers are never double-booked.'
+                    )
+                else:
+                    msg += 'Teachers are clash-free.'
+                result['message'] = msg
+                result['cross_section_slots_respected'] = cross_count
         return Response(result, status=status.HTTP_200_OK if result['ok'] else status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     @action(detail=True, methods=['get'])
@@ -309,23 +320,30 @@ class TimetableViewSet(viewsets.ModelViewSet):
         assignments = TeachingAssignment.objects.filter(
             academic_class__in=classes
         ).select_related('teacher', 'subject')
-        return Response(section_generation_data(classes, class_subjects, assignments))
+        data = section_generation_data(classes, class_subjects, assignments)
+        shared_teachers, _ = self._cross_section_data(request, term, classes)
+        data['shared_teachers'] = shared_teachers
+        return Response(data)
 
     @action(detail=False, methods=['post'])
     def check_section(self, request):
         """
         Pre-generation feasibility check (plan section 31): class capacity,
-        missing teacher assignment, teacher capacity after availability.
+        missing teacher assignment, teacher capacity after availability + other sections.
         """
         from .section_tools import section_feasibility
         term = self._section_term(request)
         classes = self._section_classes(request, term)
         periods, working_days = _parse_week(request.data)
-        issues = section_feasibility(request.tenant_id, classes, periods, working_days)
+        shared_teachers, existing_blocks = self._cross_section_data(request, term, classes)
+        issues = section_feasibility(request.tenant_id, classes, periods, working_days, existing_blocks)
+        shared_teacher_count = len(shared_teachers)
         return Response({
             'ready': not any(i['severity'] == 'error' for i in issues),
             'issues': issues,
             'count': len(issues),
+            'shared_teachers': shared_teachers,
+            'shared_teacher_count': shared_teacher_count,
         })
 
     @action(detail=False, methods=['post'])
@@ -382,6 +400,65 @@ class TimetableViewSet(viewsets.ModelViewSet):
         if not classes:
             raise ValidationError('No classes found for the selected section.')
         return classes
+
+    def _cross_section_data(self, request, term, classes):
+        """
+        Build shared_teachers list and existing_blocks dict for the section.
+        existing_blocks: {(teacher_id, day): [(start, end), ...]} from other sections' slots.
+        """
+        from collections import defaultdict
+        from .solver import _to_time
+        from .models import TimeSlot
+        from apps.staff.models import TeachingAssignment
+
+        class_ids = {c.id for c in classes}
+        other_tts = Timetable.objects.filter(
+            tenant_id=request.tenant_id, term_id=term.id
+        ).exclude(class_obj_id__in=class_ids)
+        blocks = defaultdict(list)
+        for slot in TimeSlot.objects.filter(timetable__in=other_tts).values(
+            'teacher_id', 'day_of_week', 'start_time', 'end_time'
+        ):
+            blocks[(slot['teacher_id'], slot['day_of_week'])].append(
+                (_to_time(slot['start_time']), _to_time(slot['end_time']))
+            )
+
+        section_teacher_ids = set(
+            TeachingAssignment.objects.filter(
+                academic_class__in=classes
+            ).values_list('teacher_id', flat=True).distinct()
+        )
+        other_class_ids = set(
+            Class.objects.filter(
+                tenant_id=request.tenant_id
+            ).exclude(id__in=class_ids).values_list('id', flat=True)
+        )
+        shared_ids = []
+        for tid in section_teacher_ids:
+            if other_class_ids and TeachingAssignment.objects.filter(
+                teacher_id=tid, academic_class_id__in=list(other_class_ids)
+            ).exists():
+                shared_ids.append(tid)
+
+        teacher_map = {}
+        for ta in TeachingAssignment.objects.filter(teacher_id__in=shared_ids).select_related('teacher'):
+            if ta.teacher_id not in teacher_map:
+                teacher_map[ta.teacher_id] = ta.teacher
+
+        shared_teachers = []
+        for tid in shared_ids:
+            teacher = teacher_map.get(tid)
+            name = teacher.user.full_name if teacher and hasattr(teacher.user, 'full_name') else f'#{tid}'
+            other_count = TeachingAssignment.objects.filter(
+                teacher_id=tid, academic_class_id__in=list(other_class_ids)
+            ).count() if other_class_ids else 0
+            shared_teachers.append({
+                'id': str(tid),
+                'name': name,
+                'other_assignments': other_count,
+            })
+
+        return shared_teachers, dict(blocks)
 
 
 class TimeSlotViewSet(viewsets.ModelViewSet):

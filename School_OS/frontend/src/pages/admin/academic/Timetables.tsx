@@ -1142,9 +1142,14 @@ if (weekScope === 'class' && selected) {
                   </div>
                 );
               })}
-            </div>
-          )}
-        </>
+</div>
+                        )}
+                        {schoolResult.cross_section_slots_respected > 0 && (
+                          <p className="pt-2 text-[10px] text-green-200 font-bold">
+                            {schoolResult.cross_section_slots_respected} existing slot(s) from other sections were respected — shared teachers are never double-booked.
+                          </p>
+                        )}
+                      </>
       )}
 
       {/* ================================================================ //
@@ -1238,6 +1243,11 @@ if (weekScope === 'class' && selected) {
                         </div>
                       ))}
                     </div>
+                    {sectionSummary.shared_teachers?.length > 0 && (
+                      <p className="text-[10px] text-amber-200 font-bold">
+                        {sectionSummary.shared_teachers.length} teacher(s) also teach other sections — their existing slots will be respected.
+                      </p>
+                    )}
                     <div className="flex gap-2">
                       <button
                         onClick={runSectionCheck}
@@ -1264,6 +1274,11 @@ if (weekScope === 'class' && selected) {
                         {sectionChecks.issues.map((issue: any, i: number) => (
                           <p key={i} className="text-white/90 leading-snug">• {issue.message}</p>
                         ))}
+                        {sectionChecks.shared_teacher_count > 0 && (
+                          <p className="text-[10px] text-white/80 font-bold mt-1">
+                            {sectionChecks.shared_teacher_count} teacher(s) shared with other sections — their existing slots are factored into this check.
+                          </p>
+                        )}
                       </div>
                     )}
                     {sectionReport && (

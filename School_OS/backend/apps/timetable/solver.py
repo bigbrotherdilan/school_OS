@@ -169,53 +169,46 @@ class SchoolSolver:
                     f'only has {slot_capacity}. Reduce weekly hours or add periods/days.'
                 )
 
+        target_ids = self.target_ids
+        target_lessons = [l for l in self.lessons if l.timetable_id in target_ids]
         by_teacher = defaultdict(int)
-        for lesson in self.lessons:
+        for lesson in target_lessons:
             by_teacher[lesson.teacher_id] += lesson.periods_per_week
         unavailable = self._unavailability_by_teacher()
         _, blocks = self._fixed_slots()
         for teacher_id, units in by_teacher.items():
-            if self.repair_mode:
-                allowed = 0
-                for day in days:
-                    for period in periods:
-                        p_start = _to_time(period['start'])
-                        p_end = _to_time(period['end'])
-                        blocked = any(
-                            _overlaps(p_start, p_end, s, e)
-                            for s, e in blocks.get((teacher_id, day), [])
-                        ) or any(
-                            _overlaps(p_start, p_end, s, e)
-                            for s, e in unavailable.get(teacher_id, {}).get(day, [])
-                        )
-                        if not blocked:
-                            allowed += 1
-                if units > allowed:
-                    errors.append(
-                        f'Teacher {self._teacher_name(teacher_id)} needs {units} lesson periods '
-                        f'but only {allowed} cells are free after their existing lessons in other '
-                        f'classes and unavailability windows.'
+            allowed = 0
+            blocked_other = 0
+            blocked_unavail = 0
+            for day in days:
+                for period in periods:
+                    p_start = _to_time(period['start'])
+                    p_end = _to_time(period['end'])
+                    blocked_by_other = any(
+                        _overlaps(p_start, p_end, s, e)
+                        for s, e in blocks.get((teacher_id, day), [])
                     )
-            else:
-                if units > slot_capacity:
-                    errors.append(
-                        f'Teacher {self._teacher_name(teacher_id)} is assigned {units} lesson '
-                        f'periods but the week only has {slot_capacity}. Reduce their load or '
-                        f'split the subject across teachers.'
+                    blocked_by_unavail = any(
+                        _overlaps(p_start, p_end, s, e)
+                        for s, e in unavailable.get(teacher_id, {}).get(day, [])
                     )
-                allowed = 0
-                for day in days:
-                    for period in periods:
-                        p_start = _to_time(period['start'])
-                        p_end = _to_time(period['end'])
-                        if not any(_overlaps(p_start, p_end, s, e) for s, e in unavailable.get(teacher_id, {}).get(day, [])):
-                            allowed += 1
-                if units > allowed:
-                    errors.append(
-                        f'Teacher {self._teacher_name(teacher_id)} needs {units} lesson periods '
-                        f'but only has {allowed} free after their unavailability windows. Free up '
-                        f'a day or redistribute lessons.'
-                    )
+                    if blocked_by_other:
+                        blocked_other += 1
+                    elif blocked_by_unavail:
+                        blocked_unavail += 1
+                    else:
+                        allowed += 1
+            if units > allowed:
+                parts = []
+                if blocked_other:
+                    parts.append(f'{blocked_other} slot(s) taken by their existing lessons in other sections/classes')
+                if blocked_unavail:
+                    parts.append(f'{blocked_unavail} slot(s) blocked by their unavailability')
+                errors.append(
+                    f'Teacher {self._teacher_name(teacher_id)} needs {units} lesson periods '
+                    f'but only {allowed} cells are free after {" and ".join(parts)}. Free up a '
+                    f'day, reduce their workload, or redistribute the subject across teachers.'
+                )
         return errors
 
     # ------------------------------------------------------------------ #

@@ -78,14 +78,16 @@ def section_generation_data(classes, class_subjects, assignments):
     }
 
 
-def section_feasibility(tenant_id, classes, periods=None, working_days=None):
+def section_feasibility(tenant_id, classes, periods=None, working_days=None, existing_blocks=None):
     """
     Pre-generation feasibility check (plan section 31). Returns a list of
     explainable issues so the admin can fix the data before generating.
 
     * class capacity: required weekly hours <= available teaching slots
-    * teacher capacity: required periods <= available free cells (availability)
+    * teacher capacity: required periods <= available free cells (availability + other sections)
     * teacher availability: a lesson has at least one possible slot
+
+    existing_blocks: dict {(teacher_id, day): [(start,end), ...]} from other sections' slots.
     """
     from .models import Timetable, TeacherUnavailability
 
@@ -146,28 +148,43 @@ def section_feasibility(tenant_id, classes, periods=None, working_days=None):
             matched.add(assignment.id)
             by_teacher[assignment.teacher_id] += cs.weekly_hours or 0
 
-    for teacher_id, units in by_teacher.items():
+for teacher_id, units in by_teacher.items():
         free_cells = 0
+        blocked_other = 0
+        blocked_unavail = 0
         for day in working_days:
             for period in periods:
                 p_start = _to_time(period['start'])
                 p_end = _to_time(period['end'])
-                blocked = any(
+                blocked_by_other = existing_blocks and any(
+                    _overlaps(p_start, p_end, s, e)
+                    for s, e in existing_blocks.get((teacher_id, day), [])
+                )
+                blocked_by_unavail = any(
                     _overlaps(p_start, p_end, s, e)
                     for s, e in availability[teacher_id].get(day, [])
                 )
-                if not blocked:
+                if blocked_by_other:
+                    blocked_other += 1
+                elif blocked_by_unavail:
+                    blocked_unavail += 1
+                else:
                     free_cells += 1
         if units > free_cells:
             teacher = next((a.teacher for a in assignments if a.teacher_id == teacher_id), None)
             name = _teacher_name(teacher) if teacher else f'#{teacher_id}'
+            parts = []
+            if blocked_other:
+                parts.append(f'{blocked_other} slot(s) taken by lessons they already teach in other sections')
+            if blocked_unavail:
+                parts.append(f'{blocked_unavail} slot(s) blocked by unavailability')
             issues.append({
                 'severity': 'error',
                 'class_name': '',
                 'message': (
                     f'{name} must teach {units} lesson periods in this section but only '
-                    f'has {free_cells} free slots after their unavailability. Free up a '
-                    f'day or redistribute the subject across teachers.'
+                    f'{free_cells} cells are free after {" and ".join(parts)}. Free up a '
+                    f'day, reduce workload, or redistribute across teachers.'
                 ),
             })
 
