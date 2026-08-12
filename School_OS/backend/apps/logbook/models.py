@@ -5,7 +5,13 @@ from django.db import models
 class SchemeOfWork(models.Model):
     """
     The planned curriculum broken down by weeks for a specific subject and class.
+    Each row = one week of teaching for one class + subject in a term.
+    Status planned -> taught records actual work coverage.
     """
+    class Status(models.TextChoices):
+        PLANNED = 'planned', 'Planned'
+        TAUGHT = 'taught', 'Taught'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey('tenants.Tenant', on_delete=models.CASCADE, related_name='schemes')
     academic_year = models.ForeignKey('academic.AcademicYear', on_delete=models.CASCADE, related_name='schemes')
@@ -15,6 +21,15 @@ class SchemeOfWork(models.Model):
     week_number = models.PositiveSmallIntegerField()
     topic = models.CharField(max_length=255)
     objectives = models.TextField(blank=True)
+    expected_outcome = models.TextField(blank=True)
+    essential_knowledge = models.TextField(blank=True)
+    homework = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PLANNED)
+    taught_at = models.DateTimeField(null=True, blank=True)
+    taught_by = models.ForeignKey(
+        'staff.Teacher', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='taught_schemes')
+    notes = models.TextField(blank=True)
 
     class Meta:
         db_table = 'logbook_schemes'
@@ -28,9 +43,16 @@ class SchemeOfWork(models.Model):
 class CurriculumModule(models.Model):
     """
     A major unit of study (e.g. 'Algebra', 'Geometry').
+    Scoped to a class + subject: Form 1 Maths and Form 2 Maths are
+    different schemes, each with their own modules and lessons.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey('tenants.Tenant', on_delete=models.CASCADE, related_name='curriculum_modules')
+    academic_class = models.ForeignKey(
+        'academic.Class', on_delete=models.CASCADE, related_name='curriculum_modules',
+        null=True, blank=True,
+        help_text='The class this scheme belongs to (e.g. Form 1).',
+    )
     subject = models.ForeignKey('academic.Subject', on_delete=models.CASCADE, related_name='modules')
     name = models.CharField(max_length=255)
     order = models.PositiveSmallIntegerField(default=1)
@@ -40,7 +62,8 @@ class CurriculumModule(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return f"{self.subject.name} - {self.name}"
+        class_label = f"{self.academic_class.name} - " if self.academic_class_id else ""
+        return f"{class_label}{self.subject.name} - {self.name}"
 
 
 class CurriculumLesson(models.Model):

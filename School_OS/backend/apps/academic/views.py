@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
+from django.db.models import Q
 from apps.academic.models import (
     AcademicYear, Term, Sequence, Cycle, Section, Series, Class, Subject,
     ClassSubject, SectionSubject,
@@ -261,6 +262,15 @@ class SubjectViewSet(BaseTenantViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     permission_classes = [IsAdminOrTeacher]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.query_params.get('school'):
+            qs = qs.filter(
+                Q(section_subjects__section__tenant_id=self.request.tenant_id)
+                | Q(class_subjects__academic_class__tenant_id=self.request.tenant_id)
+            ).distinct()
+        return qs
 
     @action(detail=False, methods=['get'], url_path='recommended')
     def recommended(self, request):

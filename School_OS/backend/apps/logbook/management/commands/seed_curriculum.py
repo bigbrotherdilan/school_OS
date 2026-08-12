@@ -5,7 +5,7 @@ Mathematics and French Language for Form 1.
 """
 from django.core.management.base import BaseCommand
 from apps.logbook.models import CurriculumModule, CurriculumLesson
-from apps.academic.models import Subject
+from apps.academic.models import Subject, Class
 from apps.tenants.models import Tenant
 
 
@@ -85,6 +85,12 @@ class Command(BaseCommand):
 
         self.stdout.write('Seeding curriculum for tenant: %s' % tenant.school_name)
 
+        form1 = Class.objects.filter(tenant=tenant, name__iexact='Form 1').first()
+        if form1:
+            self.stdout.write('  [OK] Using class: %s' % form1.name)
+        else:
+            self.stdout.write(self.style.WARNING('  [!] No "Form 1" class found — modules will be class-less.'))
+
         # Find subjects by name (case-insensitive partial match)
         if not math_subject:
             math_subject = Subject.objects.filter(
@@ -102,13 +108,13 @@ class Command(BaseCommand):
         created_count = 0
 
         if math_subject:
-            created_count += self._seed_subject(tenant, math_subject, MATH_CURRICULUM)
+            created_count += self._seed_class_subject(tenant, form1, math_subject, MATH_CURRICULUM)
             self.stdout.write(self.style.SUCCESS('  [OK] Mathematics (%s) seeded' % math_subject.name))
         else:
             self.stdout.write(self.style.WARNING('  [!] No Mathematics subject found, skipping'))
 
         if french_subject:
-            created_count += self._seed_subject(tenant, french_subject, FRENCH_CURRICULUM)
+            created_count += self._seed_class_subject(tenant, form1, french_subject, FRENCH_CURRICULUM)
             self.stdout.write(self.style.SUCCESS('  [OK] French (%s) seeded' % french_subject.name))
         else:
             self.stdout.write(self.style.WARNING('  [!] No French subject found, skipping'))
@@ -117,11 +123,12 @@ class Command(BaseCommand):
             '\nDone! Created %d items total.' % created_count
         ))
 
-    def _seed_subject(self, tenant, subject, curriculum_data):
+    def _seed_class_subject(self, tenant, academic_class, subject, curriculum_data):
         count = 0
         for order, (module_name, lessons) in enumerate(curriculum_data.items(), start=1):
             module, mod_created = CurriculumModule.objects.get_or_create(
                 tenant=tenant,
+                academic_class=academic_class,
                 subject=subject,
                 name=module_name,
                 defaults={'order': order}

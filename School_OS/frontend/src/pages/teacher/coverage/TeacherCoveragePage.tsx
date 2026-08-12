@@ -57,7 +57,7 @@ export default function TeacherCoveragePage() {
     if (!activeAssignment) return;
     setLoading(true);
     try {
-      const response = await api.get(`/logbook/modules/?subject=${activeAssignment.subject}`);
+      const response = await api.get(`/logbook/modules/?subject=${activeAssignment.subject}&class=${activeAssignment.academic_class}`);
       setModules(response.data.results || response.data);
     } catch (error) {
       console.error("Failed to fetch coverage data:", error);
@@ -69,7 +69,7 @@ export default function TeacherCoveragePage() {
   const fetchSummary = useCallback(async () => {
     if (!activeAssignment) return;
     try {
-      const response = await api.get(`/logbook/modules/coverage_summary/?subject=${activeAssignment.subject}`);
+      const response = await api.get(`/logbook/modules/coverage_summary/?subject=${activeAssignment.subject}&class=${activeAssignment.academic_class}`);
       setSummary(response.data);
     } catch (error) {
       console.error("Failed to fetch coverage summary:", error);
@@ -140,6 +140,7 @@ export default function TeacherCoveragePage() {
     try {
       await api.post('/logbook/modules/', {
         subject: activeAssignment.subject,
+        academic_class: activeAssignment.academic_class,
         name: newModuleName.trim(),
         order: modules.length + 1,
       });

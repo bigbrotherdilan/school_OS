@@ -27,7 +27,7 @@ export default function TeacherDashboardHome() {
 
   useEffect(() => {
     if (!activeAssignment) return;
-    api.get(`/logbook/modules/?subject=${activeAssignment.subject}`).then((res) => {
+    api.get(`/logbook/modules/?subject=${activeAssignment.subject}&class=${activeAssignment.academic_class}`).then((res) => {
       const modules = res.data.results || res.data;
       if (modules && modules.length > 0) {
         const allLessons = modules.flatMap((m: any) => m.lessons);
