@@ -28,6 +28,7 @@ export default function BulkImportTeachers() {
           description="Bulk teacher onboarding"
           requiredColumns={[
             { key: 'first_name', label: 'First Name', required: true, example: 'Dr. Marie' },
+            { key: 'middle_name', label: 'Middle Name', required: false, example: 'Salomea' },
             { key: 'last_name', label: 'Last Name', required: true, example: 'Curie' },
             { key: 'email', label: 'Email', required: true, example: 'marie.curie@school.edu' },
           ]}

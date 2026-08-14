@@ -1,4 +1,4 @@
-"""
+﻿"""
 Staff Management — School OS
 """
 import uuid
@@ -95,6 +95,11 @@ class TeachingAssignment(models.Model):
         related_name='teacher_assignments',
         help_text="2nd Cycle only: which series this teacher handles",
     )
+    student_group = models.ForeignKey(
+        'timetable.StudentGroup', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='teacher_assignments',
+        help_text="Student group/stream this teacher handles. Null = the full class cohort.",
+    )
     academic_year = models.ForeignKey(
         'academic.AcademicYear', on_delete=models.CASCADE, related_name='teacher_assignments',
         null=True, blank=True,
@@ -102,7 +107,7 @@ class TeachingAssignment(models.Model):
 
     class Meta:
         db_table = 'staff_assignments'
-        unique_together = ['teacher', 'subject', 'academic_class', 'series', 'academic_year']
+        unique_together = ['teacher', 'subject', 'academic_class', 'series', 'student_group', 'academic_year']
         indexes = [
             models.Index(fields=['teacher', 'academic_year'], name='idx_assignment_teacher'),
             models.Index(fields=['tenant', 'academic_class'], name='idx_assignment_class'),

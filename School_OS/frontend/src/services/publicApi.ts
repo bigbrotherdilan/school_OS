@@ -132,6 +132,7 @@ export const fetchRegions = (): Promise<RegionCount[]> => {
 export const submitEnrollmentInquiry = (data: {
   school_id: string;
   child_first_name: string;
+  child_middle_name?: string;
   child_last_name: string;
   date_of_birth?: string;
   gender?: string;

@@ -13,6 +13,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [firstName, setFirstName] = useState(user?.first_name || '');
+  const [middleName, setMiddleName] = useState(user?.middle_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -85,6 +86,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
     try {
       const payload: Record<string, any> = {
         first_name: firstName,
+        middle_name: middleName,
         last_name: lastName,
         phone: phone || undefined,
         email: email || undefined,
@@ -149,13 +151,22 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
           </div>
 
           {/* Name Fields */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">First Name</label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">Middle Name</label>
+              <input
+                type="text"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
               />
             </div>

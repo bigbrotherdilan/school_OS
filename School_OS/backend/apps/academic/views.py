@@ -16,7 +16,9 @@ from apps.academic.serializers import (
     SectionSerializer, SeriesSerializer, ClassSerializer,
     SubjectSerializer, ClassSubjectSerializer, SectionSubjectSerializer,
 )
-from apps.academic.curriculum import recommended_subjects, recommended_classes
+from apps.academic.curriculum import (
+    recommended_subjects, recommended_classes, recommended_class_subjects,
+)
 from apps.authentication.permissions import (
     IsSchoolAdmin, IsAdminOrTeacher, IsSchoolAdminOrBursar,
 )
@@ -161,6 +163,18 @@ class ClassViewSet(BaseTenantViewSet):
             qs = qs.filter(cycle_id=cycle_id)
         return qs
 
+    def perform_create(self, serializer):
+        cls_obj = serializer.save(tenant_id=self.request.tenant_id)
+        if cls_obj.stream_id:
+            try:
+                section = Section.objects.get(
+                    id=cls_obj.stream_id, tenant_id=self.request.tenant_id
+                )
+            except Section.DoesNotExist:
+                section = None
+            if section is not None:
+                _link_section_subjects_to_class(section, cls_obj)
+
     @action(detail=False, methods=['get'], url_path='recommended')
     def recommended(self, request):
         """
@@ -218,6 +232,7 @@ class ClassViewSet(BaseTenantViewSet):
         )
 
         created_count = 0
+        linked_count = 0
         created = []
         for name, level_order, cycle_order in recommended_classes(section.language or 'en'):
             if name in existing_names:
@@ -233,12 +248,136 @@ class ClassViewSet(BaseTenantViewSet):
             created_count += 1
             created.append(cls_obj)
 
+            # Auto-link the official subjects for this section type + level.
+            # get_or_create keeps any subjects the admin already linked, and
+            # subjects remain removable per class afterwards.
+            linked = _link_class_subjects(section, cls_obj)
+            linked += _link_section_subjects_to_class(section, cls_obj)
+            linked_count += linked
+
         serializer = ClassSerializer(created, many=True)
         return Response({
-            'detail': f'{created_count} class(es) created for {section.name}.',
+            'detail': (
+                f'{created_count} class(es) created for {section.name} with '
+                f'{linked_count} subject link(s).'
+            ),
             'created': created_count,
+            'linked': linked_count,
             'classes': serializer.data,
         })
+
+
+def _resolve_or_create_subject(tenant_id, name, code, cycle, coefficient, is_compulsory, language=''):
+    """
+    Find the tenant's master subject for (name, code), preferring a subject
+    that matches the class's cycle. Creates a cycle-specific subject when none
+    matches, since the official catalog has separate entries per cycle for
+    subjects like SVTEEHB.
+    """
+    qs = Subject.objects.filter(tenant_id=tenant_id)
+    if cycle is not None:
+        if code:
+            existing = qs.filter(code=code, cycle=cycle).first()
+            if existing is not None:
+                return existing
+        existing = qs.filter(name=name, cycle=cycle).first()
+        if existing is not None:
+            return existing
+        return Subject.objects.create(
+            tenant_id=tenant_id,
+            cycle=cycle,
+            name=name,
+            code=code,
+            language=language,
+            default_coefficient=coefficient,
+            is_compulsory=is_compulsory,
+        )
+    if code:
+        existing = qs.filter(code=code).first()
+        if existing is not None:
+            return existing
+    existing = qs.filter(name=name).first()
+    if existing is not None:
+        return existing
+    return Subject.objects.create(
+        tenant_id=tenant_id,
+        cycle=None,
+        name=name,
+        code=code,
+        language=language,
+        default_coefficient=coefficient,
+        is_compulsory=is_compulsory,
+    )
+
+
+def _link_class_subjects(section, cls_obj):
+    """
+    Link the official curriculum subjects to a class according to its
+    section type and level. Returns the number of new links created.
+    """
+    linked_count = 0
+    language = section.language if section.language in ('en', 'fr') else 'en'
+    for name, code, coefficient, hours, compulsory, is_double in recommended_class_subjects(
+        section.section_type,
+        language,
+        cls_obj.level_order,
+    ):
+        subject = _resolve_or_create_subject(
+            cls_obj.tenant_id, name, code, cls_obj.cycle,
+            coefficient, compulsory, language,
+        )
+        _, was_created = ClassSubject.objects.get_or_create(
+            academic_class=cls_obj,
+            subject=subject,
+            series=None,
+            defaults={
+                'coefficient': coefficient,
+                'weekly_hours': hours,
+                'is_double': is_double,
+            },
+        )
+        if was_created:
+            linked_count += 1
+    return linked_count
+
+
+def _link_section_subjects_to_class(section, cls_obj):
+    """
+    Link the section's subjects to a class, skipping subjects that belong to a
+    different cycle than the class. Returns the number of new links created.
+    """
+    linked_count = 0
+    section_subjects = SectionSubject.objects.filter(section=section).select_related(
+        'subject', 'subject__cycle'
+    )
+    for ss in section_subjects:
+        subject = ss.subject
+        if subject.cycle_id and cls_obj.cycle_id and subject.cycle_id != cls_obj.cycle_id:
+            continue
+        _, was_created = ClassSubject.objects.get_or_create(
+            academic_class=cls_obj,
+            subject=subject,
+            series=None,
+            defaults={
+                'coefficient': ss.coefficient,
+                'weekly_hours': 0,
+            },
+        )
+        if was_created:
+            linked_count += 1
+    return linked_count
+
+
+def _propagate_section_subjects(section):
+    """
+    Link the section's subjects to every class of the section.
+    get_or_create keeps any subjects already linked per class.
+    Returns the total number of new links created.
+    """
+    total = 0
+    for cls_obj in Class.objects.filter(tenant_id=section.tenant_id, stream=section):
+        total += _link_section_subjects_to_class(section, cls_obj)
+    return total
 
 
 def _existing_subject_map(tenant_id):
@@ -282,6 +421,7 @@ class SubjectViewSet(BaseTenantViewSet):
         """
         section_id = request.query_params.get('section')
         language = request.query_params.get('language')
+        section_type = request.query_params.get('section_type')
         section = None
 
         if section_id:
@@ -290,6 +430,7 @@ class SubjectViewSet(BaseTenantViewSet):
             except Section.DoesNotExist:
                 return Response({'detail': 'Section not found.'}, status=404)
             language = language or section.language or 'en'
+            section_type = section.section_type
         language = language or 'en'
 
         existing = _existing_subject_map(request.tenant_id)
@@ -301,7 +442,7 @@ class SubjectViewSet(BaseTenantViewSet):
             )
 
         items = []
-        for name, code, cycle_order, coeff, compulsory in recommended_subjects(language):
+        for name, code, cycle_order, coeff, compulsory in recommended_subjects(language, section_type):
             subj = _lookup_subject(existing, name, code)
             items.append({
                 'name': name,
@@ -313,7 +454,7 @@ class SubjectViewSet(BaseTenantViewSet):
                 'already_assigned': subj is not None and code in assigned_codes,
             })
 
-        return Response({'language': language, 'items': items})
+        return Response({'language': language, 'section_type': section_type, 'items': items})
 
     @action(detail=False, methods=['post'], url_path='apply-recommendations')
     def apply_recommendations(self, request):
@@ -333,13 +474,15 @@ class SubjectViewSet(BaseTenantViewSet):
         except Section.DoesNotExist:
             return Response({'detail': 'Section not found.'}, status=404)
 
-        language = section.language or 'en'
+        language = section.language if section.language in ('en', 'fr') else 'en'
         cycles = {c.order: c for c in Cycle.objects.filter(tenant_id=request.tenant_id)}
         existing = _existing_subject_map(request.tenant_id)
 
         created_count = 0
         assigned_count = 0
-        for name, code, cycle_order, coeff, compulsory in recommended_subjects(language):
+        for name, code, cycle_order, coeff, compulsory in recommended_subjects(
+            language, section.section_type
+        ):
             subj = _lookup_subject(existing, name, code)
             if subj is None:
                 subj = Subject.objects.create(
@@ -347,6 +490,7 @@ class SubjectViewSet(BaseTenantViewSet):
                     cycle=cycles.get(cycle_order) if cycle_order else None,
                     name=name,
                     code=code,
+                    language=language,
                     default_coefficient=coeff,
                     is_compulsory=compulsory,
                 )
@@ -362,13 +506,16 @@ class SubjectViewSet(BaseTenantViewSet):
             if was_created:
                 assigned_count += 1
 
+        propagated = _propagate_section_subjects(section)
+
         return Response({
             'detail': (
                 f'{created_count} subject(s) created and {assigned_count} assigned '
-                f'to {section.name}.'
+                f'to {section.name} ({propagated} class link(s) added).'
             ),
             'created': created_count,
             'assigned': assigned_count,
+            'class_links_added': propagated,
         })
 
 
@@ -387,10 +534,23 @@ class ClassSubjectViewSet(BaseTenantViewSet):
 
     def perform_create(self, serializer):
         academic_class = serializer.validated_data.get('academic_class')
-        if not academic_class or academic_class.tenant_id != self.request.tenant_id:
+        if not academic_class or str(academic_class.tenant_id) != self.request.tenant_id:
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied('Invalid class for this school.')
         serializer.save()
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        if str(instance.academic_class.tenant_id) != self.request.tenant_id:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('You do not have permission to modify this resource.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if str(instance.academic_class.tenant_id) != self.request.tenant_id:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('You do not have permission to delete this resource.')
+        instance.delete()
 
 
 class SectionSubjectViewSet(BaseTenantViewSet):
@@ -407,7 +567,10 @@ class SectionSubjectViewSet(BaseTenantViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save()
+        link = serializer.save()
+        section = link.section
+        if section is not None and section.tenant_id == self.request.tenant_id:
+            _propagate_section_subjects(section)
 
     def perform_update(self, serializer):
         serializer.save()
@@ -459,7 +622,12 @@ class SectionSubjectViewSet(BaseTenantViewSet):
             created.append(link)
 
         serializer = SectionSubjectSerializer(created, many=True)
+        propagated = _propagate_section_subjects(section)
         return Response({
-            'detail': f'{len(created)} subject(s) assigned to {section.name}.',
+            'detail': (
+                f'{len(created)} subject(s) assigned to {section.name} '
+                f'({propagated} class link(s) added).'
+            ),
             'created': serializer.data,
+            'class_links_added': propagated,
         })

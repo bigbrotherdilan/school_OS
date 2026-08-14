@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, type StateStorage } from 'zustand/middleware';
 
 export interface AdminSection {
   id: string;
@@ -15,6 +15,43 @@ interface SectionState {
   setActiveSectionId: (id: string | null) => void;
   fetchSections: (tenantId: string) => Promise<void>;
 }
+
+const safeStorage: StateStorage = {
+  getItem: (name: string): string | null => {
+    try {
+      const value = localStorage.getItem(name);
+      if (!value) return null;
+      const parsed = JSON.parse(value);
+      // Validate the structure - we only persist activeSectionId which should be a string or null
+      if (parsed.state && typeof parsed.state.activeSectionId === 'string') {
+        return value;
+      }
+      if (parsed.state && parsed.state.activeSectionId === null) {
+        return value;
+      }
+      // If invalid, remove it
+      localStorage.removeItem(name);
+      return null;
+    } catch {
+      localStorage.removeItem(name);
+      return null;
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    try {
+      localStorage.setItem(name, value);
+    } catch {
+      // Ignore storage errors (e.g., quota exceeded)
+    }
+  },
+  removeItem: (name: string): void => {
+    try {
+      localStorage.removeItem(name);
+    } catch {
+      // Ignore
+    }
+  },
+};
 
 export const useSectionStore = create<SectionState>()(
   persist(
@@ -49,6 +86,7 @@ export const useSectionStore = create<SectionState>()(
     }),
     {
       name: 'sos-section-storage',
+      storage: safeStorage,
       partialize: (state) => ({ activeSectionId: state.activeSectionId }),
     }
   )

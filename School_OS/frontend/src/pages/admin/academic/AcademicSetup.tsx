@@ -22,8 +22,8 @@ export default function AcademicSetup() {
   const [yearForm, setYearForm] = useState({ name: '', start_date: '', end_date: '' });
   const [termForm, setTermForm] = useState({ academic_year: '', name: '', order_number: 1 });
   const [classForm, setClassForm] = useState({ name: '', cycle: '', stream: '', level_order: 1 });
-  const [subjectForm, setSubjectForm] = useState({ name: '', code: '', cycle: '', default_coefficient: 1.0 });
-  const [sectionForm, setSectionForm] = useState({ name: '', language: 'en' });
+  const [subjectForm, setSubjectForm] = useState({ name: '', code: '', cycle: '', language: '', default_coefficient: 1.0 });
+  const [sectionForm, setSectionForm] = useState({ name: '', section_type: 'grammar', language: 'en' });
 
   const [selectedSection, setSelectedSection] = useState('');
   const [sectionSubjects, setSectionSubjects] = useState<any[]>([]);
@@ -35,7 +35,7 @@ export default function AcademicSetup() {
   const [recommendedClasses, setRecommendedClasses] = useState<any[]>([]);
   const [applyingClasses, setApplyingClasses] = useState(false);
   const [editingSection, setEditingSection] = useState<number | null>(null);
-  const [sectionEditForm, setSectionEditForm] = useState({ name: '', language: 'en' });
+  const [sectionEditForm, setSectionEditForm] = useState({ name: '', section_type: 'grammar', language: 'en' });
   const [creatingYear, setCreatingYear] = useState(false);
   const [editingTerm, setEditingTerm] = useState<number | null>(null);
   const [termEditForm, setTermEditForm] = useState({ name: '', start_date: '', end_date: '' });
@@ -278,8 +278,7 @@ export default function AcademicSetup() {
       await api.post('/academic/subjects/', subjectForm);
       addToast("Subject added to your curriculum.", "success");
       fetchData();
-      setSubjectForm({ ...subjectForm, name: '', code: '' });
-    } catch (error: any) {
+      setSubjectForm({ ...subjectForm, name: '', code: '' });    } catch (error: any) {
       addToast(error.response?.data?.detail || error.response?.data?.error || `Failed to create Subject`, "error");
     }
   };
@@ -290,19 +289,19 @@ export default function AcademicSetup() {
       await api.post('/academic/sections/', sectionForm);
       addToast("Section created! You can now assign classes to it.", "success");
       fetchData();
-      setSectionForm({ name: '', language: 'en' });
+      setSectionForm({ name: '', section_type: 'grammar', language: 'en' });
     } catch (error: any) {
       addToast(error.response?.data?.detail || error.response?.data?.error || `Failed to create Section`, "error");
     }
   };
 
-  const applySectionTemplate = (name: string, language: string) => {
-    setSectionForm({ name, language });
+  const applySectionTemplate = (name: string, language: string, section_type: string) => {
+    setSectionForm({ name, section_type, language });
   };
 
   const startEditSection = (s: any) => {
     setEditingSection(s.id);
-    setSectionEditForm({ name: s.name, language: s.language || 'en' });
+    setSectionEditForm({ name: s.name, section_type: s.section_type || 'grammar', language: s.language || 'en' });
   };
 
   const handleUpdateSection = async (sectionId: number) => {
@@ -470,8 +469,12 @@ export default function AcademicSetup() {
     }
   };
 
+  const selectedSectionObj = sections.find((s: any) => String(s.id) === selectedSection);
+
   const unassignedSubjects = subjects.filter(
-    (s: any) => !sectionSubjects.some((ss: any) => ss.subject === s.id)
+    (s: any) =>
+      !sectionSubjects.some((ss: any) => ss.subject === s.id) &&
+      (!s.language || !selectedSectionObj || s.language === selectedSectionObj.language)
   );
 
   const activeYear = academicYears.find((y: any) => y.is_active);
@@ -755,7 +758,7 @@ export default function AcademicSetup() {
               <p className="text-white/90 max-w-2xl leading-relaxed">
                 Every school must have at least one <strong>section</strong> before anything else can work —
                 classes, subjects, students, timetables, and report cards all hang off a section.
-                Create your first section below (e.g. Anglophone, Francophone, Technical, Commercial).
+                Create your first section below (e.g. Grammar, Francophone, Technical, Commercial).
                 After that, the curriculum for that section becomes available automatically.
               </p>
             </div>
@@ -770,16 +773,17 @@ export default function AcademicSetup() {
               <label className="text-[10px] font-black uppercase text-on-surface-variant">Quick Templates</label>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { name: 'Anglophone', language: 'en' },
-                  { name: 'Francophone', language: 'fr' },
-                  { name: 'Grammar', language: 'fr' },
-                  { name: 'Technical', language: 'fr' },
-                  { name: 'Commercial', language: 'fr' },
+                  { name: 'Grammar', language: 'en', section_type: 'grammar' },
+                  { name: 'Francophone', language: 'fr', section_type: 'grammar' },
+                  { name: 'Technical (English)', language: 'en', section_type: 'technical' },
+                  { name: 'Technical (French)', language: 'fr', section_type: 'technical' },
+                  { name: 'Commercial (English)', language: 'en', section_type: 'commercial' },
+                  { name: 'Commercial (French)', language: 'fr', section_type: 'commercial' },
                 ].map((tpl) => (
                   <button
                     key={tpl.name}
                     type="button"
-                    onClick={() => applySectionTemplate(tpl.name, tpl.language)}
+                    onClick={() => applySectionTemplate(tpl.name, tpl.language, tpl.section_type)}
                     className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border transition-colors ${sectionForm.name === tpl.name ? 'bg-primary text-white border-primary' : 'bg-surface-container text-on-surface-variant border-outline-variant/20 hover:border-primary/40 hover:text-primary'}`}
                   >
                     {tpl.name}
@@ -790,14 +794,24 @@ export default function AcademicSetup() {
 
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase text-on-surface-variant">Section Name</label>
-              <input required type="text" placeholder="e.g. Anglophone, Technical, Commercial" value={sectionForm.name} onChange={e => setSectionForm({...sectionForm, name: e.target.value})} className="w-full bg-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold" />
+              <input required type="text" placeholder="e.g. Grammar, Technical, Commercial" value={sectionForm.name} onChange={e => setSectionForm({...sectionForm, name: e.target.value})} className="w-full bg-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-on-surface-variant">Section Type</label>
+              <p className="text-xs text-on-surface-variant">Decides which curriculum (subjects) is auto-linked to the section's classes.</p>
+              <select value={sectionForm.section_type} onChange={e => setSectionForm({...sectionForm, section_type: e.target.value})} className="w-full bg-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold">
+                <option value="grammar">Grammar (general academic)</option>
+                <option value="technical">Technical</option>
+                <option value="commercial">Commercial</option>
+              </select>
             </div>
 
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase text-on-surface-variant">Primary Language</label>
               <p className="text-xs text-on-surface-variant">This decides which Cameroon national curriculum (subjects + classes) is recommended for the section.</p>
               <select value={sectionForm.language} onChange={e => setSectionForm({...sectionForm, language: e.target.value})} className="w-full bg-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold">
-                <option value="en">English (Anglophone — GCE curriculum)</option>
+                <option value="en">English (GCE curriculum)</option>
                 <option value="fr">French (Francophone — MINESEC curriculum)</option>
                 <option value="de">German</option>
               </select>
@@ -816,6 +830,11 @@ export default function AcademicSetup() {
                   {editingSection === s.id ? (
                     <div className="space-y-3">
                       <input type="text" value={sectionEditForm.name} onChange={e => setSectionEditForm({...sectionEditForm, name: e.target.value})} className="w-full bg-surface-container-highest rounded-lg px-3 py-2 text-sm font-bold" />
+                      <select value={sectionEditForm.section_type} onChange={e => setSectionEditForm({...sectionEditForm, section_type: e.target.value})} className="w-full bg-surface-container-highest rounded-lg px-3 py-2 text-sm font-bold">
+                        <option value="grammar">Grammar (general academic)</option>
+                        <option value="technical">Technical</option>
+                        <option value="commercial">Commercial</option>
+                      </select>
                       <select value={sectionEditForm.language} onChange={e => setSectionEditForm({...sectionEditForm, language: e.target.value})} className="w-full bg-surface-container-highest rounded-lg px-3 py-2 text-sm font-bold">
                         <option value="en">English</option>
                         <option value="fr">French</option>
@@ -830,7 +849,7 @@ export default function AcademicSetup() {
                     <div className="flex justify-between items-center gap-3">
                       <div className="min-w-0">
                         <span className="font-bold">{s.name}</span>
-                        <span className="block text-xs text-on-surface-variant mt-0.5">{s.language === 'en' ? 'English' : s.language === 'fr' ? 'French' : s.language}</span>
+                        <span className="block text-xs text-on-surface-variant mt-0.5">{s.language === 'en' ? 'English' : s.language === 'fr' ? 'French' : s.language} • {(s.section_type || 'grammar').charAt(0).toUpperCase() + (s.section_type || 'grammar').slice(1)}</span>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button onClick={() => startEditSection(s)} title="Edit section" className="text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg p-2 transition-colors">
@@ -844,7 +863,7 @@ export default function AcademicSetup() {
                   )}
                 </div>
               ))}
-              {sections.length === 0 && <p className="text-on-surface-variant text-sm text-center py-4 font-medium">No sections yet. Create your first section (e.g., Anglophone, Francophone).</p>}
+              {sections.length === 0 && <p className="text-on-surface-variant text-sm text-center py-4 font-medium">No sections yet. Create your first section (e.g., Grammar, Francophone).</p>}
             </div>
           </div>
           </div>
@@ -857,7 +876,7 @@ export default function AcademicSetup() {
             <h3 className="text-xl font-bold mb-2">Recommended Class Structure</h3>
             <p className="text-sm text-on-surface-variant mb-4">
               Each section type follows the official Cameroon class ladder —
-              Anglophone: Form 1 to Upper Sixth • Francophone: 6ème to Terminale.
+              Grammar: Form 1 to Upper Sixth • Francophone: 6ème to Terminale.
               Pick a section and add its standard classes with one click.
             </p>
             <select required value={selectedSection} onChange={e => setSelectedSection(e.target.value)} className="w-full bg-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold">
@@ -951,7 +970,7 @@ export default function AcademicSetup() {
                       <input type="checkbox" checked={selectedForAssign.includes(sub.id)} onChange={() => toggleForAssign(sub.id)} className="w-4 h-4 accent-primary" />
                       <span className="flex-1">
                         <span className="font-bold block text-sm">{sub.name} <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-mono text-[10px]">{sub.code}</span></span>
-                        <span className="block text-xs text-on-surface-variant">{sub.cycle_name || 'General'} • default coeff {sub.default_coefficient}</span>
+                        <span className="block text-xs text-on-surface-variant">{sub.language === 'fr' ? 'French (MINESEC) • ' : sub.language === 'en' ? 'English (GCE) • ' : ''}{sub.cycle_name || 'General'} • default coeff {sub.default_coefficient}</span>
                       </span>
                     </label>
                   ))}
@@ -963,10 +982,17 @@ export default function AcademicSetup() {
 
                 <div className="mt-5 border-t border-outline-variant/10 pt-5">
                   <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-1">Cameroon National Curriculum</h4>
-                  <p className="text-xs text-on-surface-variant mb-3">
-                    Recommended subjects for this section ({sections.find((s: any) => String(s.id) === selectedSection)?.language === 'fr' ? 'Francophone — MINESEC' : 'Anglophone — GCE'}):
-                    {recommended.length > 0 && ` ${recommended.filter(r => !r.already_assigned).length} available, ${recommended.filter(r => r.already_assigned).length} already assigned.`}
-                  </p>
+                  {(() => {
+                    const sec = sections.find((s: any) => String(s.id) === selectedSection);
+                    const lang = sec?.language === 'fr' ? 'French (MINESEC)' : 'English (GCE)';
+                    const typeLabel = sec?.section_type === 'technical' ? 'Technical' : sec?.section_type === 'commercial' ? 'Commercial' : 'General';
+                    return (
+                      <p className="text-xs text-on-surface-variant mb-3">
+                        Recommended subjects for this section — <strong className="text-on-surface">{lang}</strong> • <strong className="text-on-surface">{typeLabel}</strong>
+                        {recommended.length > 0 && `: ${recommended.filter(r => !r.already_assigned).length} available, ${recommended.filter(r => r.already_assigned).length} already assigned.`}
+                      </p>
+                    );
+                  })()}
                   {recommended.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {recommended.slice(0, 12).map((r: any) => (
@@ -1023,6 +1049,12 @@ export default function AcademicSetup() {
                 {cycles.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
 
+              <select value={subjectForm.language} onChange={e => setSubjectForm({...subjectForm, language: e.target.value})} className="w-full bg-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold">
+                <option value="">Shared / Both subsystems</option>
+                <option value="en">English (GCE)</option>
+                <option value="fr">French (MINESEC)</option>
+              </select>
+
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2 space-y-1">
                   <label className="text-[10px] font-black uppercase text-on-surface-variant">Subject Name</label>
@@ -1051,7 +1083,7 @@ export default function AcademicSetup() {
                   <div key={sub.id} className="p-4 bg-white rounded-xl shadow-sm border border-outline-variant/10 flex justify-between items-center">
                     <div>
                       <span className="font-bold flex items-center gap-2">{sub.name} <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-mono text-[10px]">{sub.code}</span></span>
-                      <span className="block text-xs text-on-surface-variant mt-1 font-bold tracking-widest uppercase">{sub.cycle_name || 'General'}</span>
+                      <span className="block text-xs text-on-surface-variant mt-1 font-bold tracking-widest uppercase">{sub.language === 'fr' ? 'FRENCH • ' : sub.language === 'en' ? 'ENGLISH • ' : 'SHARED • '}{sub.cycle_name || 'General'}</span>
                     </div>
                     <div className="text-center bg-secondary/10 p-2 rounded-lg">
                       <span className="block text-[10px] uppercase font-black text-secondary">Coeff</span>

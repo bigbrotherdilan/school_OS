@@ -7,7 +7,7 @@ For each of the 12 real schools (from seed_real_schools):
   2. Seeds the baseline academic structure so testers can immediately
      register students and add teachers/bursars:
      - Active AcademicYear (2026/2027) + 3 Terms + 6 Sequences
-     - Cycles (1st/2nd) + Sections (Anglophone/Francophone per education_type)
+     - Cycles (1st/2nd) + Sections (Grammar/Francophone per education_type)
      - Recommended classes (Form 1–Upper Sixth / 6ème–Terminale)
      - Recommended subjects + SectionSubject/ClassSubject links + Series
 
@@ -42,9 +42,9 @@ TERMS = [
 SEQUENCES_PER_TERM = 2
 
 SECTIONS_BY_TYPE = {
-    'anglophone': [('Anglophone', 'en')],
+    'anglophone': [('Grammar', 'en')],
     'francophone': [('Francophone', 'fr')],
-    'bilingual': [('Anglophone', 'en'), ('Francophone', 'fr')],
+    'bilingual': [('Grammar', 'en'), ('Francophone', 'fr')],
 }
 
 SERIES_BY_LANGUAGE = {
@@ -167,6 +167,7 @@ class Command(BaseCommand):
                         tenant=tenant, cycle=cycles[cycle_order], name=subj_name,
                         defaults={
                             'code': code,
+                            'language': language,
                             'default_coefficient': coeff,
                             'is_compulsory': compulsory,
                         },

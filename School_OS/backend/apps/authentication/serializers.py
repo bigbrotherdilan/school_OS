@@ -150,6 +150,7 @@ class SOSTokenObtainPairSerializer(TokenObtainPairSerializer):
             'email': user.email,
             'full_name': user.full_name,
             'first_name': user.first_name,
+            'middle_name': user.middle_name,
             'last_name': user.last_name,
             'default_language': user.default_language,
             'email_alerts': user.email_alerts,
@@ -171,7 +172,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'first_name', 'last_name', 'full_name',
+            'id', 'email', 'first_name', 'middle_name', 'last_name', 'full_name',
             'phone', 'default_language', 'profile_photo',
             'email_alerts', 'sms_alerts',
             'is_platform_admin', 'is_active', 'date_joined',
@@ -202,7 +203,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'email', 'first_name', 'last_name', 'phone',
+            'email', 'first_name', 'middle_name', 'last_name', 'phone',
             'default_language', 'password', 'role', 'tenant_id',
         ]
 

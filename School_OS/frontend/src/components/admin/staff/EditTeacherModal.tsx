@@ -14,6 +14,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: teacher.user_details?.first_name || '',
+    middle_name: teacher.user_details?.middle_name || '',
     last_name: teacher.user_details?.last_name || '',
     email: teacher.user_details?.email || '',
     department: teacher.department || '',
@@ -74,7 +75,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
               <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">badge</span> Identity
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">First Name</label>
                   <input
@@ -82,6 +83,16 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                     type="text"
                     name="first_name"
                     value={formData.first_name}
+                    onChange={handleChange}
+                    className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Middle Name</label>
+                  <input
+                    type="text"
+                    name="middle_name"
+                    value={formData.middle_name}
                     onChange={handleChange}
                     className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                   />

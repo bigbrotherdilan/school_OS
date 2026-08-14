@@ -92,6 +92,7 @@ export default function SchoolProfile() {
       await submitEnrollmentInquiry({
         school_id: school.id,
         child_first_name: fd.get('child_first_name') as string,
+        child_middle_name: fd.get('child_middle_name') as string || undefined,
         child_last_name: fd.get('child_last_name') as string,
         date_of_birth: fd.get('date_of_birth') as string || undefined,
         gender: fd.get('gender') as string || undefined,
@@ -335,6 +336,11 @@ export default function SchoolProfile() {
                       <div>
                         <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Child's First Name *</label>
                         <input name="child_first_name" type="text" required placeholder="First name"
+                          className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Child's Middle Name</label>
+                        <input name="child_middle_name" type="text" placeholder="Middle name"
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                       <div>

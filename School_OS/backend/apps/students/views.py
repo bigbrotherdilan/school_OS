@@ -72,7 +72,7 @@ class StudentViewSet(BaseTenantViewSet):
     serializer_class = StudentSerializer
     permission_classes = [IsAdminOrTeacher]
     filterset_fields = ['current_class', 'stream', 'status']
-    search_fields = ['first_name', 'last_name', 'admission_number']
+    search_fields = ['first_name', 'middle_name', 'last_name', 'admission_number']
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve') and self.request.method in SAFE_METHODS:
@@ -97,13 +97,15 @@ class StudentViewSet(BaseTenantViewSet):
                 from apps.authentication.services import create_parent_account
 
                 full_name = (serializer.validated_data.get('parent_name') or '').strip()
-                parts = full_name.split(maxsplit=1)
+                parts = full_name.split()
                 first = parts[0] if parts else parent_email.split('@')[0]
-                last = parts[1] if len(parts) > 1 else ''
+                middle = parts[1] if len(parts) > 2 else ''
+                last = ' '.join(parts[2:]) if len(parts) > 2 else (parts[1] if len(parts) > 1 else '')
 
                 user, temp_password, created_links = create_parent_account(
                     request.tenant,
                     first_name=first,
+                    middle_name=middle,
                     last_name=last,
                     email=parent_email,
                     phone=serializer.validated_data.get('parent_phone', ''),
@@ -125,7 +127,7 @@ class StudentViewSet(BaseTenantViewSet):
         return Response(data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], permission_classes=[IsSchoolAdmin])
-    def set_status(self, request, pk=None):
+    def set_status(self, request, id=None):
         """Manually update student status (e.g., Promote, Graduate)."""
         student = self.get_object()
         new_status = request.data.get('status')
@@ -139,7 +141,7 @@ class StudentViewSet(BaseTenantViewSet):
         )
 
     @action(detail=True, methods=['post'], permission_classes=[IsSchoolAdmin])
-    def verify(self, request, pk=None):
+    def verify(self, request, id=None):
         """Verify a registered student, making them ACTIVE."""
         student = self.get_object()
         student.status = Student.Status.ACTIVE
@@ -482,6 +484,7 @@ class StudentViewSet(BaseTenantViewSet):
             return Response({'detail': 'Could not read CSV file. Ensure it is UTF-8 encoded.'}, status=400)
 
         required_cols = {'first_name', 'last_name', 'gender', 'date_of_birth'}
+        optional_cols = {'middle_name', 'blood_group', 'emergency_contact', 'current_class'}
         if not required_cols.issubset(set(reader.fieldnames or [])):
             return Response({
                 'detail': f'CSV must have columns: {", ".join(required_cols)}. Found: {", ".join(reader.fieldnames or [])}'
@@ -495,16 +498,17 @@ class StudentViewSet(BaseTenantViewSet):
         for row in reader:
             row_num += 1
             first_name = row.get('first_name', '').strip()
+            middle_name = row.get('middle_name', '').strip()
             last_name = row.get('last_name', '').strip()
             gender = row.get('gender', '').strip().upper()
             dob = row.get('date_of_birth', '').strip()
 
             if not first_name or not last_name or not gender or not dob:
-                errors.append({'row': row_num, 'name': f"{first_name} {last_name}", 'error': 'Missing required fields'})
+                errors.append({'row': row_num, 'name': f"{first_name} {middle_name} {last_name}".strip(), 'error': 'Missing required fields'})
                 continue
 
             if gender not in ('M', 'F'):
-                errors.append({'row': row_num, 'name': f"{first_name} {last_name}", 'error': f'Invalid gender: {gender}. Must be M or F'})
+                errors.append({'row': row_num, 'name': f"{first_name} {middle_name} {last_name}".strip(), 'error': f'Invalid gender: {gender}. Must be M or F'})
                 continue
 
             try:
@@ -521,6 +525,7 @@ class StudentViewSet(BaseTenantViewSet):
                     student = Student.objects.create(
                         tenant=tenant,
                         first_name=first_name,
+                        middle_name=middle_name,
                         last_name=last_name,
                         gender=gender,
                         date_of_birth=dob,
@@ -531,12 +536,12 @@ class StudentViewSet(BaseTenantViewSet):
                     )
 
                     created.append({
-                        'name': f"{first_name} {last_name}",
+                        'name': f"{first_name} {middle_name} {last_name}".strip(),
                         'admission_number': student.admission_number,
                         'class': current_class.name if current_class else 'Unassigned',
                     })
             except Exception as e:
-                errors.append({'row': row_num, 'name': f"{first_name} {last_name}", 'error': str(e)})
+                errors.append({'row': row_num, 'name': f"{first_name} {middle_name} {last_name}".strip(), 'error': str(e)})
 
         return Response({
             'message': f'Import complete. {len(created)} students created, {len(errors)} errors.',

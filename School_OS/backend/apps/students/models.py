@@ -31,6 +31,10 @@ class Student(models.Model):
     admission_number = models.CharField(max_length=50, unique=True, blank=True)
 
     first_name = models.CharField(max_length=150)
+    middle_name = models.CharField(
+        max_length=150, blank=True,
+        help_text="Middle name(s), e.g., 'Nfon' in 'Dilan Nfon Ngongsong'",
+    )
     last_name = models.CharField(max_length=150)
     gender = models.CharField(max_length=1, choices=Gender.choices)
     date_of_birth = models.DateField()
@@ -72,7 +76,7 @@ class Student(models.Model):
         ordering = ['last_name', 'first_name']
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.admission_number})"
+        return f"{self.full_name} ({self.admission_number})"
 
     def save(self, *args, **kwargs):
         if not self.admission_number:
@@ -82,7 +86,8 @@ class Student(models.Model):
 
     @property
     def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        parts = [p for p in (self.first_name, self.middle_name, self.last_name) if p]
+        return ' '.join(parts)
 
 
 class ParentStudentRelationship(models.Model):

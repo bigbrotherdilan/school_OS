@@ -190,7 +190,7 @@ class Command(BaseCommand):
         cycle1, _ = Cycle.objects.get_or_create(tenant=tenant, order=1, defaults={'name': '1st Cycle'})
         cycle2, _ = Cycle.objects.get_or_create(tenant=tenant, order=2, defaults={'name': '2nd Cycle'})
 
-        anglo_section, _ = Section.objects.get_or_create(tenant=tenant, name='anglophone', defaults={'language': 'en'})
+        anglo_section, _ = Section.objects.get_or_create(tenant=tenant, name='Grammar', defaults={'language': 'en'})
         franco_section, _ = Section.objects.get_or_create(tenant=tenant, name='francophone', defaults={'language': 'fr'})
 
         form1, _ = Class.objects.get_or_create(tenant=tenant, cycle=cycle1, stream=anglo_section, name='Form 1', defaults={'level_order': 1})
@@ -452,7 +452,7 @@ parent_user, created = User.objects.get_or_create(
 
         cycle_1, _ = Cycle.objects.get_or_create(tenant=tenant, name='1st Cycle', defaults={'order': 1})
         cycle_2, _ = Cycle.objects.get_or_create(tenant=tenant, name='2nd Cycle', defaults={'order': 2})
-        section_en, _ = Section.objects.get_or_create(tenant=tenant, name='anglophone', defaults={'language': 'en'})
+        section_en, _ = Section.objects.get_or_create(tenant=tenant, name='Grammar', defaults={'language': 'en'})
         section_fr, _ = Section.objects.get_or_create(tenant=tenant, name='francophone', defaults={'language': 'fr'})
         self.reconnect()
 
@@ -477,7 +477,7 @@ parent_user, created = User.objects.get_or_create(
             ('Further Mathematics', cycle_2, 2.0, False), ('Computer Science', cycle_1, 1.0, False),
             ('Civic Education', cycle_1, 1.0, True),
         ]:
-            subj, _ = Subject.objects.get_or_create(tenant=tenant, name=name, defaults={'cycle': cycle, 'default_coefficient': coeff, 'is_compulsory': compulsory})
+            subj, _ = Subject.objects.get_or_create(tenant=tenant, name=name, defaults={'cycle': cycle, 'language': 'en', 'default_coefficient': coeff, 'is_compulsory': compulsory})
             subject_objects[name] = subj
         self.reconnect()
 

@@ -1,6 +1,46 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, Component, type ErrorInfo, type ReactNode } from 'react';
 import { api } from './services/api';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest rounded-2xl border border-error/30 p-8 max-w-md text-center">
+            <h2 className="text-xl font-bold text-error mb-4">Something went wrong</h2>
+            <pre className="text-left text-sm text-on-surface-variant bg-surface-container p-4 rounded-xl overflow-auto max-h-60">
+              {this.state.error?.message ?? 'Unknown error'}
+              {this.state.error?.stack && '\n\n' + this.state.error.stack}
+            </pre>
+            <button
+              onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+              className="mt-6 px-6 py-3 bg-primary text-white rounded-xl font-medium hover:opacity-90"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Public + auth pages stay eagerly loaded for instant first paint.
 import Login from './pages/Login';
@@ -211,8 +251,9 @@ export default function App() {
       <ThemeBridge />
       <ToastContainer />
       <ScrollManager />
-      <Suspense fallback={<PageLoader />}>
-      <Routes>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+        <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/features" element={<FeaturesPage />} />
@@ -346,8 +387,9 @@ export default function App() {
         <Route path="/unauthorized" element={
           <PlaceholderDashboard title="Unauthorized. You do not have access to this portal." />
         } />
-      </Routes>
-      </Suspense>
+        </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

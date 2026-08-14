@@ -36,6 +36,7 @@ def onboard_bursar(request):
 
     class BursarOnboardSerializer(drf_serializers.Serializer):
         first_name = drf_serializers.CharField(max_length=150)
+        middle_name = drf_serializers.CharField(max_length=150, required=False, allow_blank=True)
         last_name = drf_serializers.CharField(max_length=150)
         email = drf_serializers.EmailField()
         phone = drf_serializers.CharField(max_length=30, required=False, allow_blank=True)
@@ -61,6 +62,7 @@ def onboard_bursar(request):
                 email=data['email'],
                 username=data['email'],
                 first_name=data['first_name'],
+                middle_name=data.get('middle_name', ''),
                 last_name=data['last_name'],
                 password=temp_password,
             )
@@ -127,6 +129,7 @@ def onboard_parent(request):
 
     class ParentOnboardSerializer(drf_serializers.Serializer):
         first_name = drf_serializers.CharField(max_length=150)
+        middle_name = drf_serializers.CharField(max_length=150, required=False, allow_blank=True)
         last_name = drf_serializers.CharField(max_length=150)
         email = drf_serializers.EmailField()
         phone = drf_serializers.CharField(max_length=30, required=False, allow_blank=True)
@@ -151,6 +154,7 @@ def onboard_parent(request):
             user, temp_password, created_links = create_parent_account(
                 request.tenant,
                 first_name=data['first_name'],
+                middle_name=data.get('middle_name', ''),
                 last_name=data['last_name'],
                 email=data['email'],
                 phone=data.get('phone', ''),
@@ -226,6 +230,7 @@ class TeacherViewSet(BaseTenantViewSet):
                     email=data['email'],
                     username=username,
                     first_name=data['first_name'],
+                    middle_name=data.get('middle_name', ''),
                     last_name=data['last_name'],
                     password=temp_password,
                     default_language=data.get('default_language', 'en')
@@ -322,6 +327,7 @@ class TeacherViewSet(BaseTenantViewSet):
             row_num += 1
             email = row.get('email', '').strip()
             first_name = row.get('first_name', '').strip()
+            middle_name = row.get('middle_name', '').strip()
             last_name = row.get('last_name', '').strip()
 
             if not email or not first_name or not last_name:
@@ -343,6 +349,7 @@ class TeacherViewSet(BaseTenantViewSet):
                         email=email,
                         username=email,
                         first_name=first_name,
+                        middle_name=middle_name,
                         last_name=last_name,
                         password=temp_password,
                         default_language=row.get('default_language', 'en').strip() or 'en',

@@ -13,6 +13,7 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
     class_name = serializers.CharField(source='academic_class.name', read_only=True)
     series_code = serializers.CharField(source='series.code', read_only=True, default=None)
     academic_year_name = serializers.CharField(source='academic_year.name', read_only=True)
+    group_name = serializers.CharField(source='student_group.name', read_only=True, default=None)
     series = serializers.PrimaryKeyRelatedField(
         queryset=Series.objects.all(), required=False, allow_null=True
     )
@@ -22,6 +23,7 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'teacher', 'teacher_name', 'subject', 'subject_name',
             'academic_class', 'class_name', 'series', 'series_code',
+            'student_group', 'group_name',
             'academic_year', 'academic_year_name',
         ]
         read_only_fields = ['id']
@@ -37,6 +39,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)
     assignments = TeachingAssignmentSerializer(many=True, read_only=True)
     first_name = serializers.CharField(source='user.first_name', max_length=150, required=False, write_only=True)
+    middle_name = serializers.CharField(source='user.middle_name', max_length=150, required=False, write_only=True)
     last_name = serializers.CharField(source='user.last_name', max_length=150, required=False, write_only=True)
     email = serializers.EmailField(source='user.email', required=False, write_only=True)
 
@@ -49,7 +52,7 @@ class TeacherSerializer(serializers.ModelSerializer):
             'specializations', 'certifications', 'teaching_philosophy',
             'achievements', 'availability', 'public_profile', 'hourly_rate',
             'subjects_taught', 'languages_spoken', 'average_rating', 'total_reviews',
-            'first_name', 'last_name', 'email',
+            'first_name', 'middle_name', 'last_name', 'email',
         ]
         read_only_fields = ['id', 'tenant', 'average_rating', 'total_reviews']
 
@@ -65,6 +68,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 class TeacherOnboardSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150)
+    middle_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     default_language = serializers.ChoiceField(choices=[('en', 'English'), ('fr', 'French')], default='en')

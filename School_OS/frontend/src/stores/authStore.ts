@@ -7,6 +7,7 @@ export interface User {
   phone?: string;
   full_name: string;
   first_name: string;
+  middle_name?: string;
   last_name: string;
   profile_photo?: string;
   default_language: string;

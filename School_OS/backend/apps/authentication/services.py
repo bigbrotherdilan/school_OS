@@ -12,7 +12,8 @@ from rest_framework import serializers
 
 
 def create_parent_account(tenant, *, first_name, last_name, email, phone='',
-                          default_language='en', links=None, assigned_by=None):
+                          middle_name='', default_language='en', links=None,
+                          assigned_by=None):
     """
     Create a GLOBAL parent user with a parent role mapping at `tenant` and
     optional student links. Parents are global identity — the role mapping
@@ -34,6 +35,7 @@ def create_parent_account(tenant, *, first_name, last_name, email, phone='',
         email=email,
         username=email,
         first_name=first_name,
+        middle_name=middle_name,
         last_name=last_name,
         password=temp_password,
         phone=phone,

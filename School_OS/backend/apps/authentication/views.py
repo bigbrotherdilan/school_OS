@@ -289,6 +289,7 @@ def confirm_kill_login_view(request):
             'email': user.email,
             'full_name': user.full_name,
             'first_name': user.first_name,
+            'middle_name': user.middle_name,
             'last_name': user.last_name,
             'default_language': user.default_language,
             'email_alerts': user.email_alerts,
@@ -403,7 +404,7 @@ def me_view(request):
     """
     if request.method == 'PATCH':
         user = request.user
-        allowed_fields = ['first_name', 'last_name', 'phone', 'email', 'default_language', 'email_alerts', 'sms_alerts', 'profile_photo']
+        allowed_fields = ['first_name', 'middle_name', 'last_name', 'phone', 'email', 'default_language', 'email_alerts', 'sms_alerts', 'profile_photo']
         for field in allowed_fields:
             if field in request.data:
                 setattr(user, field, request.data[field])

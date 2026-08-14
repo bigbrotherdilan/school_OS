@@ -10,10 +10,18 @@ export default function AcademicManagement() {
   const { activeSectionId } = useSectionStore();
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
 
   const handlePendingFeature = (featureName: string) => {
     addToast(`${featureName} module is subject to deployment in upcoming sprint.`, 'info');
   };
+
+  useEffect(() => {
+    const closeMenu = () => setMenuOpenFor(null);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
 
   const activateStudent = async (studentId: string) => {
     try {
@@ -22,6 +30,21 @@ export default function AcademicManagement() {
       setStudents(prev => prev.map((s: any) => s.id === studentId ? { ...s, status: 'active' } : s));
     } catch (error: any) {
       addToast(error.response?.data?.detail || 'Failed to activate student.', 'error');
+    }
+  };
+
+  const updateStatus = async (studentId: string, status: string) => {
+    if (updatingId) return;
+    setUpdatingId(studentId);
+    setMenuOpenFor(null);
+    try {
+      await api.post(`/students/students/${studentId}/set_status/`, { status });
+      addToast(`Student marked as ${status}.`, 'success');
+      setStudents(prev => prev.map((s: any) => s.id === studentId ? { ...s, status } : s));
+    } catch (error: any) {
+      addToast(error.response?.data?.detail || error.response?.data?.error || 'Failed to update status.', 'error');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -169,13 +192,65 @@ export default function AcademicManagement() {
                         <span className="material-symbols-outlined text-sm">edit</span>
                         Edit
                       </button>
+                      {stu.status === 'active' && (
+                        <>
+                          <button
+                            onClick={() => updateStatus(stu.id, 'inactive')}
+                            disabled={updatingId === stu.id}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-error/10 text-error rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-error/20 transition-colors disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-sm">toggle_off</span>
+                            Deactivate
+                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={e => { e.stopPropagation(); setMenuOpenFor(menuOpenFor === stu.id ? null : stu.id); }}
+                              disabled={updatingId === stu.id}
+                              title="More status actions"
+                              className="flex items-center gap-1.5 px-3 py-2 bg-surface-container-highest text-on-surface-variant rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-surface-container-high transition-colors disabled:opacity-50"
+                            >
+                              <span className="material-symbols-outlined text-sm">more_horiz</span>
+                            </button>
+                            {menuOpenFor === stu.id && (
+                              <div className="absolute right-0 top-full mt-2 w-44 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/15 py-1 z-20 text-left">
+                                {[
+                                  { status: 'suspended', label: 'Suspend', icon: 'pause_circle' },
+                                  { status: 'withdrawn', label: 'Withdraw', icon: 'person_remove' },
+                                  { status: 'graduated', label: 'Graduate', icon: 'school' },
+                                ].map(opt => (
+                                  <button
+                                    key={opt.status}
+                                    onClick={() => updateStatus(stu.id, opt.status)}
+                                    disabled={updatingId === stu.id}
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-xs font-bold hover:bg-surface-container/60 transition-colors disabled:opacity-50"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">{opt.icon}</span>
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                       {stu.status === 'registered' && (
                         <button
                           onClick={() => activateStudent(stu.id)}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-primary/20 transition-colors"
+                          disabled={updatingId === stu.id}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-primary/20 transition-colors disabled:opacity-50"
                         >
                           <span className="material-symbols-outlined text-sm">verified_user</span>
                           Activate
+                        </button>
+                      )}
+                      {!['active', 'registered'].includes(stu.status) && (
+                        <button
+                          onClick={() => updateStatus(stu.id, 'active')}
+                          disabled={updatingId === stu.id}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-primary/20 transition-colors disabled:opacity-50"
+                        >
+                          <span className="material-symbols-outlined text-sm">verified_user</span>
+                          Reactivate
                         </button>
                       )}
                     </div>

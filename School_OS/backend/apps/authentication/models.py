@@ -15,6 +15,10 @@ class User(AbstractUser):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
+    middle_name = models.CharField(
+        max_length=150, blank=True,
+        help_text="Middle name(s), e.g., 'Nfon' in 'Dilan Nfon Ngongsong'",
+    )
     phone = models.CharField(max_length=20, blank=True)
     default_language = models.CharField(
         max_length=5,
@@ -82,6 +86,10 @@ class User(AbstractUser):
     @property
     def full_name(self):
         return self.get_full_name() or self.email
+
+    def get_full_name(self):
+        parts = [p for p in (self.first_name, self.middle_name, self.last_name) if p]
+        return ' '.join(parts)
 
     def get_roles_for_tenant(self, tenant_id):
         """Get all roles this user has for a specific tenant."""

@@ -129,8 +129,18 @@ class Section(models.Model):
     A section within a school. Bilingual schools have Anglophone/Francophone sections.
     Technical schools might have Technical/Commercial sections. Schools define their own.
     """
+    class SectionType(models.TextChoices):
+        GRAMMAR = 'grammar', 'Grammar'
+        TECHNICAL = 'technical', 'Technical'
+        COMMERCIAL = 'commercial', 'Commercial'
+
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='sections')
     name = models.CharField(max_length=100, help_text="e.g., Anglophone, Francophone, Technical, Commercial")
+    section_type = models.CharField(
+        max_length=20, choices=SectionType.choices, default=SectionType.GRAMMAR,
+        help_text="Grammar (general academic), Technical, or Commercial. "
+                  "Decides which curriculum is auto-linked to the section's classes.",
+    )
     language = models.CharField(
         max_length=5, choices=[('en', 'English'), ('fr', 'French'), ('de', 'German')],
         blank=True, default='en',
@@ -229,6 +239,11 @@ class Subject(models.Model):
         Cycle, on_delete=models.SET_NULL, null=True, blank=True, related_name='subjects',
         help_text="Null means available in all cycles",
     )
+    language = models.CharField(
+        max_length=5, choices=[('en', 'English'), ('fr', 'French')], blank=True, default='',
+        help_text="Subsystem this subject belongs to (English GCE / French MINESEC). "
+                  "Empty means shared or custom — shown for every section.",
+    )
     name = models.CharField(max_length=255)
     code = models.CharField(
         max_length=20, blank=True,
@@ -311,6 +326,12 @@ class ClassSubject(models.Model):
         Series, on_delete=models.SET_NULL, null=True, blank=True, related_name='class_subjects',
         help_text="Only for 2nd cycle series-specific subjects",
     )
+    student_group = models.ForeignKey(
+        'timetable.StudentGroup', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='class_subjects',
+        help_text="Student group/stream this allocation is for. Null = the full class cohort. "
+                  "Parallel groups let several subjects run at the same time in one class.",
+    )
     coefficient = models.DecimalField(
         max_digits=4, decimal_places=2, default=1.0,
         help_text="Subject coefficient for this class/series",
@@ -326,7 +347,7 @@ class ClassSubject(models.Model):
 
     class Meta:
         db_table = 'academic_class_subjects'
-        unique_together = ['academic_class', 'subject', 'series']
+        unique_together = ['academic_class', 'subject', 'series', 'student_group']
 
     def __str__(self):
         series_label = f" ({self.series.code})" if self.series else ""

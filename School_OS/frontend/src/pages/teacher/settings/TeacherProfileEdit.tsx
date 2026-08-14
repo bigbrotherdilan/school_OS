@@ -13,6 +13,7 @@ export default function TeacherProfileEdit() {
 
   const [formData, setFormData] = useState({
     first_name: '',
+    middle_name: '',
     last_name: '',
     email: '',
     phone: '',
@@ -41,6 +42,7 @@ export default function TeacherProfileEdit() {
           setTeacherId(t.id);
           setFormData({
             first_name: t.user_details?.first_name || '',
+            middle_name: t.user_details?.middle_name || '',
             last_name: t.user_details?.last_name || '',
             email: t.user_details?.email || '',
             phone: t.phone || '',
@@ -83,6 +85,7 @@ export default function TeacherProfileEdit() {
       // Update user info
       await api.patch('/auth/me/', {
         first_name: formData.first_name,
+        middle_name: formData.middle_name,
         last_name: formData.last_name,
         phone: formData.phone,
       });
@@ -140,10 +143,14 @@ export default function TeacherProfileEdit() {
           <h3 className="text-xl font-bold tracking-tight flex items-center gap-3 border-b border-outline-variant/10 pb-4">
             <User className="text-primary w-6 h-6" /> Personal Information
           </h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">First Name</label>
               <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Middle Name</label>
+              <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Last Name</label>

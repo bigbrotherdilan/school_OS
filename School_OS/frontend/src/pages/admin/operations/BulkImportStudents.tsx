@@ -28,6 +28,7 @@ export default function BulkImportStudents() {
           description="Bulk student registration"
           requiredColumns={[
             { key: 'first_name', label: 'First Name', required: true, example: 'Marc' },
+            { key: 'middle_name', label: 'Middle Name', required: false, example: 'Antonius' },
             { key: 'last_name', label: 'Last Name', required: true, example: 'Aurelius' },
             { key: 'gender', label: 'Gender (M/F)', required: true, example: 'M' },
             { key: 'date_of_birth', label: 'Date of Birth (YYYY-MM-DD)', required: true, example: '2010-03-15' },

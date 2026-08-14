@@ -48,7 +48,7 @@ class CycleSerializer(serializers.ModelSerializer):
 class SectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Section
-        fields = ['id', 'tenant', 'name', 'language']
+        fields = ['id', 'tenant', 'name', 'section_type', 'language']
         read_only_fields = ['id', 'tenant']
 
 
@@ -81,7 +81,7 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = [
             'id', 'tenant', 'cycle', 'cycle_name',
-            'name', 'code', 'default_coefficient', 'is_compulsory',
+            'name', 'code', 'language', 'default_coefficient', 'is_compulsory',
         ]
         read_only_fields = ['id', 'tenant']
 
@@ -89,10 +89,12 @@ class SubjectSerializer(serializers.ModelSerializer):
 class ClassSubjectSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source='subject.name', read_only=True)
     series_code = serializers.CharField(source='series.code', read_only=True, default=None)
+    group_name = serializers.CharField(source='student_group.name', read_only=True, default=None)
 
     class Meta:
         model = ClassSubject
-        fields = ['id', 'academic_class', 'subject', 'subject_name', 'series', 'series_code', 'coefficient', 'weekly_hours', 'is_double']
+        fields = ['id', 'academic_class', 'subject', 'subject_name', 'series', 'series_code',
+                  'student_group', 'group_name', 'coefficient', 'weekly_hours', 'is_double']
         read_only_fields = ['id']
 
 

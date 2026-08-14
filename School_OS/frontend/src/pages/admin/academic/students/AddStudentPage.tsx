@@ -26,6 +26,7 @@ export default function AddStudentPage() {
 
   const [formData, setFormData] = useState({
     first_name: '',
+    middle_name: '',
     last_name: '',
     date_of_birth: '',
     gender: 'M',
@@ -170,6 +171,7 @@ export default function AddStudentPage() {
 
       const payload: any = {
         first_name: formData.first_name,
+        middle_name: formData.middle_name,
         last_name: formData.last_name,
         date_of_birth: formData.date_of_birth,
         gender: formData.gender,
@@ -362,15 +364,21 @@ export default function AddStudentPage() {
               <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/30">Optional — Student Profile Photo</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-3 gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">First Name</label>
                 <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g., Marcus" />
               </div>
               <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Middle Name</label>
+                <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g., Nfon" />
+              </div>
+              <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Last Name</label>
                 <input required type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g., Aurelius" />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Date of Birth</label>
                 <input required type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all" />

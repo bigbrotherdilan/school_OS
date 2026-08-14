@@ -1,3 +1,4 @@
+# type: ignore
 """
 Seed script for Second School - Greenfield International Academy
 Creates a complete second school with admin, teachers, 10 students, classes, etc.
@@ -114,7 +115,7 @@ for td in teacher_data:
     user, created = User.objects.get_or_create(
         email=td['email'],
         defaults={
-            'username': td['email'].split('@')[0],
+            'username': str(td['email']).split('@')[0],
             'first_name': td['first_name'],
             'last_name': td['last_name'],
             'phone': td['phone'],
@@ -208,7 +209,7 @@ cycle_2, _ = Cycle.objects.get_or_create(
 
 # Sections (for bilingual)
 section_en, _ = Section.objects.get_or_create(
-    tenant=tenant, name='anglophone', defaults={'language': 'en'}
+    tenant=tenant, name='Grammar', defaults={'language': 'en'}
 )
 section_fr, _ = Section.objects.get_or_create(
     tenant=tenant, name='francophone', defaults={'language': 'fr'}
@@ -259,7 +260,7 @@ subject_objects = {}
 for name, cycle, coeff, compulsory in subjects_data:
     subj, _ = Subject.objects.get_or_create(
         tenant=tenant, name=name,
-        defaults={'cycle': cycle, 'default_coefficient': coeff, 'is_compulsory': compulsory}
+        defaults={'cycle': cycle, 'language': 'en', 'default_coefficient': coeff, 'is_compulsory': compulsory}
     )
     subject_objects[name] = subj
 

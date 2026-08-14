@@ -15,7 +15,7 @@ class StudentSerializer(serializers.ModelSerializer):
         model = Student
         fields = [
             'id', 'tenant', 'admission_number', 'first_name',
-            'last_name', 'full_name', 'gender', 'date_of_birth',
+            'middle_name', 'last_name', 'full_name', 'gender', 'date_of_birth',
             'photo_url', 'blood_group', 'emergency_contact',
             'current_class', 'class_display', 'stream',
             'section_display', 'series', 'series_code',
@@ -24,7 +24,7 @@ class StudentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'tenant', 'admission_number', 'created_at']
 
     def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
+        return obj.full_name
 
     def get_class_display(self, obj):
         return obj.current_class.name if obj.current_class else None

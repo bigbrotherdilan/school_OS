@@ -18,6 +18,7 @@ export default function AddFacultyPage() {
   
   const [formData, setFormData] = useState({
     first_name: '',
+    middle_name: '',
     last_name: '',
     email: '',
     employee_id: '',
@@ -167,10 +168,14 @@ export default function AddFacultyPage() {
                 <UserCircle className="text-primary w-6 h-6" /> Personal Details
               </h3>
               
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">First Name</label>
                   <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Middle Name</label>
+                  <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Last Name</label>

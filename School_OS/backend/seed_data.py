@@ -164,7 +164,7 @@ teacher_users = []
 
     # Sections (for bilingual school)
     anglo_section, _ = Section.objects.get_or_create(
-        tenant=tenant, name='Anglophone',
+        tenant=tenant, name='Grammar',
         defaults={'language': 'en'},
     )
     franco_section, _ = Section.objects.get_or_create(
@@ -304,41 +304,41 @@ teacher_users = []
     # Subjects — 1st Cycle (common)
     maths, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle1, code='570',
-        defaults={'name': 'Mathematics', 'default_coefficient': 4.0, 'is_compulsory': True},
+        defaults={'name': 'Mathematics', 'language': 'en', 'default_coefficient': 4.0, 'is_compulsory': True},
     )
     english, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle1, code='530',
-        defaults={'name': 'English Language', 'default_coefficient': 3.0, 'is_compulsory': True},
+        defaults={'name': 'English Language', 'language': 'en', 'default_coefficient': 3.0, 'is_compulsory': True},
     )
     french_subj, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle1, code='535',
-        defaults={'name': 'French Language', 'default_coefficient': 3.0, 'is_compulsory': True},
+        defaults={'name': 'French Language', 'language': 'en', 'default_coefficient': 3.0, 'is_compulsory': True},
     )
 
     # Subjects — 2nd Cycle (common)
     physics, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle2, code='780',
-        defaults={'name': 'Physics', 'default_coefficient': 5.0, 'is_compulsory': False},
+        defaults={'name': 'Physics', 'language': 'en', 'default_coefficient': 5.0, 'is_compulsory': False},
     )
     chemistry, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle2, code='715',
-        defaults={'name': 'Chemistry', 'default_coefficient': 5.0, 'is_compulsory': False},
+        defaults={'name': 'Chemistry', 'language': 'en', 'default_coefficient': 5.0, 'is_compulsory': False},
     )
     biology, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle2, code='710',
-        defaults={'name': 'Biology', 'default_coefficient': 4.0, 'is_compulsory': False},
+        defaults={'name': 'Biology', 'language': 'en', 'default_coefficient': 4.0, 'is_compulsory': False},
     )
     history, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle2, code='760',
-        defaults={'name': 'History', 'default_coefficient': 3.0, 'is_compulsory': False},
+        defaults={'name': 'History', 'language': 'en', 'default_coefficient': 3.0, 'is_compulsory': False},
     )
     geography, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle2, code='750',
-        defaults={'name': 'Geography', 'default_coefficient': 3.0, 'is_compulsory': False},
+        defaults={'name': 'Geography', 'language': 'en', 'default_coefficient': 3.0, 'is_compulsory': False},
     )
     philosophy, _ = Subject.objects.get_or_create(
         tenant=tenant, cycle=cycle2, code='790',
-        defaults={'name': 'Philosophy', 'default_coefficient': 4.0, 'is_compulsory': False},
+        defaults={'name': 'Philosophy', 'language': 'en', 'default_coefficient': 4.0, 'is_compulsory': False},
     )
 
     # Link subjects to classes (ClassSubject)

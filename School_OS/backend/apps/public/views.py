@@ -231,6 +231,7 @@ def submit_enrollment_inquiry(request):
     parent_name = _sanitize_input(request.data.get('parent_name', ''))
     parent_phone = _sanitize_input(request.data.get('parent_phone', ''))
     child_first = _sanitize_input(request.data.get('child_first_name', ''))
+    child_middle = _sanitize_input(request.data.get('child_middle_name', ''))
     child_last = _sanitize_input(request.data.get('child_last_name', ''))
     email = _sanitize_input(request.data.get('email', ''))
     date_of_birth = _sanitize_input(request.data.get('date_of_birth', ''))
@@ -242,12 +243,12 @@ def submit_enrollment_inquiry(request):
         from apps.notifications.models import Announcement
         Announcement.objects.create(
             tenant=school,
-            title=f'New Enrollment Inquiry: {child_first} {child_last}',
+            title=f'New Enrollment Inquiry: {child_first} {child_middle} {child_last}'.replace('  ', ' ').strip(),
             body=(
                 f"Parent: {parent_name}\n"
                 f"Phone: {parent_phone}\n"
                 f"Email: {email or 'N/A'}\n"
-                f"Child: {child_first} {child_last}\n"
+                f"Child: {child_first} {child_middle} {child_last}".replace('  ', ' ').strip() + "\n"
                 f"DOB: {date_of_birth or 'N/A'}\n"
                 f"Gender: {gender or 'N/A'}\n"
                 f"Grade: {grade or 'N/A'}\n"
