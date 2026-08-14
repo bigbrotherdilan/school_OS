@@ -734,6 +734,44 @@ class SchoolSolver:
                     for p in range(max(0, len(grid[d]) - 3), len(grid[d])):
                         penalties.append((x[(card.id, d, p)], 1))
 
+        # 5. Cognitive load / pedagogical time preferences
+        #    Softer than hard constraints, stronger than teacher compactness
+        #    Priority: Hard constraints > Doubles/Volume > Cross-section > Teacher/Room > Pedagogical
+        if not relax:
+            period_pos_info = self._period_position_info()
+            for card in target_cards:
+                for d in D:
+                    periods = grid[d]
+                    for p in range(len(periods)):
+                        # Skip blocked/unavailable periods (already constrained to 0)
+                        penalty = self._cognitive_load_penalty(card, d, p, period_pos_info)
+                        if penalty > 0:
+                            penalties.append((x[(card.id, d, p)], penalty))
+
+            # For double periods, also score the pair as a unit (both periods together)
+            # This prevents placing a high-load double late just because the first half
+            # barely falls in an acceptable bucket.
+            for card in target_cards:
+                if not card.is_double:
+                    continue
+                for d in D:
+                    periods = grid[d]
+                    adjacent = [
+                        p for p in range(len(periods) - 1)
+                        if _to_time(periods[p]['end']) == _to_time(periods[p + 1]['start'])
+                    ]
+                    for p in adjacent:
+                        # Get penalties for both periods in the pair
+                        penalty_1 = self._cognitive_load_penalty(card, d, p, period_pos_info)
+                        penalty_2 = self._cognitive_load_penalty(card, d, p + 1, period_pos_info)
+                        pair_penalty = (penalty_1 + penalty_2) // 2  # average of both periods
+                        if pair_penalty > 0:
+                            # Create a pair variable for the double session
+                            pair = model.NewBoolVar(f'cog_pair_{card.id}_{d}_{p}')
+                            model.Add(x[(card.id, d, p)] >= pair)
+                            model.Add(x[(card.id, d, p + 1)] >= pair)
+                            penalties.append((pair, pair_penalty))
+
         if relax:
             huge = 10_000
             objective_terms = []
@@ -780,6 +818,137 @@ class SchoolSolver:
                         )
         if errors:
             raise ValueError('\n'.join(errors))
+
+    # ------------------------------------------------------------------ #
+    #  Cognitive Load / Pedagogical Preferences                          #
+    # ------------------------------------------------------------------ #
+    def _period_position_info(self):
+        """
+        Compute period position information for cognitive load scoring.
+
+        Returns a dict: {day: {period_idx: {'relative_pos': float, 'bucket': str}}}
+        where bucket is 'early', 'middle', or 'late' based on relative position
+        within that day's available teaching periods (excluding blocked periods).
+
+        Relative position = index_of_period / (number_of_available_periods - 1)
+        Buckets: 0.00-0.30 = early, 0.30-0.60 = middle, 0.60-1.00 = late
+        """
+        grid = self.grid()
+        blocked = self._blocked_by_day()
+        result = {}
+
+        for day in grid:
+            periods = grid[day]
+            windows = blocked.get(day, [])
+
+            def is_placeable(idx):
+                start = _to_time(periods[idx]['start'])
+                end = _to_time(periods[idx]['end'])
+                return not any(
+                    _to_time(w[0]) < end and start < _to_time(w[1])
+                    for w in windows
+                )
+
+            placeable_indices = [i for i in range(len(periods)) if is_placeable(i)]
+            n_placeable = len(placeable_indices)
+
+            day_info = {}
+            for idx in placeable_indices:
+                if n_placeable <= 1:
+                    rel_pos = 0.0
+                else:
+                    rel_pos = placeable_indices.index(idx) / (n_placeable - 1)
+
+                if rel_pos <= 0.30:
+                    bucket = 'early'
+                elif rel_pos <= 0.60:
+                    bucket = 'middle'
+                else:
+                    bucket = 'late'
+
+                day_info[idx] = {'relative_pos': rel_pos, 'bucket': bucket}
+            result[day] = day_info
+        return result
+
+    def _cognitive_load_penalty(self, card, day, period_idx, period_pos_info):
+        """
+        Calculate the cognitive load penalty for placing a card at a specific
+        day and period.
+
+        The penalty is computed as:
+            base_penalty = subject_time_penalty(day, bucket) * class_fatigue_weight
+
+        Where:
+        - subject_time_penalty depends on subject.cognitive_demand, time_preference,
+          morning_preference, afternoon_preference, late_day_penalty
+        - class_fatigue_weight depends on class.fatigue_sensitivity
+
+        Returns an integer penalty (0-1000 range) suitable for the CP-SAT objective.
+        """
+        subject = card.subject
+        # Get the timetable for this card
+        tt = next(t for t in self.timetables if t.id == card.timetable_id)
+        class_obj = tt.class_obj
+
+        # Subject cognitive demand (1=LOW, 2=MEDIUM, 3=HIGH)
+        cognitive_demand = getattr(subject, 'cognitive_demand', 2)
+
+        # Subject time preferences
+        morning_pref = getattr(subject, 'morning_preference', 50)
+        afternoon_pref = getattr(subject, 'afternoon_preference', 50)
+        late_day_penalty = getattr(subject, 'late_day_penalty', 30)
+        time_pref = getattr(subject, 'time_preference', 'flexible')
+
+        # Class fatigue sensitivity (1=LOW, 2=MEDIUM_LOW, 3=MEDIUM, 4=MEDIUM_HIGH, 5=HIGH)
+        fatigue_sensitivity = getattr(class_obj, 'fatigue_sensitivity', 3)
+
+        # Get bucket for this period
+        day_info = period_pos_info.get(day, {})
+        period_info = day_info.get(period_idx, {'bucket': 'middle', 'relative_pos': 0.5})
+        bucket = period_info['bucket']
+
+        # Base time-of-day penalty based on subject preferences
+        # Normalize preferences to 0-1 range
+        morning_score = morning_pref / 100.0
+        afternoon_score = afternoon_pref / 100.0
+        late_penalty = late_day_penalty / 100.0
+
+        # Bucket-based penalty (0 = best, 1 = worst for this subject)
+        if bucket == 'early':
+            time_penalty = (1.0 - morning_score) * 0.3 + late_penalty * 0.1
+        elif bucket == 'middle':
+            time_penalty = (1.0 - afternoon_score) * 0.3 + late_penalty * 0.3
+        else:  # late
+            time_penalty = (1.0 - afternoon_score) * 0.4 + late_penalty * 0.8
+
+        # Adjust for time_preference category
+        if time_pref == 'early':
+            if bucket == 'late':
+                time_penalty += 0.3
+            elif bucket == 'middle':
+                time_penalty += 0.1
+        elif time_pref == 'late':
+            if bucket == 'early':
+                time_penalty += 0.2
+            elif bucket == 'middle':
+                time_penalty += 0.1
+        elif time_pref == 'middle':
+            if bucket == 'early':
+                time_penalty += 0.1
+            elif bucket == 'late':
+                time_penalty += 0.1
+        # 'flexible' adds no extra penalty
+
+        # Scale by cognitive demand (HIGH=3 gets 3x penalty, LOW=1 gets 1x)
+        demand_weight = cognitive_demand / 2.0  # 0.5, 1.0, 1.5
+
+        # Class fatigue weight (HIGH=5 gets 2.5x, LOW=1 gets 0.5x)
+        fatigue_weight = fatigue_sensitivity / 2.0  # 0.5 to 2.5
+
+        # Final penalty (0-100 range before scaling)
+        penalty = time_penalty * demand_weight * fatigue_weight * 100
+
+        return int(max(0, min(1000, penalty)))
 
     # ------------------------------------------------------------------ #
     #  Solve                                                             #

@@ -202,6 +202,13 @@ class Class(models.Model):
     Anglophone class names: Form 1–5, Lower Sixth, Upper Sixth
     Francophone class names: 6ème, 5ème, 4ème, 3ème, Seconde, Première, Terminale
     """
+    class FatigueSensitivity(models.IntegerChoices):
+        LOW = 1, 'Low'
+        MEDIUM_LOW = 2, 'Medium-Low'
+        MEDIUM = 3, 'Medium'
+        MEDIUM_HIGH = 4, 'Medium-High'
+        HIGH = 5, 'High'
+
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='classes')
     cycle = models.ForeignKey(Cycle, on_delete=models.SET_NULL, null=True, blank=True, related_name='classes')
     stream = models.ForeignKey(
@@ -214,6 +221,11 @@ class Class(models.Model):
     )
     level_order = models.PositiveSmallIntegerField(
         help_text="Numeric order: 1=Form 1/6ème, ..., 7=Upper Sixth/Terminale",
+    )
+    fatigue_sensitivity = models.PositiveSmallIntegerField(
+        choices=FatigueSensitivity.choices,
+        default=FatigueSensitivity.MEDIUM,
+        help_text="How sensitive this class level is to cognitive fatigue. Younger classes (Form 1-2) should have higher sensitivity.",
     )
 
     class Meta:
@@ -234,6 +246,17 @@ class Subject(models.Model):
     Official codes follow GCE Board codes (525=Economics, 570=Maths) for Anglophone,
     or Francophone codes where applicable.
     """
+    class CognitiveDemand(models.IntegerChoices):
+        LOW = 1, 'Low'
+        MEDIUM = 2, 'Medium'
+        HIGH = 3, 'High'
+
+    class TimePreference(models.TextChoices):
+        EARLY_DAY = 'early', 'Early Day (Morning Preferred)'
+        MIDDLE_DAY = 'middle', 'Middle Day'
+        LATE_DAY = 'late', 'Late Day (Afternoon Preferred)'
+        FLEXIBLE = 'flexible', 'Flexible / Neutral'
+
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='subjects')
     cycle = models.ForeignKey(
         Cycle, on_delete=models.SET_NULL, null=True, blank=True, related_name='subjects',
@@ -256,6 +279,31 @@ class Subject(models.Model):
     is_double_preferred = models.BooleanField(
         default=False,
         help_text="Sciences, languages and workshop subjects often run as 2 consecutive periods (double period)",
+    )
+
+    # --- Cognitive Load / Scheduling Preferences ---
+    cognitive_demand = models.PositiveSmallIntegerField(
+        choices=CognitiveDemand.choices,
+        default=CognitiveDemand.MEDIUM,
+        help_text="How much sustained concentration this subject requires. Affects scheduling preference for earlier periods.",
+    )
+    time_preference = models.CharField(
+        max_length=20,
+        choices=TimePreference.choices,
+        default=TimePreference.FLEXIBLE,
+        help_text="Preferred time of day for this subject.",
+    )
+    morning_preference = models.PositiveSmallIntegerField(
+        default=50,
+        help_text="Preference score for morning periods (0-100). Higher = stronger preference.",
+    )
+    afternoon_preference = models.PositiveSmallIntegerField(
+        default=50,
+        help_text="Preference score for afternoon periods (0-100). Higher = stronger preference.",
+    )
+    late_day_penalty = models.PositiveSmallIntegerField(
+        default=30,
+        help_text="Penalty score for late-day periods (0-100). Higher = stronger avoidance.",
     )
 
     class Meta:

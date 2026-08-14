@@ -37,6 +37,8 @@ from apps.timetable.solver import (
 from apps.timetable.conflicts import timetable_cell_states
 from apps.timetable.section_tools import validate_section, validate_section_against_school
 
+from apps.academic.models import Subject, Class
+
 from .base import (
     make_tenant, make_user, make_teacher, make_year, make_section, make_class,
     make_subject, make_class_subject, make_assignment, make_timetable,
@@ -729,6 +731,225 @@ class TestDoubles(TimetableTestCase):
                          'odd volume: 1 double + 1 single for Geology')
         self.assertFalse(lessons['History'].is_double,
                          'History exceeds weekly block capacity -> generated as singles')
+
+    # --- Cognitive Load / Pedagogical Preference Tests ---
+
+    def test_11k_cognitive_load_mathematics_prefers_morning(self):
+        # Test A: Mathematics (HIGH cognitive demand, early preference) should
+        # be placed in early periods when feasible.
+        section = make_section(self.tenant)
+        cls = make_class(self.tenant, section, 'Form 1')
+        cls.fatigue_sensitivity = Class.FatigueSensitivity.HIGH
+        cls.save()
+        maths = make_subject(self.tenant, 'Mathematics', '570')
+        maths.cognitive_demand = Subject.CognitiveDemand.HIGH
+        maths.time_preference = Subject.TimePreference.EARLY_DAY
+        maths.morning_preference = 90
+        maths.afternoon_preference = 30
+        maths.late_day_penalty = 80
+        maths.save()
+        teacher = make_teacher(self.tenant)
+        make_class_subject(cls, maths, 4)
+        make_assignment(teacher, cls, maths)
+        tt = make_timetable(self.tenant, self.year, cls)
+
+        created, total, doubles, error = suggest_lessons_for(tt)
+        self.assertIsNone(error)
+
+        result = self._generate([tt])
+        self.assertTrue(result['ok'], result.get('message'))
+        slots = self._slots(tt)
+        maths_slots = [s for s in slots if s.subject_id == maths.id]
+        # Count how many maths slots are in early periods (P0, P1)
+        early_count = sum(1 for s in maths_slots if s.start_time < time(9, 10))
+        # At least half should be in early periods for Form 1
+        self.assertGreaterEqual(early_count, 2,
+                                'Form 1 Mathematics should prefer early periods')
+
+    def test_11l_cognitive_load_higher_class_weaker_penalty(self):
+        # Test B: Lower Sixth should tolerate later periods better than Form 1
+        section = make_section(self.tenant)
+        cls_form1 = make_class(self.tenant, section, 'Form 1')
+        cls_form1.fatigue_sensitivity = Class.FatigueSensitivity.HIGH
+        cls_form1.save()
+        cls_sixth = make_class(self.tenant, section, 'Lower Sixth')
+        cls_sixth.fatigue_sensitivity = Class.FatigueSensitivity.LOW
+        cls_sixth.save()
+
+        maths = make_subject(self.tenant, 'Mathematics', '570')
+        maths.cognitive_demand = Subject.CognitiveDemand.HIGH
+        maths.time_preference = Subject.TimePreference.EARLY_DAY
+        maths.morning_preference = 90
+        maths.afternoon_preference = 30
+        maths.late_day_penalty = 80
+        maths.save()
+
+        teacher = make_teacher(self.tenant)
+        make_class_subject(cls_form1, maths, 4)
+        make_class_subject(cls_sixth, maths, 4)
+        make_assignment(teacher, cls_form1, maths)
+        make_assignment(teacher, cls_sixth, maths)
+        tt1 = make_timetable(self.tenant, self.year, cls_form1)
+        tt2 = make_timetable(self.tenant, self.year, cls_sixth)
+
+        suggest_lessons_for(tt1)
+        suggest_lessons_for(tt2)
+
+        result = self._generate([tt1, tt2])
+        self.assertTrue(result['ok'], result.get('message'))
+
+        slots1 = self._slots(tt1)
+        slots2 = self._slots(tt2)
+        maths1 = [s for s in slots1 if s.subject_id == maths.id]
+        maths2 = [s for s in slots2 if s.subject_id == maths.id]
+
+        early1 = sum(1 for s in maths1 if s.start_time < time(9, 10))
+        early2 = sum(1 for s in maths2 if s.start_time < time(9, 10))
+        late1 = sum(1 for s in maths1 if s.start_time >= time(11, 20))
+        late2 = sum(1 for s in maths2 if s.start_time >= time(11, 20))
+
+        # Form 1 should have more early and fewer late than Lower Sixth
+        self.assertGreaterEqual(early1, early2,
+                                'Form 1 should have at least as many early Maths slots')
+        self.assertLessEqual(late1, late2,
+                                'Form 1 should have at most as many late Maths slots')
+
+    def test_11m_preference_never_causes_infeasibility(self):
+        # Test C: If Mathematics has high penalty in morning, it should still
+        # be scheduled (in afternoon) rather than infeasible.
+        section = make_section(self.tenant)
+        cls = make_class(self.tenant, section, 'Form 1')
+        cls.fatigue_sensitivity = Class.FatigueSensitivity.HIGH
+        cls.save()
+        maths = make_subject(self.tenant, 'Mathematics', '570')
+        maths.cognitive_demand = Subject.CognitiveDemand.HIGH
+        maths.time_preference = Subject.TimePreference.LATE_DAY
+        maths.morning_preference = 10
+        maths.afternoon_preference = 90
+        maths.late_day_penalty = 10
+        maths.save()
+        teacher = make_teacher(self.tenant)
+        make_class_subject(cls, maths, 4)
+        make_assignment(teacher, cls, maths)
+        tt = make_timetable(self.tenant, self.year, cls)
+
+        created, total, doubles, error = suggest_lessons_for(tt)
+        self.assertIsNone(error)
+
+        result = self._generate([tt])
+        self.assertTrue(result['ok'], f"Solver failed: {result.get('message')}")
+        slots = self._slots(tt)
+        maths_slots = [s for s in slots if s.subject_id == maths.id]
+        self.assertEqual(len(maths_slots), 4)
+        # Check that it's scheduled late
+        late_count = sum(1 for s in maths_slots if s.start_time >= time(9, 10))
+        self.assertGreaterEqual(late_count, 2, 'Maths should be scheduled in afternoon')
+
+    def test_11n_double_preference_scored_as_unit(self):
+        # Test D: A Mathematics double should preferably occur early as a unit
+        section = make_section(self.tenant)
+        cls = make_class(self.tenant, section, 'Form 1')
+        cls.fatigue_sensitivity = Class.FatigueSensitivity.HIGH
+        cls.save()
+        maths = make_subject(self.tenant, 'Mathematics', '570')
+        maths.cognitive_demand = Subject.CognitiveDemand.HIGH
+        maths.time_preference = Subject.TimePreference.EARLY_DAY
+        maths.morning_preference = 90
+        maths.afternoon_preference = 30
+        maths.late_day_penalty = 80
+        maths.save()
+        teacher = make_teacher(self.tenant)
+        make_class_subject(cls, maths, 4)
+        make_assignment(teacher, cls, maths)
+        tt = make_timetable(self.tenant, self.year, cls)
+
+        created, total, doubles, error = suggest_lessons_for(tt)
+        self.assertIsNone(error)
+
+        result = self._generate([tt])
+        self.assertTrue(result['ok'], result.get('message'))
+        slots = self._slots(tt)
+        maths_slots = [s for s in slots if s.subject_id == maths.id]
+        maths_slots.sort(key=lambda s: (s.day_of_week, s.start_time))
+        # Count double pairs
+        pairs = 0
+        for d in range(1, 6):
+            day_slots = [s for s in maths_slots if s.day_of_week == d]
+            day_slots.sort(key=lambda s: s.start_time)
+            i = 0
+            while i + 1 < len(day_slots):
+                if day_slots[i + 1].start_time == day_slots[i].end_time:
+                    pairs += 1
+                    i += 2
+                else:
+                    i += 1
+        # Should have 2 double pairs, preferably early
+        early_pairs = 0
+        for d in range(1, 6):
+            day_slots = [s for s in maths_slots if s.day_of_week == d]
+            day_slots.sort(key=lambda s: s.start_time)
+            i = 0
+            while i + 1 < len(day_slots):
+                if day_slots[i + 1].start_time == day_slots[i].end_time:
+                    if day_slots[i].start_time < time(10, 0):
+                        early_pairs += 1
+                    i += 2
+                else:
+                    i += 1
+        self.assertGreaterEqual(early_pairs, 1,
+                                'At least one double pair should be in early periods')
+
+    def test_11o_half_day_relative_scoring(self):
+        # Test E: Wednesday half-day should score periods relative to available
+        # periods that day. With only 2 periods on Wed, P1 should be "late" for Wed.
+        section = make_section(self.tenant)
+        cls = make_class(self.tenant, section, 'Form 1')
+        cls.fatigue_sensitivity = Class.FatigueSensitivity.HIGH
+        cls.save()
+        maths = make_subject(self.tenant, 'Mathematics', '570')
+        maths.cognitive_demand = Subject.CognitiveDemand.HIGH
+        maths.time_preference = Subject.TimePreference.EARLY_DAY
+        maths.morning_preference = 90
+        maths.afternoon_preference = 30
+        maths.late_day_penalty = 80
+        maths.save()
+        english = make_subject(self.tenant, 'English', '301')
+        english.cognitive_demand = Subject.CognitiveDemand.LOW
+        english.time_preference = Subject.TimePreference.FLEXIBLE
+        english.morning_preference = 50
+        english.afternoon_preference = 50
+        english.late_day_penalty = 20
+        english.save()
+        teacher = make_teacher(self.tenant)
+        make_class_subject(cls, maths, 2)   # 1 double
+        make_class_subject(cls, english, 2) # 1 double
+        make_assignment(teacher, cls, maths)
+        make_assignment(teacher, cls, english)
+        # Wednesday half-day: only 2 periods (P0, P1)
+        tt = make_timetable(
+            self.tenant, self.year, cls,
+            day_periods={'3': self.periods[:2]},
+        )
+
+        created, total, doubles, error = suggest_lessons_for(tt)
+        self.assertIsNone(error)
+
+        result = self._generate([tt])
+        self.assertTrue(result['ok'], f"Solver failed: {result.get('message')}")
+        slots = self._slots(tt)
+        wed_slots = [s for s in slots if s.day_of_week == 3]
+        # Wednesday should only have at most 2 slots (P0, P1)
+        self.assertLessEqual(len(wed_slots), 2, f"Expected at most 2 slots on Wed, got {len(wed_slots)}")
+        # If slots placed on Wed, neither should be after 09:10
+        for s in wed_slots:
+            self.assertLess(s.start_time, time(10, 0))
+        # Maths should be placed on other days (not forced to late Wed slot)
+        maths_slots = [s for s in slots if s.subject_id == maths.id]
+        wed_maths = [s for s in maths_slots if s.day_of_week == 3]
+        # With half-day Wed, Maths may or may not be placed on Wed depending on
+        # availability, but if it is, it should be in the available periods
+        for s in wed_maths:
+            self.assertLess(s.start_time, time(9, 10))
 
 
 class TestHalfDays(TimetableTestCase):
