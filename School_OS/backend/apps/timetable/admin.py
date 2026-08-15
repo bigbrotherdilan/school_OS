@@ -10,6 +10,7 @@ class TimetableAdmin(admin.ModelAdmin):
     list_display = ('class_obj', 'academic_year', 'term', 'generation_status', 'is_active')
     list_filter = ('generation_status', 'is_active', 'academic_year')
     search_fields = ('class_obj__name',)
+    list_select_related = ('class_obj', 'academic_year', 'term')
 
 
 @admin.register(TimeSlot)

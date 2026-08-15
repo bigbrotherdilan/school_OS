@@ -83,7 +83,9 @@ class Timetable(models.Model):
         ordering = ['-created_at', 'id']
 
     def __str__(self):
-        return f"Timetable for {self.class_obj.name if hasattr(self, 'class_obj') else 'Class'} ({self.term.name if hasattr(self, 'term') else 'Term'})"
+        class_name = self.class_obj.name if self.class_obj else 'Class'
+        term_name = self.term.name if self.term else 'Term'
+        return f"Timetable for {class_name} ({term_name})"
 
     def period_times(self):
         if self.periods:

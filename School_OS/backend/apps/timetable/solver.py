@@ -672,7 +672,9 @@ class SchoolSolver:
                     count = sum(x[(card.id, d, p)] for p in range(len(grid[d])))
                     excess = model.NewIntVar(0, len(grid[d]), f'excess_{card.id}_{d}')
                     model.Add(count - 2 <= excess)
-                    penalties.append((excess, 8))
+                    # Use a penalty higher than the clash_vars penalty (10,000)
+                    # to strongly discourage 3+ periods
+                    penalties.append((excess, 10001))
 
         # 1b. Balanced class weeks
         if not relax:

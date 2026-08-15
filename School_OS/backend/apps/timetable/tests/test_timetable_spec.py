@@ -124,6 +124,32 @@ class TestLessonSuggestions(TimetableTestCase):
             self.assertEqual(lesson.teacher_id, teacher.id)
 
 
+
+class TestSubjectConcentration(TimetableTestCase):
+    def test_no_more_than_two_periods_per_subject_per_day(self):
+        section = make_section(self.tenant)
+        cls = make_class(self.tenant, section, 'Form 4B')
+        maths = make_subject(self.tenant, 'Mathematics', '570')
+        teacher = make_teacher(self.tenant)
+        
+        # 3 periods, 2 days of 4 periods each
+        make_class_subject(cls, maths, 3, is_double=False)
+        make_assignment(teacher, cls, maths)
+        tt = make_timetable(self.tenant, self.year, cls, working_days=[1, 2])
+        
+        suggest_lessons_for(tt)
+        result = self._generate([tt])
+        
+        self.assertTrue(result['ok'], "Solver should have succeeded for 3 periods on 2 days")
+        
+        slots = self._slots(tt)
+        maths_slots_on_day1 = [s for s in slots if s.subject_id == maths.id and s.day_of_week == 1]
+        maths_slots_on_day2 = [s for s in slots if s.subject_id == maths.id and s.day_of_week == 2]
+        
+        self.assertLessEqual(len(maths_slots_on_day1), 2)
+        self.assertLessEqual(len(maths_slots_on_day2), 2)
+        self.assertEqual(len(maths_slots_on_day1) + len(maths_slots_on_day2), 3)
+
 class TestParallelGroups(TimetableTestCase):
     def test_02_parallel_groups_schedule_without_clashing(self):
         section = make_section(self.tenant)
