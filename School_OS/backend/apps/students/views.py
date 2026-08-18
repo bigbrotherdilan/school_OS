@@ -26,7 +26,7 @@ from apps.students.models import (
     Student, ParentStudentRelationship, DisciplineRecord, TransferRequest, PromotionHistory
 )
 from apps.assessments.models import ExamResult
-from apps.academic.views import BaseTenantViewSet
+from apps.core.views import BaseTenantViewSet
 from apps.academic.models import AcademicYear, Class, Term, effective_coefficient
 from apps.authentication.permissions import IsSchoolAdmin, IsAdminOrTeacher, IsSchoolAdminOrBursar
 
@@ -472,7 +472,10 @@ class StudentViewSet(BaseTenantViewSet):
         POST /api/v1/students/students/bulk-import/
         Accepts a CSV file with columns: first_name, last_name, gender, date_of_birth,
         optional: blood_group, emergency_contact, current_class (name or id)
+        Pass ?dry_run=true to validate without writing to the database.
         """
+        dry_run = request.query_params.get('dry_run', 'false').lower() == 'true'
+
         csv_file = request.FILES.get('file')
         if not csv_file:
             return Response({'detail': 'No file uploaded. Send a CSV file as "file".'}, status=400)
@@ -511,6 +514,23 @@ class StudentViewSet(BaseTenantViewSet):
                 errors.append({'row': row_num, 'name': f"{first_name} {middle_name} {last_name}".strip(), 'error': f'Invalid gender: {gender}. Must be M or F'})
                 continue
 
+            if dry_run:
+                class_name = row.get('current_class', '').strip()
+                assigned_class = 'Unassigned'
+                if class_name:
+                    from apps.academic.models import Class
+                    resolved = Class.objects.filter(tenant=tenant, name__iexact=class_name).first()
+                    if resolved:
+                        assigned_class = resolved.name
+                    else:
+                        errors.append({'row': row_num, 'name': f"{first_name} {middle_name} {last_name}".strip(), 'error': f'Class "{class_name}" not found'})
+                        continue
+                created.append({
+                    'name': f"{first_name} {middle_name} {last_name}".strip(),
+                    'class': assigned_class,
+                })
+                continue
+
             try:
                 with db_transaction.atomic():
                     # Try to match class by name if provided
@@ -544,9 +564,10 @@ class StudentViewSet(BaseTenantViewSet):
                 errors.append({'row': row_num, 'name': f"{first_name} {middle_name} {last_name}".strip(), 'error': str(e)})
 
         return Response({
-            'message': f'Import complete. {len(created)} students created, {len(errors)} errors.',
+            'message': f'{"Preview: " if dry_run else ""}Import {"preview" if dry_run else "complete"}. {len(created)} students {"would be created" if dry_run else "created"}, {len(errors)} errors.',
             'created': created,
             'errors': errors,
+            'dry_run': dry_run,
         }, status=status.HTTP_201_CREATED)
 
 

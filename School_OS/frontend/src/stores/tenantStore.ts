@@ -17,6 +17,21 @@ export interface SchoolConfig {
   phone_format_placeholder: string;
 }
 
+export interface SchoolInfo {
+  school_name: string;
+  motto: string;
+  phone: string;
+  email: string;
+  address: string;
+  region: string;
+  division: string;
+  country: string;
+  postal_code: string;
+  education_type: string;
+  school_type: string;
+  session_type: string;
+}
+
 const DEFAULT_CONFIG: SchoolConfig = {
   currency_code: 'XAF',
   currency_symbol: 'XAF',
@@ -39,6 +54,7 @@ interface TenantState {
   logoUrl: string | null;
   schoolConfig: SchoolConfig;
   configLoaded: boolean;
+  schoolInfo: SchoolInfo | null;
   
   setActiveTenantId: (id: string) => void;
   setThemeConfig: (config: ThemeConfig) => void;
@@ -48,6 +64,8 @@ interface TenantState {
   fetchThemeConfig: (tenantId: string) => Promise<void>;
   updateThemeConfig: (patch: Partial<ThemeConfig>) => Promise<void>;
   uploadLogo: (tenantId: string, file: File) => Promise<string>;
+  fetchSchoolInfo: (tenantId: string) => Promise<void>;
+  updateSchoolInfo: (patch: Partial<SchoolInfo>) => Promise<void>;
 }
 
 export const useTenantStore = create<TenantState>()(
@@ -60,6 +78,7 @@ export const useTenantStore = create<TenantState>()(
       logoUrl: null,
       schoolConfig: DEFAULT_CONFIG,
       configLoaded: false,
+      schoolInfo: null,
 
       setActiveTenantId: (id) => set({ activeTenantId: id, configLoaded: false }),
       setThemeConfig: (themeConfig) => set({ themeConfig }),
@@ -118,6 +137,22 @@ export const useTenantStore = create<TenantState>()(
         const url = res.data?.logo_url || '';
         set({ logoUrl: url });
         return url;
+      },
+
+      fetchSchoolInfo: async (tenantId: string) => {
+        try {
+          const res = await api.get(`/tenants/${tenantId}/school-info/`);
+          set({ schoolInfo: res.data });
+        } catch {
+          set({ schoolInfo: null });
+        }
+      },
+
+      updateSchoolInfo: async (patch: Partial<SchoolInfo>) => {
+        const tenantId = get().activeTenantId;
+        if (!tenantId) throw new Error('No active tenant.');
+        const res = await api.patch(`/tenants/${tenantId}/school-info/`, patch);
+        set({ schoolInfo: res.data });
       },
     }),
     {

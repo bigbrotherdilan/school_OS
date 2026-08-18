@@ -39,6 +39,9 @@ class AttendanceRecord(models.Model):
     class Meta:
         db_table = 'attendance_records'
         unique_together = ['session', 'student']
+        indexes = [
+            models.Index(fields=['session', 'status'], name='idx_attend_sess_status'),
+        ]
 
     def __str__(self):
         return f"{self.student.first_name if self.student else 'Student'} - {self.status} ({self.session.date if self.session else 'N/A'})"

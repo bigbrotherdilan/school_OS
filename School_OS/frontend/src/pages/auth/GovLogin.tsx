@@ -1,4 +1,5 @@
 ﻿import { useAuthLogin } from '../../hooks/useAuthLogin';
+import { Link } from 'react-router-dom';
 import DeviceLimitDialog from '../../components/ui/DeviceLimitDialog';
 import PasswordInput from '../../components/ui/PasswordInput';
 
@@ -73,6 +74,14 @@ export default function GovLogin() {
                             )}
                         </button>
                     </form>
+                </div>
+                <div className="mt-6 text-center space-y-3">
+                    <Link to="/forgot-password" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors block">
+                        Forgot your password?
+                    </Link>
+                    <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-1 justify-center">
+                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> Change Portal
+                    </Link>
                 </div>
                 <div className="mt-8 text-center">
                     <p className="text-xs text-slate-500">Restricted Access. Unauthorized entry is prohibited by law.</p>

@@ -65,7 +65,7 @@ export default function ComplianceCenter() {
       {/* Compliance Modules Navigation */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Inspections Dashboard', icon: 'fact_check', path: '/admin/compliance', color: 'bg-blue-500' },
+          { label: 'Inspector Dashboard', icon: 'dashboard', path: '/admin/compliance/inspections', color: 'bg-blue-500' },
           { label: 'Performance Reports', icon: 'assessment', path: '/admin/compliance/reports', color: 'bg-emerald-500' },
         ].map((mod) => (
           <button

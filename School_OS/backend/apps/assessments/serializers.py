@@ -1,18 +1,10 @@
 from rest_framework import serializers
-from .models import GradeScale, GradeBoundary, MarkEntryWindow, Exam, ExamResult
+from .models import GradeBoundary, MarkEntryWindow, Exam, ExamResult
 
 
 class GradeBoundarySerializer(serializers.ModelSerializer):
     class Meta:
         model = GradeBoundary
-        fields = '__all__'
-
-
-class GradeScaleSerializer(serializers.ModelSerializer):
-    boundaries = GradeBoundarySerializer(many=True, read_only=True)
-
-    class Meta:
-        model = GradeScale
         fields = '__all__'
 
 

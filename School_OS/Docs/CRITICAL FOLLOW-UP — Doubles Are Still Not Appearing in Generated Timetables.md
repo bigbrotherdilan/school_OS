@@ -1034,7 +1034,7 @@ Find the first point where:
 Required doubles = 2
 ```
 
-becomes:
+esy
 
 ```text
 Generated doubles = 0

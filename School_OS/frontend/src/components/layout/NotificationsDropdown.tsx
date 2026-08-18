@@ -44,13 +44,12 @@ type NotificationItem =
 
 const POLL_INTERVAL_MS = 45000;
 
-const isItemRead = (n: NotificationItem): boolean => n.data.is_read;
-
 export default function NotificationsDropdown() {
   const navigate = useNavigate();
   const { roles } = useAuthStore();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NotificationItem | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -106,6 +105,19 @@ export default function NotificationsDropdown() {
     });
   }, [isAnnouncementVisible]);
 
+  // Lightweight fetch — only retrieves the unread count for the badge, no full list payload.
+  const fetchUnreadCounts = useCallback(async () => {
+    const [notifRes, annRes, msgRes] = await Promise.allSettled([
+      api.get('/notifications/notifications/unread-count/'),
+      api.get('/notifications/announcements/unread-count/'),
+      api.get('/notifications/messages/unread-count/'),
+    ]);
+    const n = notifRes.status === 'fulfilled' ? (notifRes.value.data.count ?? 0) : 0;
+    const a = annRes.status === 'fulfilled' ? (annRes.value.data.count ?? 0) : 0;
+    const m = msgRes.status === 'fulfilled' ? (msgRes.value.data.count ?? 0) : 0;
+    setUnreadCount(n + a + m);
+  }, []);
+
   // Mark all items as read on the server (persists across logins/devices).
   const markAllRead = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -116,16 +128,15 @@ export default function NotificationsDropdown() {
     return results.every((r) => r.status === 'fulfilled');
   }, []);
 
-  // Fetch on mount + poll so new items show up while the badge stays accurate.
-  // While the dropdown is open, skip polling so viewed items aren't wiped out
-  // mid-session before the user has read them.
+  // Fetch lightweight unread counts on mount + poll so the badge stays accurate
+  // without transferring full notification payloads on every tick.
   useEffect(() => {
-    fetchItems();
+    fetchUnreadCounts();
     const interval = setInterval(() => {
-      if (!openRef.current) fetchItems();
+      if (!openRef.current) fetchUnreadCounts();
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [fetchItems]);
+  }, [fetchUnreadCounts]);
 
   // Clicking the bell opens the dropdown; everything shown there gets marked
   // read (server-persisted) and the badge clears. Closing re-fetches only
@@ -146,8 +157,9 @@ export default function NotificationsDropdown() {
         }),
       );
       setLoading(false);
+      setUnreadCount(0);
     } else {
-      fetchItems();
+      fetchUnreadCounts();
     }
   };
 
@@ -157,17 +169,18 @@ export default function NotificationsDropdown() {
       if (ref.current && !ref.current.contains(e.target as Node) && openRef.current) {
         openRef.current = false;
         setOpen(false);
-        fetchItems();
+        fetchUnreadCounts();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [fetchItems]);
+  }, [fetchUnreadCounts]);
 
   const markNotificationRead = async (notifId: string) => {
     try {
       await api.patch(`/notifications/notifications/${notifId}/`, { is_read: true });
       setItems((prev) => prev.filter((n) => !(n.type === 'notification' && n.data.id === notifId)));
+      setUnreadCount((c) => Math.max(0, c - 1));
     } catch { /* silent */ }
   };
 
@@ -175,6 +188,7 @@ export default function NotificationsDropdown() {
     try {
       await api.patch(`/notifications/messages/${msgId}/`, { is_read: true });
       setItems((prev) => prev.filter((n) => !(n.type === 'message' && n.data.id === msgId)));
+      setUnreadCount((c) => Math.max(0, c - 1));
     } catch { /* silent */ }
   };
 
@@ -182,6 +196,7 @@ export default function NotificationsDropdown() {
     try {
       await api.post('/notifications/announcements/mark-all-read/');
       setItems((prev) => prev.filter((n) => !(n.type === 'announcement' && n.data.id === annId)));
+      setUnreadCount((c) => Math.max(0, c - 1));
     } catch { /* silent */ }
   };
 
@@ -208,6 +223,7 @@ export default function NotificationsDropdown() {
     setOpen(false);
     await markAllRead();
     setItems([]);
+    setUnreadCount(0);
     const activeRoles = new Set(rolesRef.current.map((r) => r.role));
     if (activeRoles.has('admin') || activeRoles.has('super_admin')) {
       navigate('/admin/community/communications');
@@ -219,8 +235,6 @@ export default function NotificationsDropdown() {
       navigate('/');
     }
   };
-
-  const unreadCount = items.filter((n) => !isItemRead(n)).length;
 
   const timeAgo = (ts: string) => {
     try {

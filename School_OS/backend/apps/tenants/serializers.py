@@ -11,6 +11,7 @@ class TenantSerializer(serializers.ModelSerializer):
         model = Tenant
         fields = [
             'id', 'school_name', 'slug', 'education_type',
+            'school_type', 'session_type',
             'region', 'division', 'country', 'address',
             'phone', 'email', 'logo_url', 'theme_config',
             'motto', 'postal_code', 'status', 'subscription_plan',
@@ -27,6 +28,7 @@ class TenantListSerializer(serializers.ModelSerializer):
         model = Tenant
         fields = [
             'id', 'school_name', 'slug', 'education_type',
+            'school_type', 'session_type',
             'region', 'division', 'address', 'phone', 'email',
             'logo_url', 'motto', 'postal_code', 'status', 'created_at',
         ]

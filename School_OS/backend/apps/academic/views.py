@@ -22,49 +22,15 @@ from apps.academic.curriculum import (
 from apps.authentication.permissions import (
     IsSchoolAdmin, IsAdminOrTeacher, IsSchoolAdminOrBursar,
 )
-
-
-class BaseTenantViewSet(viewsets.ModelViewSet):
-    """
-    Abstract ViewSet to enforce tenant filtering and ownership.
-    All data access is scoped to the current tenant.
-    """
-    permission_classes = [IsSchoolAdmin]
-    lookup_field = 'id'
-    allow_delete = True
-
-    def get_queryset(self):
-        tenant_id = self.request.tenant_id
-        if not tenant_id:
-            return self.queryset.none()
-        return self.queryset.filter(tenant_id=tenant_id)
-
-    def perform_create(self, serializer):
-        serializer.save(tenant_id=self.request.tenant_id)
-
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        if str(instance.tenant_id) != self.request.tenant_id:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied('You do not have permission to modify this resource.')
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        if not self.allow_delete:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied(
-                'Deletion is not allowed for this resource. '
-                'Use cancellation or deactivation instead.'
-            )
-        if str(instance.tenant_id) != self.request.tenant_id:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied('You do not have permission to delete this resource.')
-        instance.delete()
+from apps.core.views import BaseTenantViewSet
 
 
 class AcademicYearViewSet(BaseTenantViewSet):
     queryset = AcademicYear.objects.all()
     serializer_class = AcademicYearSerializer
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('terms__sequences')
 
     @action(detail=True, methods=['post'])
     def set_active(self, request, id=None):
@@ -403,7 +369,7 @@ class SubjectViewSet(BaseTenantViewSet):
     permission_classes = [IsAdminOrTeacher]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().select_related('cycle')
         if self.request.query_params.get('school'):
             qs = qs.filter(
                 Q(section_subjects__section__tenant_id=self.request.tenant_id)

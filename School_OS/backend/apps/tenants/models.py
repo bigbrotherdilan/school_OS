@@ -59,7 +59,11 @@ class Tenant(models.Model):
 
     # Branding
     logo_url = models.URLField(blank=True)
-    logo = models.CharField(max_length=255, blank=True, null=True)
+    logo = models.ImageField(
+        upload_to='school_logos/',
+        blank=True,
+        null=True,
+    )
     theme_config = models.JSONField(
         default=dict,
         blank=True,

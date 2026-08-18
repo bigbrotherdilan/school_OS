@@ -72,6 +72,7 @@ class Student(models.Model):
         indexes = [
             models.Index(fields=['tenant', 'current_class'], name='idx_student_class'),
             models.Index(fields=['tenant', 'status'], name='idx_student_status'),
+            models.Index(fields=['tenant', 'current_class', 'stream'], name='idx_student_cls_sec'),
         ]
         ordering = ['last_name', 'first_name']
 

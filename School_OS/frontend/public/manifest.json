@@ -1,15 +1,20 @@
 {
-  "id": "/parent",
-  "name": "School OS — Parent Portal",
+  "name": "School OS",
   "short_name": "School OS",
-  "description": "View your child's school fees, report cards, grades, and school announcements.",
-  "start_url": "/parent",
+  "description": "All-in-one school management platform for African schools.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#F7F9FB",
   "theme_color": "#00236f",
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
@@ -29,5 +34,5 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["education", "finance"]
+  "categories": ["education"]
 }

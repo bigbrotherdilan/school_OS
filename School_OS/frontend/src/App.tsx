@@ -26,8 +26,12 @@ class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNod
             <h2 className="text-xl font-bold text-error mb-4">Something went wrong</h2>
             <pre className="text-left text-sm text-on-surface-variant bg-surface-container p-4 rounded-xl overflow-auto max-h-60">
               {this.state.error?.message ?? 'Unknown error'}
-              {this.state.error?.stack && '\n\n' + this.state.error.stack}
             </pre>
+            {import.meta.env.DEV && this.state.error?.stack && (
+              <pre className="text-left text-sm text-on-surface-variant bg-surface-container p-4 rounded-xl overflow-auto max-h-60">
+                {this.state.error.stack}
+              </pre>
+            )}
             <button
               onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
               className="mt-6 px-6 py-3 bg-primary text-white rounded-xl font-medium hover:opacity-90"
@@ -55,15 +59,22 @@ import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage';
 import TrustPage from './pages/public/TrustPage';
 import ReceiptVerify from './pages/public/ReceiptVerify';
+import NotFoundPage from './pages/public/NotFoundPage';
 import SchoolTemplate from './pages/public/SchoolTemplate';
 import SchoolsList from './pages/public/SchoolsList';
 import SchoolProfile from './pages/public/SchoolProfile';
 import TeacherMarketplace from './pages/public/TeacherMarketplace';
 import ForcePasswordChange from './pages/ForcePasswordChange';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import InviteAcceptPage from './pages/auth/InviteAcceptPage';
 import { useAuthStore } from './stores/authStore';
 import ToastContainer from './components/ui/ToastContainer';
 import ThemeBridge from './components/ui/ThemeBridge';
 import { useTenantTheme } from './hooks/useTenantTheme';
+import PinLockScreen from './components/ui/PinLockScreen';
+import { useInactivityLock } from './hooks/useInactivityLock';
+import { useTenantStore } from './stores/tenantStore';
 
 // Portal pages — code-split so each portal loads its own chunk on demand.
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
@@ -78,6 +89,7 @@ const ArrearsManagement = lazy(() => import('./pages/admin/finance/ArrearsManage
 const ExpensesPage = lazy(() => import('./pages/admin/finance/ExpensesPage'));
 const CommunityEthos = lazy(() => import('./pages/admin/community/CommunityEthos'));
 const ComplianceCenter = lazy(() => import('./pages/admin/compliance/ComplianceCenter'));
+const InspectorDashboard = lazy(() => import('./pages/admin/compliance/InspectorDashboard'));
 const SystemControl = lazy(() => import('./pages/admin/system/SystemControl'));
 const AcademicSetup = lazy(() => import('./pages/admin/academic/AcademicSetup'));
 const AuditLogs = lazy(() => import('./pages/admin/audit/AuditLogs'));
@@ -105,6 +117,7 @@ const ReportCardManagement = lazy(() => import('./pages/admin/academic/ReportCar
 const IDCardGenerator = lazy(() => import('./pages/admin/academic/IDCardGenerator'));
 const AcademicAnalytics = lazy(() => import('./pages/admin/academic/AcademicAnalytics'));
 const TeacherDirectory = lazy(() => import('./pages/admin/operations/TeacherDirectory'));
+const UserDirectory = lazy(() => import('./pages/admin/operations/UserDirectory'));
 const BulkImportStudents = lazy(() => import('./pages/admin/operations/BulkImportStudents'));
 const BulkImportTeachers = lazy(() => import('./pages/admin/operations/BulkImportTeachers'));
 const SchoolYearReview = lazy(() => import('./components/admin/SchoolYearReview'));
@@ -233,7 +246,17 @@ export default function App() {
   const logout = useAuthStore(state => state.logout);
   const tenants = useAuthStore(state => state.tenants);
 
+  const { isLocked, unlock } = useInactivityLock();
+  const activeTenantId = useTenantStore(s => s.activeTenantId);
+  const activeTenant = tenants?.find(t => t.id === activeTenantId);
+
+  const fetchPinStatus = useAuthStore(s => s.fetchPinStatus);
+
   useTenantTheme();
+
+  useEffect(() => {
+    if (token) fetchPinStatus();
+  }, [token, fetchPinStatus]);
 
   useEffect(() => {
     if (!token) return;
@@ -252,6 +275,12 @@ export default function App() {
       <ToastContainer />
       <ScrollManager />
       <ErrorBoundary>
+        {isLocked && (
+          <PinLockScreen
+            onUnlock={unlock}
+            schoolName={activeTenant?.school_name || 'School OS'}
+          />
+        )}
         <Suspense fallback={<PageLoader />}>
         <Routes>
         {/* Public Routes */}
@@ -272,6 +301,9 @@ export default function App() {
         <Route path="/login/teacher" element={token ? <PortalRedirect /> : <TeacherLogin />} />
         <Route path="/login/admin" element={token ? <PortalRedirect /> : <AdminLogin />} />        
         <Route path="/login/bursar" element={token ? <PortalRedirect /> : <BursarLogin />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        <Route path="/invite/:token" element={<InviteAcceptPage />} />
         {/* Generic Dashboard Redirect */}
         <Route path="/dashboard" element={<PortalRedirect />} />
         <Route path="/force-password-change" element={<ProtectedRoute><ForcePasswordChange /></ProtectedRoute>} />
@@ -289,6 +321,7 @@ export default function App() {
           <Route path="academic/students/import" element={<BulkImportStudents />} />
           <Route path="operations" element={<OperationsCenter />} />
           <Route path="operations/faculty" element={<TeacherDirectory />} />
+          <Route path="operations/users" element={<UserDirectory />} />
           <Route path="operations/faculty/new" element={<AddFacultyPage />} />
           <Route path="operations/bursars/new" element={<AddBursarPage />} />
           <Route path="operations/parents/new" element={<AddParentPage />} />
@@ -301,8 +334,9 @@ export default function App() {
           <Route path="finance/expenses" element={<ExpensesPage />} />
           <Route path="finance/transactions/new" element={<RecordTransactionPage />} />
           <Route path="community" element={<CommunityEthos />} />
-          <Route path="compliance" element={<ComplianceCenter />} />
-          <Route path="system" element={<SystemControl />} />
+<Route path="compliance" element={<ComplianceCenter />} />
+<Route path="compliance/inspections" element={<InspectorDashboard />} />
+<Route path="system" element={<SystemControl />} />
           <Route path="academic/setup" element={<AcademicSetup />} />
           <Route path="academic/grading" element={<Navigate to="/admin/academic/exam-workflow" replace />} />
           <Route path="academic/timetables" element={<Timetables />} />
@@ -387,6 +421,7 @@ export default function App() {
         <Route path="/unauthorized" element={
           <PlaceholderDashboard title="Unauthorized. You do not have access to this portal." />
         } />
+        <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>
       </ErrorBoundary>

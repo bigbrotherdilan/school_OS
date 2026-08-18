@@ -2,10 +2,14 @@
 import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ProfileEditor from '../../../components/ui/ProfileEditor';
+import PinSetupModal from '../../../components/ui/PinSetupModal';
+import PinReauthModal from '../../../components/ui/PinReauthModal';
 import { useToastStore } from '../../../stores/toastStore';
 import { useTenantStore } from '../../../stores/tenantStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { DEFAULT_THEME, PRESET_TEMPLATES, FONT_OPTIONS, applyThemeVars, hexToRgb, shadeHex, contrastTextOn, type ThemeConfig } from '../../../utils/theme';
+import type { SchoolInfo } from '../../../stores/tenantStore';
+import { api } from '../../../services/api';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -13,12 +17,16 @@ export default function Settings() {
   const { addToast } = useToastStore();
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState(true);
-  const { activeTenantId, schoolConfig, themeConfig, logoUrl, fetchSchoolConfig, patchSchoolConfig, updateThemeConfig, uploadLogo, setDraftTheme } = useTenantStore();
+  const { activeTenantId, schoolConfig, themeConfig, logoUrl, schoolInfo, fetchSchoolConfig, patchSchoolConfig, updateThemeConfig, uploadLogo, setDraftTheme, fetchSchoolInfo, updateSchoolInfo } = useTenantStore();
   const roles = useAuthStore(s => s.roles);
   const tenants = useAuthStore(s => s.tenants);
   const activeTenantName = tenants?.find(t => t.id === activeTenantId)?.school_name || 'School';
   const schoolInitials = activeTenantName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const isAdminRole = roles.some(r => r.tenant_id === activeTenantId && (r.role === 'admin' || r.role === 'super_admin'));
+
+  const [showChangePin, setShowChangePin] = useState(false);
+  const [showRemovePinModal, setShowRemovePinModal] = useState(false);
+  const [pinInfo, setPinInfo] = useState<{ pin_is_set: boolean; pin_set_at: string | null }>({ pin_is_set: false, pin_set_at: null });
 
   const [financeRecording, setFinanceRecording] = useState<'admin_and_bursar' | 'bursar_only'>(schoolConfig.finance_recording);
   const [savingFinance, setSavingFinance] = useState(false);
@@ -29,6 +37,8 @@ export default function Settings() {
   const [fontFamily, setFontFamily] = useState(DEFAULT_THEME.fontFamily);
   const [savingBranding, setSavingBranding] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [savingSchoolInfo, setSavingSchoolInfo] = useState(false);
+  const [schoolInfoDraft, setSchoolInfoDraft] = useState<Partial<SchoolInfo>>({});
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const savedThemeRef = useRef<ThemeConfig | null>(null);
   const brandInitializedRef = useRef(false);
@@ -43,6 +53,16 @@ export default function Settings() {
   useEffect(() => {
     if (activeTenantId) fetchSchoolConfig(activeTenantId);
   }, [activeTenantId, fetchSchoolConfig]);
+
+  useEffect(() => {
+    if (activeTenantId) fetchSchoolInfo(activeTenantId);
+  }, [activeTenantId, fetchSchoolInfo]);
+
+  useEffect(() => {
+    if (schoolInfo && Object.keys(schoolInfoDraft).length === 0) {
+      setSchoolInfoDraft(schoolInfo);
+    }
+  }, [schoolInfo]);
 
   useEffect(() => {
     setFinanceRecording(schoolConfig.finance_recording);
@@ -78,6 +98,12 @@ export default function Settings() {
       if (savedThemeRef.current) applyThemeVars(savedThemeRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTenantId) {
+      api.get('/auth/pin/').then(res => setPinInfo(res.data)).catch(() => {});
+    }
+  }, [activeTenantId]);
 
   const handleSaveBranding = async () => {
     if (!hexToRgb(primaryColor) || !hexToRgb(secondaryColor)) {
@@ -159,6 +185,22 @@ export default function Settings() {
     addToast('System cache completely purged. Operations restored to zero state.', 'success');
   };
 
+  const handleSaveSchoolInfo = async () => {
+    if (!schoolInfoDraft.school_name?.trim()) {
+      addToast('School name is required.', 'error');
+      return;
+    }
+    setSavingSchoolInfo(true);
+    try {
+      await updateSchoolInfo(schoolInfoDraft);
+      addToast('School information saved.', 'success');
+    } catch {
+      addToast('Failed to save school information.', 'error');
+    } finally {
+      setSavingSchoolInfo(false);
+    }
+  };
+
   const handleNavClick = (item: { route?: string; target?: string }) => {
     if (item.route) {
       navigate(item.route);
@@ -182,9 +224,11 @@ export default function Settings() {
         <aside className="col-span-12 lg:col-span-3 space-y-2">
           {[
             { label: 'Profile & Authority', icon: 'person_outline', target: 'settings-profile' },
+            { label: 'School Information', icon: 'school', target: 'settings-school-info' },
             { label: 'Institution Branding', icon: 'palette', target: 'settings-branding' },
             { label: 'Academic Structure', icon: 'account_tree', route: '/admin/academic/setup' },
             { label: 'Security & Privacy', icon: 'shield', target: 'settings-security' },
+            { label: 'PIN Security', icon: 'pin', target: 'settings-pin' },
             { label: 'Billing & Subscriptions', icon: 'credit_card', target: 'settings-billing' },
             { label: 'Integrations', icon: 'extension', route: '/admin/settings/integrations' },
             { label: 'Email Configuration', icon: 'mail', route: '/admin/settings/email' }
@@ -204,6 +248,83 @@ export default function Settings() {
           <div id="settings-profile" className="space-y-8">
             <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Profile & Authority</h3>
             <ProfileEditor role="admin" />
+          </div>
+
+          <div id="settings-school-info" className="space-y-8 pt-12 border-t border-slate-100">
+            <div>
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">School Information</h3>
+              <p className="text-xs text-slate-400 mt-1 font-medium">Details shown on report cards, ID cards, and public profile.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { key: 'school_name', label: 'School Name', required: true, colSpan: true },
+                { key: 'motto', label: 'School Motto', colSpan: true },
+                { key: 'phone', label: 'Phone Number', placeholder: '+237 6XX XXX XXX' },
+                { key: 'email', label: 'Email Address', placeholder: 'info@yourschool.cm', type: 'email' },
+                { key: 'address', label: 'Street Address', colSpan: true },
+                { key: 'region', label: 'Region' },
+                { key: 'division', label: 'Division' },
+                { key: 'country', label: 'Country', placeholder: 'Cameroon' },
+                { key: 'postal_code', label: 'Postal Code' },
+              ].map((field) => (
+                <div key={field.key} className={field.colSpan ? 'md:col-span-2' : ''}>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+                    {field.label} {field.required && <span className="text-error">*</span>}
+                  </label>
+                  <input
+                    type={field.type || 'text'}
+                    value={(schoolInfoDraft as Record<string, string>)?.[field.key] || ''}
+                    onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, [field.key]: e.target.value })}
+                    placeholder={field.placeholder || ''}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Education System</label>
+                <select
+                  value={schoolInfoDraft.education_type || ''}
+                  onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, education_type: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
+                >
+                  <option value="anglophone">Anglophone</option>
+                  <option value="francophone">Francophone</option>
+                  <option value="bilingual">Bilingual</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">School Type</label>
+                <select
+                  value={schoolInfoDraft.school_type || ''}
+                  onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, school_type: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
+                >
+                  <option value="general">General</option>
+                  <option value="technical">Technical</option>
+                  <option value="vocational">Vocational</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Session Type</label>
+                <select
+                  value={schoolInfoDraft.session_type || ''}
+                  onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, session_type: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+            </div>
+            <button
+              onClick={handleSaveSchoolInfo}
+              disabled={savingSchoolInfo}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingSchoolInfo ? <span className="material-symbols-outlined animate-spin text-base">sync</span> : <span className="material-symbols-outlined text-base">check_circle</span>}
+              {savingSchoolInfo ? 'Saving...' : 'Save School Information'}
+            </button>
           </div>
 
           <div id="settings-branding" className="space-y-8 pt-12 border-t border-slate-100">
@@ -484,6 +605,65 @@ export default function Settings() {
             </div>
           </div>
 
+          <div id="settings-pin" className="space-y-8 pt-12 border-t border-slate-100">
+            <div>
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Quick Unlock PIN</h3>
+              <p className="text-xs text-slate-400 mt-1 font-medium">
+                Set a 6-digit PIN for quick re-entry after inactivity or for sensitive actions.
+              </p>
+            </div>
+
+            {pinInfo.pin_is_set ? (
+              <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary-container flex items-center justify-center">
+                      <span className="material-symbols-outlined text-secondary">lock</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">PIN is active</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Set {pinInfo.pin_set_at ? new Date(pinInfo.pin_set_at).toLocaleDateString() : 'previously'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowChangePin(true)}
+                      className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-100 transition-all"
+                    >
+                      Change PIN
+                    </button>
+                    <button
+                      onClick={() => setShowRemovePinModal(true)}
+                      className="px-4 py-2 bg-white border border-error/30 text-error rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-error hover:text-white transition-all"
+                    >
+                      Remove PIN
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-primary-container flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary">pin</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">No PIN set</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Add a PIN for quick re-entry after inactivity.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowChangePin(true)}
+                  className="px-6 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95"
+                >
+                  Set Up PIN
+                </button>
+              </div>
+            )}
+          </div>
+
           <div id="settings-billing" className="space-y-8 pt-12 border-t border-slate-100">
             <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Billing & Finance</h3>
             <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200/60">
@@ -554,6 +734,42 @@ export default function Settings() {
           <p className="text-[0.6rem] font-black uppercase tracking-[0.6em] text-primary/30">- Monolith Config Charter v2.0</p>
         </div>
       </footer>
+
+      {showChangePin && (
+        <PinSetupModal
+          isOpen={showChangePin}
+          onClose={() => setShowChangePin(false)}
+          onSuccess={() => {
+            setPinInfo({ pin_is_set: true, pin_set_at: new Date().toISOString() });
+            useAuthStore.getState().setPinIsSet(true);
+            setShowChangePin(false);
+          }}
+          currentPinIsSet={pinInfo.pin_is_set}
+        />
+      )}
+
+      {showRemovePinModal && (
+        <PinReauthModal
+          isOpen={showRemovePinModal}
+          onClose={() => setShowRemovePinModal(false)}
+          onVerified={async () => {
+            try {
+              const password = prompt('Enter your password to remove PIN:');
+              if (password) {
+                await api.post('/auth/pin/remove/', { password });
+                setPinInfo({ pin_is_set: false, pin_set_at: null });
+                useAuthStore.getState().setPinIsSet(false);
+                addToast('PIN removed.', 'success');
+              }
+            } catch {
+              addToast('Failed to remove PIN.', 'error');
+            }
+            setShowRemovePinModal(false);
+          }}
+          title="Verify to Remove PIN"
+          subtitle="Enter your PIN to confirm removal"
+        />
+      )}
 
       <ConfirmationModal
         isOpen={isPurgeModalOpen}

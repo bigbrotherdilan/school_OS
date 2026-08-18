@@ -162,3 +162,36 @@ class TimetableSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['tenant', 'academic_year', 'generation_status', 'generation_message',
                             'generation_score', 'last_generated_at', 'approved_at', 'approved_by']
+
+
+class TimetableListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for the timetable list view.
+    Omits slots, lessons, rooms, student_groups, cell_states — the heavy
+    nested data that is only needed in the detail / grid view."""
+    class_name = serializers.CharField(source='class_obj.name', read_only=True)
+    section_name = serializers.SerializerMethodField()
+    term_name = serializers.CharField(source='term.name', read_only=True)
+    academic_year_name = serializers.CharField(source='academic_year.name', read_only=True)
+    committed = serializers.SerializerMethodField()
+    slot_count = serializers.IntegerField(read_only=True, default=0)
+    lesson_count = serializers.IntegerField(read_only=True, default=0)
+
+    def get_section_name(self, obj):
+        stream = obj.class_obj.stream if obj.class_obj else None
+        return stream.name if stream else 'General'
+
+    def get_committed(self, obj):
+        return obj.is_committed()
+
+    class Meta:
+        model = Timetable
+        fields = [
+            'id', 'tenant', 'class_obj', 'class_name', 'section_name',
+            'academic_year', 'academic_year_name', 'term', 'term_name',
+            'periods', 'working_days', 'day_periods', 'blocked_slots',
+            'generation_status', 'generation_message', 'generation_score',
+            'last_generated_at', 'committed', 'approved_at', 'approved_by',
+            'slot_count', 'lesson_count', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['tenant', 'academic_year', 'generation_status', 'generation_message',
+                            'generation_score', 'last_generated_at', 'approved_at', 'approved_by']

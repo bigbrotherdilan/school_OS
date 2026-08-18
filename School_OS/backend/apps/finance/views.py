@@ -7,7 +7,7 @@ from django.db.models import Sum, Q
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
-from apps.academic.views import BaseTenantViewSet
+from apps.core.views import BaseTenantViewSet
 from apps.authentication.permissions import IsSchoolAdminOrBursar, CanWriteFinance
 from apps.finance.models import (
     FeeCategory, FeeStructure, StudentInvoice, PaymentTransaction,

@@ -12,16 +12,45 @@ export default function AcademicManagement() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    search: '',
+    status: '',
+    current_class: '',
+    stream: '',
+  });
+  const [classes, setClasses] = useState<any[]>([]);
+  const [streams, setStreams] = useState<any[]>([]);
 
   const handlePendingFeature = (featureName: string) => {
     addToast(`${featureName} module is subject to deployment in upcoming sprint.`, 'info');
   };
 
+  const statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'active', label: 'Active' },
+    { value: 'registered', label: 'Registered' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'suspended', label: 'Suspended' },
+    { value: 'withdrawn', label: 'Withdrawn' },
+    { value: 'graduated', label: 'Graduated' },
+  ];
+
   useEffect(() => {
-    const closeMenu = () => setMenuOpenFor(null);
-    document.addEventListener('click', closeMenu);
-    return () => document.removeEventListener('click', closeMenu);
-  }, []);
+    const fetchFilters = async () => {
+      try {
+        const [classesRes, sectionsRes] = await Promise.all([
+          api.get('/academic/classes/', { params: activeSectionId ? { stream: activeSectionId } : undefined }),
+          api.get('/academic/sections/'),
+        ]);
+        setClasses(classesRes.data.results || classesRes.data);
+        setStreams(sectionsRes.data.results || sectionsRes.data);
+      } catch (e) {
+        console.error("Failed to fetch filter options", e);
+      }
+    };
+    fetchFilters();
+  }, [activeSectionId]);
 
   const activateStudent = async (studentId: string) => {
     try {
@@ -49,9 +78,25 @@ export default function AcademicManagement() {
   };
 
   useEffect(() => {
+    const closeMenu = () => setMenuOpenFor(null);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
+
+  useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await api.get('/students/students/', { params: activeSectionId ? { stream: activeSectionId } : undefined });
+        const params: any = { ...filters };
+        if (activeSectionId && !filters.stream) {
+          params.stream = activeSectionId;
+        }
+        // Remove empty filters
+        Object.keys(params).forEach(key => {
+          if (params[key] === '' || params[key] === null || params[key] === undefined) {
+            delete params[key];
+          }
+        });
+        const res = await api.get('/students/students/', { params });
         setStudents(res.data.results || res.data);
       } catch (e) {
         console.error("Failed to fetch students", e);
@@ -60,7 +105,7 @@ export default function AcademicManagement() {
       }
     };
     fetchStudents();
-  }, [activeSectionId]);
+  }, [activeSectionId, filters]);
 
   return (
     <div className="p-4 lg:p-12 space-y-12 max-w-[1600px] mx-auto">
@@ -104,9 +149,15 @@ export default function AcademicManagement() {
             <p className="text-sm text-on-surface-variant mt-1">Real-time status tracking for high-performance management</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => handlePendingFeature('Registry Filtering')} className="flex items-center gap-2 border border-outline-variant/50 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-all">
-              <span className="material-symbols-outlined text-lg">filter_list</span>
+            <button 
+              onClick={() => setFilterOpen(true)}
+              className={`flex items-center gap-2 border px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-all ${Object.values(filters).some(v => v) ? 'border-primary bg-primary/5 text-primary' : 'border-outline-variant/50'}`}
+            >
+              <span className="material-symbols-outlined text-lg">{Object.values(filters).some(v => v) ? 'filter_list' : 'filter_list'}</span>
               Filter Registry
+              {Object.values(filters).some(v => v) && (
+                <span className="w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">!</span>
+              )}
             </button>
             <button 
               onClick={() => navigate('/admin/academic/students/import')}
@@ -260,11 +311,100 @@ export default function AcademicManagement() {
             </tbody>
           </table>
 
-          <div className="bg-surface-container-low/50 p-4 border-t border-outline-variant/15">
+          <div className="bg-surface-container-low/50 p-4 border-t border-outline-variant/15 flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs text-on-surface-variant font-medium">Showing {students.length} students</span>
+            {Object.values(filters).some(v => v) && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-primary font-medium">Filters active</span>
+                <button
+                  onClick={() => setFilters({ search: '', status: '', current_class: '', stream: '' })}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
+
+      {/* Filter Modal */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setFilterOpen(false)}>
+          <div className="bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-outline-variant/15 sticky top-0 bg-surface-container-lowest z-10 rounded-t-2xl">
+              <h4 className="text-lg font-semibold text-on-surface">Filter Registry</h4>
+              <button onClick={() => setFilterOpen(false)} className="p-2 rounded-lg hover:bg-surface-container/60 transition-colors">
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Search</label>
+                <input
+                  type="text"
+                  placeholder="Name or Admission Number"
+                  value={filters.search}
+                  onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-outline-variant/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-outline-variant/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  {statusOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Class</label>
+                <select
+                  value={filters.current_class}
+                  onChange={e => setFilters(prev => ({ ...prev, current_class: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-outline-variant/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">All Classes</option>
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Section</label>
+                <select
+                  value={filters.stream}
+                  onChange={e => setFilters(prev => ({ ...prev, stream: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-outline-variant/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">All Sections</option>
+                  {streams.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-outline-variant/15">
+                <button
+                  onClick={() => setFilters({ search: '', status: '', current_class: '', stream: '' })}
+                  className="flex-1 px-4 py-2 bg-surface-container-highest text-on-surface rounded-lg text-sm font-medium hover:bg-surface-container-high transition-colors"
+                >
+                  Clear Filters
+                </button>
+                <button
+                  onClick={() => setFilterOpen(false)}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

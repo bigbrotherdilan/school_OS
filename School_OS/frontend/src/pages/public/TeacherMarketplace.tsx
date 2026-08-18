@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Star, MapPin, BookOpen, Award, Clock, Filter, ChevronDown, GraduationCap, Languages, Loader2 } from 'lucide-react';
+import { Search, Star, MapPin, BookOpen, Award, Clock, Filter, ChevronDown, GraduationCap, Languages, Loader2, Mail, X } from 'lucide-react';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 import { fetchPublicTeachers, type PublicTeacher } from '../../services/publicApi';
+import { publicApi } from '../../services/publicApi';
 
 const AVAILABILITY_LABELS: Record<string, string> = {
   full_time: 'Full Time',
@@ -24,6 +25,10 @@ export default function TeacherMarketplace() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<PublicTeacher | null>(null);
   const [regions, setRegions] = useState<{ name: string; count: number }[]>([]);
+  const [contactTeacher, setContactTeacher] = useState<PublicTeacher | null>(null);
+  const [contactForm, setContactForm] = useState({ sender_name: '', sender_email: '', subject: '', body: '' });
+  const [isSending, setIsSending] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
 
   useEffect(() => {
     fetchPublicTeachers().then((all) => {
@@ -63,6 +68,30 @@ export default function TeacherMarketplace() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchTeachers();
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactTeacher) return;
+    setIsSending(true);
+    try {
+      await publicApi.post('/teachers/contact/', {
+        teacher_id: contactTeacher.id,
+        ...contactForm,
+      });
+      setContactSent(true);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const openContact = (teacher: PublicTeacher) => {
+    setSelectedTeacher(null);
+    setContactTeacher(teacher);
+    setContactForm({ sender_name: '', sender_email: '', subject: '', body: '' });
+    setContactSent(false);
   };
 
   return (
@@ -341,10 +370,97 @@ export default function TeacherMarketplace() {
                 )}
               </div>
             </div>
-            <div className="p-6 border-t border-outline-variant/10 flex justify-end">
+            <div className="p-6 border-t border-outline-variant/10 flex justify-between">
+              <button onClick={() => openContact(selectedTeacher)} className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all">
+                <Mail className="w-4 h-4" /> Contact Teacher
+              </button>
               <button onClick={() => setSelectedTeacher(null)} className="px-8 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {contactTeacher && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm animate-in fade-in" onClick={() => setContactTeacher(null)}>
+          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl border border-outline-variant/10 overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-black text-on-surface">Contact {contactTeacher.name}</h3>
+                <p className="text-xs text-on-surface-variant mt-1">{contactTeacher.school?.name}</p>
+              </div>
+              <button onClick={() => setContactTeacher(null)} className="p-2 hover:bg-surface-container-high rounded-xl transition-colors">
+                <X className="w-5 h-5 text-on-surface-variant" />
+              </button>
+            </div>
+            <div className="p-8 overflow-y-auto">
+              {contactSent ? (
+                <div className="text-center py-8 space-y-4">
+                  <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Mail className="w-8 h-8 text-secondary" />
+                  </div>
+                  <h4 className="text-lg font-bold text-on-surface">Message Sent!</h4>
+                  <p className="text-sm text-on-surface-variant">Your message has been emailed to {contactTeacher.name}. They will receive it shortly.</p>
+                  <button onClick={() => setContactTeacher(null)} className="mt-4 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest">
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Your Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={contactForm.sender_name}
+                      onChange={(e) => setContactForm({ ...contactForm, sender_name: e.target.value })}
+                      className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all"
+                      placeholder="e.g. School Admin"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Your Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={contactForm.sender_email}
+                      onChange={(e) => setContactForm({ ...contactForm, sender_email: e.target.value })}
+                      className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all"
+                      placeholder="admin@yourschool.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Subject</label>
+                    <input
+                      type="text"
+                      required
+                      value={contactForm.subject}
+                      onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                      className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all"
+                      placeholder="Teaching Opportunity Inquiry"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Message</label>
+                    <textarea
+                      required
+                      rows={5}
+                      value={contactForm.body}
+                      onChange={(e) => setContactForm({ ...contactForm, body: e.target.value })}
+                      className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all resize-none"
+                      placeholder="Tell the teacher about the opportunity..."
+                    />
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <button type="submit" disabled={isSending} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
+                      {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                      {isSending ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

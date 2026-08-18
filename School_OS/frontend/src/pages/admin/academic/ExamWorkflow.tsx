@@ -98,11 +98,9 @@ export default function ExamWorkflow() {
     windows.find(w => Number(w.sequence) === Number(seqId));
 
   const handleToggleWindow = async (windowId: string, currentState: boolean) => {
-    console.log('Toggling window:', { windowId, currentState });
     setTogglingWindow(windowId);
     try {
       const res = await api.post(`/assessments/mark-windows/${windowId}/toggle/`);
-      console.log('Toggle response:', res.data);
 
       if (!currentState) {
         const win = windows.find(w => w.id === windowId);
@@ -159,15 +157,13 @@ export default function ExamWorkflow() {
   };
 
   const handleCreateWindow = async (sequenceId: number, academicYearId: number) => {
-    console.log('Creating window:', { sequenceId, academicYearId });
     try {
-      const res = await api.post('/assessments/mark-windows/', {
+      await api.post('/assessments/mark-windows/', {
         academic_year: academicYearId,
         sequence: sequenceId,
         start_date: new Date().toISOString().split('T')[0],
         end_date: null,
       });
-      console.log('Window created:', res.data);
 
       const seq = terms.flatMap(t => t.sequences || []).find((s: any) => Number(s.id) === Number(sequenceId));
       if (seq && seq.term) {

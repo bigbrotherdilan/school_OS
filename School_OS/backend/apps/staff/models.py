@@ -111,6 +111,7 @@ class TeachingAssignment(models.Model):
         indexes = [
             models.Index(fields=['teacher', 'academic_year'], name='idx_assignment_teacher'),
             models.Index(fields=['tenant', 'academic_class'], name='idx_assignment_class'),
+            models.Index(fields=['teacher', 'subject', 'academic_class'], name='idx_talloc_teacher_subj_cls'),
         ]
 
     def __str__(self):

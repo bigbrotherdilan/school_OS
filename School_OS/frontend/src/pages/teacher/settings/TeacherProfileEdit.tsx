@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, Briefcase, Globe, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, User, Briefcase, Globe, Loader2, Camera } from 'lucide-react';
 import { useToastStore } from '../../../stores/toastStore';
 import { api } from '../../../services/api';
 
@@ -10,6 +10,9 @@ export default function TeacherProfileEdit() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [teacherId, setTeacherId] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState<string>('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -40,6 +43,7 @@ export default function TeacherProfileEdit() {
         if (teachers.length > 0) {
           const t = teachers[0];
           setTeacherId(t.id);
+          setProfilePhoto(t.user_details?.profile_photo || '');
           setFormData({
             first_name: t.user_details?.first_name || '',
             middle_name: t.user_details?.middle_name || '',
@@ -76,6 +80,35 @@ export default function TeacherProfileEdit() {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      addToast('Photo must be under 5MB.', 'error');
+      return;
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
+      addToast('Use JPG, PNG, WebP, or GIF.', 'error');
+      return;
+    }
+    setIsUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await api.post('/auth/upload-photo/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setProfilePhoto(res.data.profile_photo || '');
+      addToast('Profile photo updated.', 'success');
+    } catch (err: any) {
+      addToast(err.response?.data?.detail || 'Failed to upload photo.', 'error');
+    } finally {
+      setIsUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,6 +171,41 @@ export default function TeacherProfileEdit() {
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-10">
+        {/* Profile Photo */}
+        <div className="bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm">
+          <h3 className="text-xl font-bold tracking-tight flex items-center gap-3 border-b border-outline-variant/10 pb-4 mb-6">
+            <Camera className="text-primary w-6 h-6" /> Profile Photo
+          </h3>
+          <div className="flex items-center gap-8">
+            <div className="w-24 h-24 rounded-2xl bg-primary/5 flex items-center justify-center text-primary font-black text-3xl overflow-hidden border-2 border-outline-variant/10 shrink-0">
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span>{formData.first_name?.[0] || 'T'}</span>
+              )}
+            </div>
+            <div className="space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,.gif"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+                className="px-5 py-2.5 bg-primary/10 text-primary rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {isUploadingPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                {isUploadingPhoto ? 'Uploading...' : 'Change Photo'}
+              </button>
+              <p className="text-[10px] text-on-surface-variant">JPG, PNG, WebP, or GIF. Max 5MB.</p>
+            </div>
+          </div>
+        </div>
+
         {/* Personal Info */}
         <div className="bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm space-y-6">
           <h3 className="text-xl font-bold tracking-tight flex items-center gap-3 border-b border-outline-variant/10 pb-4">

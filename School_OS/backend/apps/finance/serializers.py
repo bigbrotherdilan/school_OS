@@ -57,14 +57,6 @@ class StudentInvoiceCreateSerializer(serializers.Serializer):
     due_date = serializers.DateField()
 
 
-class StudentInvoiceLineItemSerializer(serializers.ModelSerializer):
-    fee_structure_label = serializers.CharField(source='fee_structure.category.name', read_only=True)
-
-    class Meta:
-        model = InvoiceLineItem
-        fields = ['id', 'invoice', 'fee_structure', 'fee_structure_label', 'label', 'amount']
-
-
 class PaymentTransactionSerializer(serializers.ModelSerializer):
     invoice_number = serializers.CharField(source='invoice.invoice_number', read_only=True)
     student_name = serializers.CharField(source='invoice.student.full_name', read_only=True)

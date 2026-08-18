@@ -7,4 +7,5 @@ urlpatterns = [
     path('enrollment/', views.submit_enrollment_inquiry, name='public-enrollment'),
     path('regions/', views.school_regions, name='public-regions'),
     path('teachers/', views.PublicTeacherListView.as_view(), name='public-teacher-list'),
+    path('teachers/contact/', views.contact_teacher, name='public-contact-teacher'),
 ]

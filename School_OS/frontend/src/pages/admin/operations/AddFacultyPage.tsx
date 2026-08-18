@@ -129,6 +129,7 @@ export default function AddFacultyPage() {
               email={result.teacher?.user_details?.email || formData.email}
               password={result.temp_password}
               label="Teacher Temporary Password"
+              loginPortal="teacher"
             />
           )}
 

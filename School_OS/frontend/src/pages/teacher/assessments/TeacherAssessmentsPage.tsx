@@ -4,6 +4,7 @@ import { useToastStore } from '../../../stores/toastStore';
 import { useTeacherData } from '../../../hooks/useTeacherData';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTenantStore } from '../../../stores/tenantStore';
+import { useAutoSave } from '../../../hooks/useAutoSave';
 
 // ─── Types ───────────────────────────────────────────────────────
 interface Assignment {
@@ -100,7 +101,6 @@ export default function TeacherAssessmentsPage() {
   const [windowMessage, setWindowMessage] = useState<string>('');
 
   const [students, setStudents] = useState<StudentRow[]>([]);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const dirtyMarks = useRef<Set<string>>(new Set());
 
   const [initialLoading, setInitialLoading] = useState(true);
@@ -239,18 +239,41 @@ export default function TeacherAssessmentsPage() {
 
       setStudents(rows);
       dirtyMarks.current.clear();
-      setSaveStatus('saved');
+      resetState();
     } catch (err) {
       console.error('Failed to load gradebook:', err);
       addToast('Failed to load student data.', 'error');
     } finally {
       setTableLoading(false);
     }
-  }, [currentClassId, currentSubjectId, exams, selectedSequence, fetchStudents, fetchExamResults, addToast]);
+  }, [currentClassId, currentSubjectId, exams, selectedSequence, fetchStudents, fetchExamResults, addToast, resetState]);
 
   useEffect(() => {
     loadGradebook();
   }, [loadGradebook]);
+
+  const handleAutoSave = useCallback(async () => {
+    const payload = Array.from(dirtyMarks.current).map(key => {
+      const [studentId, examId] = key.split(':');
+      const student = students.find(s => s.id === studentId);
+      const score = student?.marks[examId];
+      return {
+        exam: examId.startsWith('seq_') ? undefined : examId,
+        student: studentId,
+        subject: currentSubjectId,
+        sequence: selectedSequence || undefined,
+        score: score === '' ? null : Number(score),
+      };
+    });
+    if (payload.length > 0) {
+      await bulkUpdateMarks(payload);
+    }
+    dirtyMarks.current.clear();
+  }, [students, currentSubjectId, selectedSequence, bulkUpdateMarks]);
+
+  const { saveState, markDirty, triggerSave, resetState } = useAutoSave(handleAutoSave, {
+    enabled: isWindowOpen,
+  });
 
   const handleMarkChange = (studentId: string, examId: string, value: string) => {
     if (!isWindowOpen) return;
@@ -264,7 +287,7 @@ export default function TeacherAssessmentsPage() {
       )
     );
     dirtyMarks.current.add(`${studentId}:${examId}`);
-    setSaveStatus('unsaved');
+    markDirty();
   };
 
   const handleKeyDown = (
@@ -289,68 +312,25 @@ export default function TeacherAssessmentsPage() {
     }
   };
 
-  // Auto-save changes to backend after 2 seconds of inactivity
-  useEffect(() => {
-    if (saveStatus !== 'unsaved' || !isWindowOpen) return;
-
-    const timer = setTimeout(async () => {
-      setSaveStatus('saving');
-      try {
-        const payload = Array.from(dirtyMarks.current).map(key => {
-          const [studentId, examId] = key.split(':');
-          const student = students.find(s => s.id === studentId);
-          const score = student?.marks[examId];
-          return {
-            exam: examId.startsWith('seq_') ? undefined : examId,
-            student: studentId,
-            subject: currentSubjectId,
-            sequence: selectedSequence || undefined,
-            score: score === '' ? null : Number(score),
-          };
-        });
-
-        if (payload.length > 0) {
-          await bulkUpdateMarks(payload);
-        }
-        dirtyMarks.current.clear();
-        setSaveStatus('saved');
-      } catch {
-        setSaveStatus('unsaved');
-        addToast('Failed to save marks. Will retry.', 'error');
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [saveStatus, students, isWindowOpen, currentSubjectId, selectedSequence, bulkUpdateMarks, addToast]);
-
   const handleSubmit = async () => {
     if (!isWindowOpen) {
       addToast('Marks entry is closed for this sequence.', 'error');
       return;
     }
 
-    setSaveStatus('saving');
-    try {
-      const payload = students.flatMap(s =>
-        exams
-          .filter(e => s.marks[e.id] !== '' && s.marks[e.id] !== undefined)
-          .map(e => ({
-            exam: e.id.startsWith('seq_') ? undefined : e.id,
-            student: s.id,
-            subject: currentSubjectId,
-            sequence: selectedSequence || undefined,
-            score: Number(s.marks[e.id]),
-          }))
-      );
-
-      if (payload.length > 0) {
-        await bulkUpdateMarks(payload);
+    dirtyMarks.current.clear();
+    for (const s of students) {
+      for (const e of exams) {
+        if (s.marks[e.id] !== '' && s.marks[e.id] !== undefined) {
+          dirtyMarks.current.add(`${s.id}:${e.id}`);
+        }
       }
-      dirtyMarks.current.clear();
-      setSaveStatus('saved');
+    }
+
+    try {
+      await triggerSave();
       addToast('Marks officially submitted to Administration.', 'success');
     } catch {
-      setSaveStatus('unsaved');
       addToast('Failed to submit marks. Please try again.', 'error');
     }
   };
@@ -525,13 +505,13 @@ export default function TeacherAssessmentsPage() {
             </h3>
 
             <div className={`flex items-center gap-2 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all duration-300 ${
-              saveStatus === 'saved' ? 'bg-secondary/10 text-secondary' :
-              saveStatus === 'saving' ? 'bg-primary/10 text-primary' :
+              saveState === 'saved' ? 'bg-secondary/10 text-secondary' :
+              saveState === 'saving' ? 'bg-primary/10 text-primary' :
               'bg-slate-100 text-slate-400'
             }`}>
-              {saveStatus === 'saved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">cloud_done</span> <span className="hidden sm:inline">Saved to Cloud</span><span className="sm:hidden">Saved</span></>}
-              {saveStatus === 'saving' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px] animate-spin">sync</span> Saving...</>}
-              {saveStatus === 'unsaved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">edit</span> <span className="hidden sm:inline">Unsaved changes</span><span className="sm:hidden">Unsaved</span></>}
+              {saveState === 'saved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">cloud_done</span> <span className="hidden sm:inline">Saved to Cloud</span><span className="sm:hidden">Saved</span></>}
+              {saveState === 'saving' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px] animate-spin">sync</span> Saving...</>}
+              {saveState === 'unsaved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">edit</span> <span className="hidden sm:inline">Unsaved changes</span><span className="sm:hidden">Unsaved</span></>}
             </div>
           </div>
 
@@ -678,7 +658,7 @@ export default function TeacherAssessmentsPage() {
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">Ensure all cells are filled. Submitting will lock the gradebook for administrative review.</p>
             <button
               onClick={handleSubmit}
-              disabled={!isWindowOpen || saveStatus === 'saving' || students.length === 0}
+              disabled={!isWindowOpen || saveState === 'saving' || students.length === 0}
               className="w-full py-3.5 bg-primary text-white rounded-xl font-bold shadow-md hover:-translate-y-0.5 active:translate-y-0 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2 min-h-[48px]"
             >
               <span className="material-symbols-outlined text-sm">send</span> Submit to Admin
@@ -688,7 +668,7 @@ export default function TeacherAssessmentsPage() {
                 <span className="material-symbols-outlined text-[10px]">lock</span> Sequence closed
               </p>
             )}
-            {saveStatus === 'saving' && (
+            {saveState === 'saving' && (
               <p className="text-[10px] text-primary mt-2 flex items-center gap-1 font-semibold">
                 <span className="material-symbols-outlined text-[10px] animate-spin">sync</span> Waiting for sync...
               </p>

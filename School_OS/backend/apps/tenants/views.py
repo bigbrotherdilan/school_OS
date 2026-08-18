@@ -53,9 +53,7 @@ class TenantViewSet(viewsets.ModelViewSet):
         self._resolve_tenant_context()
         if self.action in ['list', 'retrieve', 'config']:
             return [IsAuthenticated()]
-        if self.action == 'theme':
-            return [IsAuthenticated(), IsSchoolAdmin()]
-        if self.action == 'logo':
+        if self.action in ['theme', 'logo', 'school_info']:
             return [IsAuthenticated(), IsSchoolAdmin()]
         if self.action == 'school_config':
             if self.request.method == 'PATCH':
@@ -141,6 +139,32 @@ class TenantViewSet(viewsets.ModelViewSet):
             'logo_url': tenant.logo_url,
             'logo_path': path,
         })
+
+    @action(detail=True, methods=['get', 'patch'])
+    def school_info(self, request, id=None):
+        """
+        GET  /tenants/{id}/school-info/ — Return editable school fields.
+        PATCH /tenants/{id}/school-info/ — Update school name, motto,
+               contact info, school_type, session_type, etc.
+        """
+        tenant = self.get_object()
+
+        if request.method == 'PATCH':
+            allowed = [
+                'school_name', 'motto', 'phone', 'email', 'address',
+                'region', 'division', 'country', 'postal_code',
+                'school_type', 'session_type', 'education_type',
+            ]
+            for field in allowed:
+                if field in request.data:
+                    setattr(tenant, field, request.data[field])
+            try:
+                tenant.full_clean()
+                tenant.save()
+            except ValidationError as e:
+                return Response({'detail': e.message_dict}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(TenantSerializer(tenant).data)
 
     @action(detail=True, methods=['get', 'patch'])
     def school_config(self, request, id=None):

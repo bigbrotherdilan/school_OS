@@ -82,7 +82,7 @@ export default function AddBursarPage() {
           </div>
 
           {result.temp_password && (
-            <CredentialsCard email={result.user.email} password={result.temp_password} label="Bursar Temporary Password" />
+            <CredentialsCard email={result.user.email} password={result.temp_password} label="Bursar Temporary Password" loginPortal="bursar" />
           )}
 
           <button onClick={() => navigate('/admin/operations')} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">

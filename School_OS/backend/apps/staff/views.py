@@ -20,7 +20,7 @@ from apps.staff.serializers import (
     TeacherSerializer, TeachingAssignmentSerializer,
     TeacherOnboardSerializer
 )
-from apps.academic.views import BaseTenantViewSet
+from apps.core.views import BaseTenantViewSet
 from apps.authentication.permissions import IsSchoolAdmin, IsAdminOrTeacher, IsSchoolMember
 
 
@@ -193,6 +193,11 @@ class TeacherViewSet(BaseTenantViewSet):
     filterset_fields = ['is_active', 'availability', 'public_profile', 'department']
     search_fields = ['user__first_name', 'user__last_name', 'employee_id', 'department']
 
+    def get_queryset(self):
+        return super().get_queryset().select_related('user').prefetch_related(
+            'assignments__subject', 'assignments__academic_class', 'assignments__academic_year',
+        )
+
     def perform_destroy(self, instance):
         """
         Remove the teacher profile. If the linked user has no other teacher
@@ -301,7 +306,10 @@ class TeacherViewSet(BaseTenantViewSet):
         POST /api/v1/staff/teachers/bulk-import/
         Accepts a CSV file with columns: first_name, last_name, email, employee_id, qualification, department
         Creates User + UserRoleMapping + Teacher for each row.
+        Pass ?dry_run=true to validate without writing to the database.
         """
+        dry_run = request.query_params.get('dry_run', 'false').lower() == 'true'
+
         csv_file = request.FILES.get('file')
         if not csv_file:
             return Response({'detail': 'No file uploaded. Send a CSV file as "file".'}, status=400)
@@ -332,6 +340,18 @@ class TeacherViewSet(BaseTenantViewSet):
 
             if not email or not first_name or not last_name:
                 errors.append({'row': row_num, 'email': email, 'error': 'Missing required fields (first_name, last_name, email)'})
+                continue
+
+            if dry_run:
+                from apps.authentication.models import User
+                if User.objects.filter(email=email).exists():
+                    errors.append({'row': row_num, 'email': email, 'error': 'Email already exists'})
+                    continue
+                created.append({
+                    'email': email,
+                    'name': f"{first_name} {last_name}",
+                    'employee_id': row.get('employee_id', '').strip() or 'Will be generated',
+                })
                 continue
 
             try:
@@ -399,9 +419,10 @@ class TeacherViewSet(BaseTenantViewSet):
                 errors.append({'row': row_num, 'email': email, 'error': str(e)})
 
         return Response({
-            'message': f'Import complete. {len(created)} teachers created, {len(errors)} errors.',
+            'message': f'{"Preview: " if dry_run else ""}Import {"preview" if dry_run else "complete"}. {len(created)} teachers {"would be created" if dry_run else "created"}, {len(errors)} errors.',
             'created': created,
             'errors': errors,
+            'dry_run': dry_run,
         }, status=status.HTTP_201_CREATED)
 
 

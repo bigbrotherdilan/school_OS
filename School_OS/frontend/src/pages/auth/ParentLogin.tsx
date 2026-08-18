@@ -73,7 +73,10 @@ export default function ParentLogin() {
                         </button>
                     </form>
                 </div>
-                <div className="mt-6 text-center">
+                <div className="mt-6 text-center space-y-3">
+                    <Link to="/forgot-password" className="text-sm font-medium text-slate-500 hover:text-[#ef4444] transition-colors block">
+                        Forgot your password?
+                    </Link>
                     <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-[#ef4444] transition-colors flex items-center gap-1 justify-center">
                         <span className="material-symbols-outlined text-[16px]">arrow_back</span> Change Portal
                     </Link>

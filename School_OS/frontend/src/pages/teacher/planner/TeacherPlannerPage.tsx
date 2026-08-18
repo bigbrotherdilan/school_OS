@@ -2,6 +2,7 @@
 import { useTeacherStore } from '../../../stores/teacherStore';
 import { useTeacherData } from '../../../hooks/useTeacherData';
 import { useToastStore } from '../../../stores/toastStore';
+import { useAutoSave, type SaveState } from '../../../hooks/useAutoSave';
 
 interface SchemeWeek {
   id: string;
@@ -28,8 +29,6 @@ interface Term {
   end_date: string | null;
 }
 
-type SaveState = 'saved' | 'saving' | 'unsaved';
-
 export default function TeacherPlannerPage() {
   const { activeAssignment } = useTeacherStore();
   const { fetchSchemes, updateScheme, markTaught, markPlanned, fetchTerms } = useTeacherData();
@@ -40,10 +39,9 @@ export default function TeacherPlannerPage() {
   const [weeks, setWeeks] = useState<SchemeWeek[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<Record<string, SaveState>>({});
 
   const notesRef = useRef<Record<string, string>>({});
-  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const lastEditedWeekId = useRef<string | null>(null);
 
   // Load terms once (for the assignment's academic year)
   useEffect(() => {
@@ -83,39 +81,27 @@ export default function TeacherPlannerPage() {
     return () => { cancelled = true; };
   }, [activeAssignment, selectedTerm, fetchSchemes]);
 
-  // Cleanup timers on unmount
-  useEffect(() => () => {
-    Object.values(timersRef.current).forEach(clearTimeout);
-  }, []);
+  const doSaveNotes = useCallback(async () => {
+    const id = lastEditedWeekId.current;
+    if (!id) return;
+    await updateScheme(id, { notes: notesRef.current[id] || '' });
+  }, [updateScheme]);
 
-  const doSaveNotes = useCallback(async (id: string) => {
-    const value = notesRef.current[id] || '';
-    setSaveState((s) => ({ ...s, [id]: 'saving' }));
-    try {
-      await updateScheme(id, { notes: value });
-      setSaveState((s) => ({ ...s, [id]: 'saved' }));
-    } catch {
-      setSaveState((s) => ({ ...s, [id]: 'unsaved' }));
-      addToast('Could not save your notes. Will retry when you type again.', 'error');
-    }
-  }, [updateScheme, addToast]);
+  const { saveState, markDirty, triggerSave, clearPending } = useAutoSave(doSaveNotes);
 
   const handleNotesChange = (id: string, value: string) => {
     notesRef.current[id] = value;
     setWeeks((prev) => prev.map((w) => (w.id === id ? { ...w, notes: value } : w)));
-    setSaveState((s) => ({ ...s, [id]: 'unsaved' }));
-    if (timersRef.current[id]) clearTimeout(timersRef.current[id]);
-    timersRef.current[id] = setTimeout(() => doSaveNotes(id), 2000);
+    lastEditedWeekId.current = id;
+    markDirty();
   };
 
   const handleToggle = async (week: SchemeWeek, toTaught: boolean) => {
     if (busyId) return;
     setBusyId(week.id);
-    if (timersRef.current[week.id]) {
-      clearTimeout(timersRef.current[week.id]);
-      delete timersRef.current[week.id];
+    clearPending();
+    if (lastEditedWeekId.current === week.id) {
       await updateScheme(week.id, { notes: notesRef.current[week.id] || '' }).catch(() => {});
-      setSaveState((s) => ({ ...s, [week.id]: 'saved' }));
     }
     try {
       const updated = toTaught ? await markTaught(week.id) : await markPlanned(week.id);
@@ -262,7 +248,7 @@ export default function TeacherPlannerPage() {
                         placeholder="What actually happened in class, anything to remember..."
                         className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all leading-relaxed resize-y"
                       />
-                      <SaveChip state={saveState[week.id] || 'saved'} />
+                      <SaveChip state={saveState} />
                     </div>
                   </div>
                   <div className="sm:ml-auto">

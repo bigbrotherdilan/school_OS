@@ -28,7 +28,8 @@ export default function BulkCsvUpload({
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string[][]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [result, setResult] = useState<{ created: any[]; errors: any[]; message: string } | null>(null);
+  const [isDryRun, setIsDryRun] = useState(false);
+  const [result, setResult] = useState<{ created: any[]; errors: any[]; message: string; dry_run?: boolean } | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const handleFile = useCallback((f: File) => {
@@ -67,20 +68,22 @@ export default function BulkCsvUpload({
     if (f) handleFile(f);
   }, [handleFile]);
 
-  const handleUpload = async () => {
+  const handleUpload = async (dryRun = false) => {
     if (!file) return;
     setIsUploading(true);
+    setIsDryRun(dryRun);
     try {
       const formData = new FormData();
       formData.append('file', file);
+      const url = dryRun ? `${uploadEndpoint}?dry_run=true` : uploadEndpoint;
       const { api } = await import('../../services/api');
-      const response = await api.post(uploadEndpoint, formData, {
+      const response = await api.post(url, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const data = response.data;
-      const res = { created: data.created || [], errors: data.errors || [], message: data.message || '' };
+      const res = { created: data.created || [], errors: data.errors || [], message: data.message || '', dry_run: data.dry_run };
       setResult(res);
-      onComplete(res);
+      if (!dryRun) onComplete(res);
     } catch (err: any) {
       const detail = err.response?.data?.detail || 'Upload failed. Please try again.';
       setResult({ created: [], errors: [{ row: 0, error: detail }], message: detail });
@@ -187,13 +190,21 @@ export default function BulkCsvUpload({
             <button onClick={reset} className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
               Choose Different File
             </button>
-            <button onClick={handleUpload} disabled={isUploading} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
-              {isUploading ? (
+            <button onClick={() => handleUpload(true)} disabled={isUploading} className="flex items-center gap-2 px-6 py-3 bg-surface-container border border-outline-variant/20 text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-high transition-all disabled:opacity-50">
+              {isUploading && isDryRun ? (
+                <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+              ) : (
+                <AlertTriangle className="w-4 h-4" />
+              )}
+              {isUploading && isDryRun ? 'Checking...' : 'Preview'}
+            </button>
+            <button onClick={() => handleUpload(false)} disabled={isUploading} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
+              {isUploading && !isDryRun ? (
                 <span className="material-symbols-outlined animate-spin text-sm">sync</span>
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              {isUploading ? 'Importing...' : `Import ${title}`}
+              {isUploading && !isDryRun ? 'Importing...' : `Import ${title}`}
             </button>
           </div>
         </div>
@@ -269,10 +280,26 @@ export default function BulkCsvUpload({
             </div>
           )}
 
-          <div className="flex justify-end">
-            <button onClick={reset} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all">
-              Import Another File
-            </button>
+          <div className="flex justify-end gap-4">
+            {result.dry_run ? (
+              <>
+                <button onClick={reset} className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
+                  Cancel
+                </button>
+                <button onClick={() => handleUpload(false)} disabled={isUploading} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
+                  {isUploading ? (
+                    <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
+                  {isUploading ? 'Importing...' : 'Confirm Import'}
+                </button>
+              </>
+            ) : (
+              <button onClick={reset} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all">
+                Import Another File
+              </button>
+            )}
           </div>
         </div>
       )}

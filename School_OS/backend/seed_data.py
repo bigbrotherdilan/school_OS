@@ -70,65 +70,65 @@ def create_seed_data():
     # ─── 2. Create Users ────────────────────────────────────────
     print("\n[2/7] Creating users...")
 
-superadmin, _ = User.objects.get_or_create(
-            email='platform@schoolos.sos',
-            defaults={
-                'username': 'platform_admin',
-                'first_name': 'Platform',
-                'last_name': 'Administrator',
-                'is_platform_admin': True,
-                'is_staff': True,
-                'is_superuser': True,
-            },
+    superadmin, _ = User.objects.get_or_create(
+        email='platform@schoolos.sos',
+        defaults={
+            'username': 'platform_admin',
+            'first_name': 'Platform',
+            'last_name': 'Administrator',
+            'is_platform_admin': True,
+            'is_staff': True,
+            'is_superuser': True,
+        },
+    )
+    if _:  # Created
+        password = generate_secure_password()
+        superadmin.set_password(password)
+        superadmin.save()
+        print(f"   -> Platform admin password: {password}")
+
+    admin_user, _ = User.objects.get_or_create(
+        email='admin@saintjoseph.sos',
+        defaults={'username': 'sj_admin', 'first_name': 'Marie', 'last_name': 'Nguema'},
+    )
+    if _:  # Created
+        password = generate_secure_password()
+        admin_user.set_password(password)
+        admin_user.save()
+        print(f"   -> Saint Joseph admin password: {password}")
+    UserRoleMapping.objects.get_or_create(user=admin_user, tenant=tenant, role='admin')
+
+    teacher_users = []
+    teachers_data = [
+        {'email': 'dr.thorne@saintjoseph.sos', 'first': 'Aris', 'last': 'Thorne', 'lang': 'en'},
+        {'email': 'mme.biya@saintjoseph.sos', 'first': 'Clarisse', 'last': 'Biya', 'lang': 'fr'},
+    ]
+    teacher_passwords = {}
+    for data in teachers_data:
+        u, _ = User.objects.get_or_create(
+            email=data['email'],
+            defaults={'username': slugify(data['first']), 'first_name': data['first'], 'last_name': data['last'], 'default_language': data['lang']}
         )
         if _:  # Created
             password = generate_secure_password()
-            superadmin.set_password(password)
-            superadmin.save()
-            print(f"   -> Platform admin password: {password}")
+            u.set_password(password)
+            u.save()
+            teacher_passwords[data['email']] = password
+        UserRoleMapping.objects.get_or_create(user=u, tenant=tenant, role='teacher')
+        teacher_users.append(u)
 
-        admin_user, _ = User.objects.get_or_create(
-            email='admin@saintjoseph.sos',
-            defaults={'username': 'sj_admin', 'first_name': 'Marie', 'last_name': 'Nguema'},
-        )
-        if _:  # Created
-            password = generate_secure_password()
-            admin_user.set_password(password)
-            admin_user.save()
-            print(f"   -> Saint Joseph admin password: {password}")
-        UserRoleMapping.objects.get_or_create(user=admin_user, tenant=tenant, role='admin')
-
-teacher_users = []
-        teachers_data = [
-            {'email': 'dr.thorne@saintjoseph.sos', 'first': 'Aris', 'last': 'Thorne', 'lang': 'en'},
-            {'email': 'mme.biya@saintjoseph.sos', 'first': 'Clarisse', 'last': 'Biya', 'lang': 'fr'},
-        ]
-        teacher_passwords = {}
-        for data in teachers_data:
-            u, _ = User.objects.get_or_create(
-                email=data['email'],
-                defaults={'username': slugify(data['first']), 'first_name': data['first'], 'last_name': data['last'], 'default_language': data['lang']}
-            )
-            if _:  # Created
-                password = generate_secure_password()
-                u.set_password(password)
-                u.save()
-                teacher_passwords[data['email']] = password
-            UserRoleMapping.objects.get_or_create(user=u, tenant=tenant, role='teacher')
-            teacher_users.append(u)
-
-        dr_song, _ = User.objects.get_or_create(
-            email='dr.song@saintjoseph.sos',
-            defaults={'username': 'dr_song', 'first_name': 'Hee-young', 'last_name': 'Song', 'default_language': 'en'}
-        )
-        if _:  # Created
-            password = generate_secure_password()
-            dr_song.set_password(password)
-            dr_song.save()
-            print(f"   -> Dr. Song password: {password}")
-        UserRoleMapping.objects.get_or_create(user=dr_song, tenant=tenant, role='teacher')
-        UserRoleMapping.objects.get_or_create(user=dr_song, tenant=tenant, role='admin')
-        teacher_users.append(dr_song)
+    dr_song, _ = User.objects.get_or_create(
+        email='dr.song@saintjoseph.sos',
+        defaults={'username': 'dr_song', 'first_name': 'Hee-young', 'last_name': 'Song', 'default_language': 'en'}
+    )
+    if _:  # Created
+        password = generate_secure_password()
+        dr_song.set_password(password)
+        dr_song.save()
+        print(f"   -> Dr. Song password: {password}")
+    UserRoleMapping.objects.get_or_create(user=dr_song, tenant=tenant, role='teacher')
+    UserRoleMapping.objects.get_or_create(user=dr_song, tenant=tenant, role='admin')
+    teacher_users.append(dr_song)
 
     # ─── 3. Academic Structure ──────────────────────────────────
     print("\n[3/7] Setting up academic structure...")

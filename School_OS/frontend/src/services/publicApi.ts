@@ -3,7 +3,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const BASE_URL = import.meta.env.VITE_PUBLIC_API_URL || API_URL.replace(/\/api\/v1$/, '');
 
-const publicApi = axios.create({
+export const publicApi = axios.create({
   baseURL: `${BASE_URL}/pub/v1`,
   headers: { 'Content-Type': 'application/json' },
 });

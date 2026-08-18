@@ -157,6 +157,9 @@ class TimeSlot(models.Model):
     class Meta:
         db_table = 'time_slots'
         ordering = ['day_of_week', 'start_time']
+        indexes = [
+            models.Index(fields=['timetable', 'day_of_week', 'start_time'], name='idx_timetable_entry_day_slot'),
+        ]
 
     def __str__(self):
         return f"{self.get_day_of_week_display()} {self.start_time.strftime('%H:%M')} - {self.subject.name if hasattr(self, 'subject') else 'Subject'}"

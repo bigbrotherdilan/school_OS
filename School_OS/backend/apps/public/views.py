@@ -380,3 +380,63 @@ class PublicTeacherListView(generics.ListAPIView):
             })
 
         return _wrap_response(data, meta={'total': len(data)})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([AnonRateThrottle])
+def contact_teacher(request):
+    """
+    POST /pub/v1/teachers/contact/
+    Public endpoint for marketplace visitors to contact a teacher.
+    Sends an email notification to the teacher.
+    """
+    teacher_id = request.data.get('teacher_id')
+    sender_name = request.data.get('sender_name', '').strip()
+    sender_email = request.data.get('sender_email', '').strip()
+    subject = request.data.get('subject', '').strip()
+    body = request.data.get('body', '').strip()
+
+    if not all([teacher_id, sender_name, sender_email, subject, body]):
+        return Response(
+            {'detail': 'All fields are required: teacher_id, sender_name, sender_email, subject, body'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        teacher = Teacher.objects.select_related('user', 'tenant').get(id=teacher_id)
+    except Teacher.DoesNotExist:
+        return Response({'detail': 'Teacher not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    from django.core.mail import send_mail
+    teacher_email = teacher.user.email
+    school_name = teacher.tenant.school_name if teacher.tenant else 'School OS'
+
+    email_subject = f"[{school_name}] {subject}"
+    email_body = (
+        f"You have received a message through the School OS Teacher Marketplace.\n\n"
+        f"From: {sender_name} ({sender_email})\n"
+        f"Subject: {subject}\n\n"
+        f"{body}\n\n"
+        f"---\nThis message was sent via the public teacher marketplace."
+    )
+
+    try:
+        send_mail(
+            email_subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,
+            [teacher_email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        logger.error(f"Failed to send contact email to {teacher_email}: {e}")
+        return Response(
+            {'detail': 'Failed to send message. Please try again later.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        {'detail': f'Message sent to {teacher.user.full_name} at {school_name}.'},
+        status=status.HTTP_200_OK,
+    )

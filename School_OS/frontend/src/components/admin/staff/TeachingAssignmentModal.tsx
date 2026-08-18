@@ -9,7 +9,8 @@ import {
   BookOpen, 
   Calendar,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 
 interface TeachingAssignmentModalProps {
@@ -34,6 +35,8 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
     academic_year: ''
   });
 
+  const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
@@ -54,6 +57,41 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
     fetchMetadata();
   }, []);
 
+  useEffect(() => {
+    if (!formData.subject || !formData.academic_class || !formData.academic_year) {
+      setConflictWarning(null);
+      return;
+    }
+    const duplicate = assignments.find(
+      a => a.subject === formData.subject
+        && a.academic_class === formData.academic_class
+        && a.academic_year === formData.academic_year
+    );
+    if (duplicate) {
+      setConflictWarning(
+        `This teacher already has an assignment for ${duplicate.subject_name} in ${duplicate.class_name} (${duplicate.academic_year_name}).`
+      );
+    } else {
+      const sameSubject = assignments.find(
+        a => a.subject === formData.subject && a.academic_year === formData.academic_year
+      );
+      const sameClass = assignments.find(
+        a => a.academic_class === formData.academic_class && a.academic_year === formData.academic_year
+      );
+      if (sameSubject) {
+        setConflictWarning(
+          `Note: This teacher already teaches ${sameSubject.subject_name} in ${sameSubject.class_name} this year.`
+        );
+      } else if (sameClass) {
+        setConflictWarning(
+          `Note: This teacher already has a subject in ${sameClass.class_name} this year.`
+        );
+      } else {
+        setConflictWarning(null);
+      }
+    }
+  }, [formData, assignments]);
+
   const handleAddAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -65,6 +103,7 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
       addToast('Teaching assignment saved.', 'success');
       setAssignments([...assignments, response.data]);
       setFormData({ subject: '', academic_class: '', academic_year: '' });
+      setConflictWarning(null);
       onUpdate();
     } catch (error: any) {
       const data = error.response?.data;
@@ -155,6 +194,12 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
               </div>
 
               <div className="md:col-span-3 flex justify-end pt-2">
+                {conflictWarning && (
+                  <div className="flex items-center gap-2 mr-auto px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs font-medium text-amber-700">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    {conflictWarning}
+                  </div>
+                )}
                 <button 
                   type="submit"
                   disabled={loading || !formData.subject || !formData.academic_class || !formData.academic_year}

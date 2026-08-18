@@ -146,7 +146,7 @@ export default function AddParentPage() {
           </div>
 
           {result.temp_password && (
-            <CredentialsCard email={result.user.email} password={result.temp_password} label="Parent Temporary Password" note="This parent is global: they can be linked to children at any other school. This password is shown only once — share it in person or by phone." />
+            <CredentialsCard email={result.user.email} password={result.temp_password} label="Parent Temporary Password" loginPortal="parent" note="This parent is global: they can be linked to children at any other school. This password is shown only once — share it in person or by phone." />
           )}
 
           <button onClick={() => navigate('/admin/operations')} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">

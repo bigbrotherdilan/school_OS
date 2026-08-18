@@ -34,6 +34,9 @@ class FeeStructure(models.Model):
     class Meta:
         db_table = 'finance_fee_structures'
         unique_together = ['tenant', 'academic_year', 'category', 'target_class']
+        indexes = [
+            models.Index(fields=['tenant', 'academic_year'], name='idx_feestructure_tenant_yr'),
+        ]
 
     def __str__(self):
         return f"{self.category.name} - {self.target_class.name if self.target_class else 'Global'} - {self.amount}"
@@ -67,6 +70,9 @@ class StudentInvoice(models.Model):
     class Meta:
         db_table = 'finance_student_invoices'
         ordering = ['-created_at', '-invoice_number']
+        indexes = [
+            models.Index(fields=['student', 'academic_year'], name='idx_invoice_student_year_term'),
+        ]
 
     @property
     def balance(self):
@@ -117,6 +123,9 @@ class PaymentTransaction(models.Model):
     class Meta:
         db_table = 'finance_payment_transactions'
         ordering = ['-payment_date']
+        indexes = [
+            models.Index(fields=['invoice'], name='idx_payment_invoice_status'),
+        ]
 
     def __str__(self):
         return f"RCT-{self.receipt_number} - {self.amount}"

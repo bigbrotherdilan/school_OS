@@ -5,14 +5,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from datetime import datetime
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from .models import (
     Timetable, TimeSlot, Lesson, TeacherUnavailability, StudentGroup, Room, TeacherAllocation,
 )
 from .serializers import (
-    TimetableSerializer, TimeSlotSerializer, LessonSerializer, TeacherUnavailabilitySerializer,
-    StudentGroupSerializer, RoomSerializer, TeacherAllocationSerializer,
+    TimetableSerializer, TimetableListSerializer, TimeSlotSerializer, LessonSerializer,
+    TeacherUnavailabilitySerializer, StudentGroupSerializer, RoomSerializer,
+    TeacherAllocationSerializer,
 )
 from .solver import SchoolSolver, suggest_lessons_for, validate_timetable, _slot_group_overlap
 from apps.authentication.permissions import IsSchoolMember
@@ -116,9 +117,21 @@ class TimetableViewSet(viewsets.ModelViewSet):
     serializer_class = TimetableSerializer
     permission_classes = [IsAuthenticated, IsSchoolMember]
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TimetableListSerializer
+        return TimetableSerializer
+
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        return Timetable.objects.filter(tenant_id=tenant_id).order_by('class_obj__name')
+        return Timetable.objects.filter(
+            tenant_id=tenant_id,
+        ).select_related(
+            'class_obj', 'class_obj__stream', 'academic_year', 'term', 'approved_by',
+        ).annotate(
+            slot_count=Count('slots'),
+            lesson_count=Count('lessons'),
+        ).order_by('class_obj__name')
 
     def perform_create(self, serializer):
         year_id = self.request.data.get('academic_year')

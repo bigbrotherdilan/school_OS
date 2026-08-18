@@ -1,6 +1,7 @@
 """
 Security Middleware — Adds additional security headers.
 """
+import re
 import uuid
 from django.utils.deprecation import MiddlewareMixin
 from django.utils import timezone
@@ -62,6 +63,20 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
         if 'X-XSS-Protection' not in response:
             response['X-XSS-Protection'] = '1; mode=block'
 
+        # Content-Security-Policy - restrict resource loading
+        if 'Content-Security-Policy' not in response:
+            response['Content-Security-Policy'] = (
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self' https://api.pwnedpasswords.com; "
+                "font-src 'self'; "
+                "frame-ancestors 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self'"
+            )
+
         return response
 
 
@@ -72,9 +87,9 @@ class RequestIDMiddleware(MiddlewareMixin):
     """
     
     def process_request(self, request):
-        # Generate or use existing request ID
-        request_id = request.META.get('HTTP_X_REQUEST_ID')
-        if not request_id:
+        # Sanitize incoming request ID — must be alphanumeric/dash, 1-64 chars
+        request_id = request.META.get('HTTP_X_REQUEST_ID', '')
+        if not request_id or not re.match(r'^[a-zA-Z0-9\-]{1,64}$', request_id):
             request_id = uuid.uuid4().hex[:16]
         request.request_id = request_id
         request.META['HTTP_X_REQUEST_ID'] = request_id

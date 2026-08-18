@@ -1,3 +1,5 @@
+* [ ] 
+
 # School OS Implementation Plan v2
 
 Complete implementation plan derived from the Psychology Map in `research.md`.
@@ -25,10 +27,10 @@ Complete implementation plan derived from the Psychology Map in `research.md`.
 
 - Title: *"What The Notebook Costs You"*
 - 4 cards, each with a hard-hitting stat:
-  - *"10 hours a week on paperwork. That's 21 days a year. Gone."* (icon: `schedule`)
-  - *"3 in 10 parents never see their child's report card on time."* (icon: `parent_optimize`)
-  - *"Fees collected in cash envelopes. Nobody knows who paid."* (icon: `money_off`)
-  - *"A student transfers. Their records? Lost."* (icon: `folder_off`)
+  - [ ] *"10 hours a week on paperwork. That's 21 days a year. Gone."* (icon: `schedule`)
+  - [ ] *"3 in 10 parents never see their child's report card on time."* (icon: `parent_optimize`)
+  - [ ] *"Fees collected in cash envelopes. Nobody knows who paid."* (icon: `money_off`)
+  - [ ] *"A student transfers. Their records? Lost."* (icon: `folder_off`)
 - Each card has a red border-left (existing pattern) but with the new copy
 
 ### C. "Pick a Side" Section (new, insert after Problem section)
@@ -66,8 +68,8 @@ Complete implementation plan derived from the Psychology Map in `research.md`.
 2. **Progress bar renders** at the top of the dashboard (before the header) showing:
 
    1. A horizontal progress bar: filled portion = completed items / 5
-   1. Text: *"Your school is X% set up"*
-   1. 5 clickable checklist items in a grid:
+   2. Text: *"Your school is X% set up"*
+   3. 5 clickable checklist items in a grid:
       - ✅ School info set up (always true if registered) → links to `/admin/settings`
       - ✅/○ Create classes (`classCount > 0`) → links to `/admin/academic/setup`
       - ✅/○ Enroll students (`studentCount > 0`) → links to `/admin/academic/students/new`

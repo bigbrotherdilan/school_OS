@@ -56,6 +56,7 @@ export default function OperationsCenter() {
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Staff Directory', icon: 'badge', path: '/admin/operations/faculty', color: 'bg-blue-500' },
+          { label: 'User Directory', icon: 'people', path: '/admin/operations/users', color: 'bg-indigo-500' },
           { label: 'Teacher Appraisal', icon: 'groups', path: '/admin/operations/faculty-performance', color: 'bg-emerald-500' },
           { label: 'Discipline & Transfers', icon: 'gavel', path: '/admin/operations/discipline', color: 'bg-amber-500' },
           { label: 'Add Staff', icon: 'person_add', path: '/admin/operations/faculty/new', color: 'bg-violet-500' },

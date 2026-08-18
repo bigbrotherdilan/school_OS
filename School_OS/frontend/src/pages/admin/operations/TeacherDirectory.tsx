@@ -509,6 +509,7 @@ export default function TeacherDirectory() {
                       email={resetResult.user.email}
                       password={resetResult.temporary_password}
                       label="New Temporary Password"
+                      loginPortal="teacher"
                     />
                   </div>
                 )}

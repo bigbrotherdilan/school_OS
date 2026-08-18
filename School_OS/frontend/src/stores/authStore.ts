@@ -1,5 +1,6 @@
 ﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { api } from '../services/api';
 
 export interface User {
   id: string;
@@ -45,15 +46,22 @@ interface AuthState {
   roles: RoleInfo[];
   sessionId: string | null;
   deviceInfo: DeviceInfo | null;
+  pinIsSet: boolean;
+  pinVerifiedAt: number | null;
   
   // Actions
   setAuth: (token: string, refreshToken: string, user: User, tenants: TenantInfo[], roles: RoleInfo[], sessionId?: string, deviceInfo?: DeviceInfo) => void;
   setToken: (token: string) => void;
   clearMustChangePassword: () => void;
   logout: () => void;
+  fetchPinStatus: () => Promise<void>;
+  setPinIsSet: (value: boolean) => void;
+  verifyPin: (pin: string) => Promise<boolean>;
+  setPinVerified: () => void;
   
   // Selectors/Computed
   isAuthenticated: () => boolean;
+  isPinVerificationValid: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -66,6 +74,8 @@ export const useAuthStore = create<AuthState>()(
       roles: [],
       sessionId: null,
       deviceInfo: null,
+      pinIsSet: false,
+      pinVerifiedAt: null,
 
       setAuth: (token, refreshToken, user, tenants, roles, sessionId, deviceInfo) =>
         set({ token, refreshToken, user, tenants, roles, sessionId, deviceInfo: deviceInfo || null }),
@@ -80,7 +90,35 @@ export const useAuthStore = create<AuthState>()(
       logout: () =>
         set({ token: null, refreshToken: null, user: null, tenants: [], roles: [], sessionId: null, deviceInfo: null }),
 
+      fetchPinStatus: async () => {
+        try {
+          const res = await api.get('/auth/pin/');
+          set({ pinIsSet: res.data.pin_is_set });
+        } catch {
+          set({ pinIsSet: false });
+        }
+      },
+
+      setPinIsSet: (value) => set({ pinIsSet: value }),
+
+      verifyPin: async (pin: string) => {
+        const res = await api.post('/auth/pin/verify/', { pin });
+        if (res.data.verification_token) {
+          set({ pinVerifiedAt: Date.now() });
+          return true;
+        }
+        return false;
+      },
+
+      setPinVerified: () => set({ pinVerifiedAt: Date.now() }),
+
       isAuthenticated: () => !!get().token,
+
+      isPinVerificationValid: () => {
+        const { pinVerifiedAt } = get();
+        if (!pinVerifiedAt) return false;
+        return Date.now() - pinVerifiedAt < 30 * 60 * 1000;
+      },
     }),
     {
       name: 'sos-auth-storage',

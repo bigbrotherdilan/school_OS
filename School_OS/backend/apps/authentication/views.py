@@ -678,6 +678,113 @@ def password_reset_confirm_view(request):
     }, status=status.HTTP_200_OK)
 
 
+# ──────────────────────────────────────────────
+# 6-Digit PIN — Quick Re-Authentication
+# ──────────────────────────────────────────────
+
+import re
+
+PIN_PATTERN = re.compile(r'^\d{6}$')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def pin_status_view(request):
+    """GET /api/v1/auth/pin/ — Check if user has a PIN set."""
+    return Response({
+        'pin_is_set': bool(request.user.pin_hash),
+        'pin_set_at': request.user.pin_set_at,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def pin_set_view(request):
+    """
+    POST /api/v1/auth/pin/set/
+    Set or change the 6-digit PIN.
+    Body: { pin, current_pin? }  — current_pin required if changing existing PIN.
+    """
+    pin = request.data.get('pin', '')
+    current_pin = request.data.get('current_pin', '')
+
+    if not PIN_PATTERN.match(pin):
+        return Response({'detail': 'PIN must be exactly 6 digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+
+    # If changing existing PIN, verify old one first
+    if user.pin_hash:
+        if not current_pin:
+            return Response({'detail': 'Current PIN is required to change your PIN.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.verify_pin(current_pin):
+            return Response({'detail': 'Current PIN is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_pin(pin)
+    return Response({'detail': 'PIN set successfully.', 'pin_is_set': True})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def pin_verify_view(request):
+    """
+    POST /api/v1/auth/pin/verify/
+    Verify the 6-digit PIN. Returns a short-lived verification token
+    that the frontend stores to skip the lock screen for the session.
+    Body: { pin }
+    """
+    pin = request.data.get('pin', '')
+
+    if not PIN_PATTERN.match(pin):
+        return Response({'detail': 'PIN must be exactly 6 digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+
+    if not user.pin_hash:
+        return Response({'detail': 'No PIN set. Please set a PIN first.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not user.verify_pin(pin):
+        return Response({'detail': 'Incorrect PIN.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Generate a short-lived verification token (signed with PIN + pin_set_at)
+    import hmac
+    import hashlib
+    import time
+    payload = f"{user.id}:{user.pin_set_at.isoformat() if user.pin_set_at else ''}:{int(time.time())}"
+    verification_token = hmac.new(
+        settings.SECRET_KEY.encode(),
+        payload.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return Response({
+        'detail': 'PIN verified.',
+        'verification_token': verification_token,
+        'pin_is_set': True,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def pin_remove_view(request):
+    """
+    POST /api/v1/auth/pin/remove/
+    Remove the PIN. Requires current password for security.
+    Body: { password }
+    """
+    password = request.data.get('password', '')
+
+    if not password:
+        return Response({'detail': 'Password is required to remove your PIN.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+    if not user.check_password(password):
+        return Response({'detail': 'Password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.remove_pin()
+    return Response({'detail': 'PIN removed.', 'pin_is_set': False})
+
+
 class UserViewSet(viewsets.ModelViewSet):
     """
     API endpoint for user management.
@@ -808,3 +915,231 @@ class UserViewSet(viewsets.ModelViewSet):
                 "email": user.email,
             }
         }, status=status.HTTP_200_OK)
+
+
+# ─── Invitation System ────────────────────────────────────────────────────── #
+
+import secrets as _secrets
+
+def _generate_invite_token():
+    return _secrets.token_urlsafe(48)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsSchoolAdmin])
+def create_invitation_view(request):
+    """
+    POST /api/v1/auth/invite/
+    Create an invitation for a user to join the school.
+    Returns the shareable invite link.
+    """
+    from .models import Invitation, UserRoleMapping
+
+    email = request.data.get('email', '').strip().lower()
+    role = request.data.get('role')
+    first_name = request.data.get('first_name', '')
+    last_name = request.data.get('last_name', '')
+
+    if not email:
+        return Response({'detail': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    if role not in UserRoleMapping.Role.values:
+        return Response({'detail': 'Invalid role.'}, status=status.HTTP_400_BAD_REQUEST)
+    if role in ('super_admin', 'government'):
+        return Response({'detail': 'Cannot invite for this role.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    tenant_id = getattr(request, 'tenant_id', None)
+    if not tenant_id:
+        return Response({'detail': 'Tenant context required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    from apps.tenants.models import Tenant
+    try:
+        tenant = Tenant.objects.get(id=tenant_id)
+    except Tenant.DoesNotExist:
+        return Response({'detail': 'School not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    token = _generate_invite_token()
+    invitation = Invitation.objects.create(
+        email=email,
+        role=role,
+        tenant=tenant,
+        invited_by=request.user,
+        token=token,
+        first_name=first_name,
+        last_name=last_name,
+        expires_at=timezone.now() + timezone.timedelta(days=7),
+    )
+
+    frontend_url = settings.FRONTEND_URL
+    invite_link = f"{frontend_url}/invite/{token}"
+
+    # Try to send email
+    subject = f"You're invited to join {tenant.school_name} on School OS"
+    message = (
+        f"Hello {first_name or ''},\n\n"
+        f"You have been invited to join {tenant.school_name} on School OS as a {invitation.get_role_display()}.\n\n"
+        f"Click the link below to set your password and activate your account:\n\n"
+        f"{invite_link}\n\n"
+        f"This link expires in 7 days.\n\n"
+        f"If you did not expect this invitation, please ignore this email."
+    )
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+    except Exception:
+        pass
+
+    return Response({
+        'invitation': {
+            'id': str(invitation.id),
+            'email': email,
+            'role': role,
+            'invite_link': invite_link,
+            'expires_at': invitation.expires_at.isoformat(),
+        },
+        'message': f'Invitation created. Share the link with {email}.',
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsSchoolAdmin])
+def list_invitations_view(request):
+    """
+    GET /api/v1/auth/invitations/
+    List all invitations for the current tenant.
+    """
+    from .models import Invitation
+
+    tenant_id = getattr(request, 'tenant_id', None)
+    if not tenant_id:
+        return Response({'detail': 'Tenant context required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    invitations = Invitation.objects.filter(
+        tenant_id=tenant_id,
+    ).select_related('invited_by').order_by('-created_at')[:50]
+
+    data = []
+    for inv in invitations:
+        data.append({
+            'id': str(inv.id),
+            'email': inv.email,
+            'role': inv.role,
+            'role_display': inv.get_role_display(),
+            'status': inv.status,
+            'invited_by': inv.invited_by.full_name if inv.invited_by else None,
+            'created_at': inv.created_at.isoformat(),
+            'expires_at': inv.expires_at.isoformat(),
+            'is_expired': inv.is_expired,
+            'first_name': inv.first_name,
+            'last_name': inv.last_name,
+        })
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def invite_detail_view(request, token):
+    """
+    GET /api/v1/auth/invite/<token>/
+    Public endpoint — returns invitation details so the frontend can render the form.
+    """
+    from .models import Invitation
+
+    try:
+        invitation = Invitation.objects.select_related('tenant').get(token=token)
+    except Invitation.DoesNotExist:
+        return Response({'detail': 'Invalid invitation link.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if invitation.status != 'pending':
+        return Response({'detail': 'This invitation has already been used.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if invitation.is_expired:
+        invitation.status = 'expired'
+        invitation.save(update_fields=['status'])
+        return Response({'detail': 'This invitation has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({
+        'email': invitation.email,
+        'role': invitation.role,
+        'role_display': invitation.get_role_display(),
+        'school_name': invitation.tenant.school_name,
+        'first_name': invitation.first_name,
+        'last_name': invitation.last_name,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def redeem_invitation_view(request, token):
+    """
+    POST /api/v1/auth/invite/<token>/redeem/
+    Accept an invitation: create the user account with the chosen password.
+    """
+    from .models import Invitation, UserRoleMapping
+    from .serializers import UserSerializer
+
+    try:
+        invitation = Invitation.objects.select_related('tenant', 'invited_by').get(token=token)
+    except Invitation.DoesNotExist:
+        return Response({'detail': 'Invalid invitation link.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if invitation.status != 'pending':
+        return Response({'detail': 'This invitation has already been used.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if invitation.is_expired:
+        invitation.status = 'expired'
+        invitation.save(update_fields=['status'])
+        return Response({'detail': 'This invitation has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    password = request.data.get('password', '')
+    if len(password) < 8:
+        return Response({'detail': 'Password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if user already exists
+    existing_user = User.objects.filter(email=invitation.email).first()
+    if existing_user:
+        # User exists — just add the role mapping
+        user = existing_user
+        user.set_password(password)
+        user.must_change_password = False
+        user.save(update_fields=['password', 'must_change_password'])
+    else:
+        # Create new user
+        username = invitation.email.split('@')[0]
+        base_username = username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        user = User.objects.create_user(
+            username=username,
+            email=invitation.email,
+            password=password,
+            first_name=invitation.first_name,
+            last_name=invitation.last_name,
+            must_change_password=False,
+        )
+
+    # Create role mapping
+    UserRoleMapping.objects.get_or_create(
+        user=user,
+        tenant=invitation.tenant,
+        role=invitation.role,
+        defaults={
+            'assigned_by': invitation.invited_by,
+            'is_active': True,
+        },
+    )
+
+    invitation.status = 'accepted'
+    invitation.accepted_at = timezone.now()
+    invitation.save(update_fields=['status', 'accepted_at'])
+
+    return Response({
+        'message': f'Account created. You can now log in.',
+        'user': {
+            'id': str(user.id),
+            'full_name': user.full_name,
+            'email': user.email,
+        },
+    }, status=status.HTTP_201_CREATED)

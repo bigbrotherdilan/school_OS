@@ -18,8 +18,9 @@ frontend/build/
 *.egg-info/
 
 # Database
-backend/db.sqlite3
+*.sqlite3
 *.db
+DATABASE/
 
 # IDE
 .vscode/
@@ -37,7 +38,9 @@ backend/server_err.log
 backend/server.log
 
 # Media uploads
+media/
 backend/media/
 
 # Static files (collected)
+staticfiles/
 backend/static/

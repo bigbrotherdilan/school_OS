@@ -9,30 +9,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.views.static import serve as static_serve
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 
 FRONTEND_DIST = settings.BASE_DIR.parent / 'frontend' / 'dist'
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def health_check(request):
-    """GET /api/v1/health/ — System health check."""
-    return Response({
-        'status': 'healthy',
-        'platform': 'School OS',
-        'version': settings.SOS_CONFIG['PLATFORM_VERSION'],
-    })
 
 
 urlpatterns = [
     # Django Admin
     path('admin/', admin.site.urls),
 
-    # API v1
-    path('api/v1/health/', health_check, name='health-check'),
+    # API v1 — Deep health check
+    path('api/v1/', include('apps.core.urls')),
     path('api/v1/', include('apps.authentication.urls')),
     path('api/v1/tenants/', include('apps.tenants.urls')),
 

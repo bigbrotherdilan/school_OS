@@ -25,8 +25,8 @@ class User(AbstractUser):
         choices=[('en', 'English'), ('fr', 'French')],
         default='en',
     )
-    profile_photo = models.CharField(
-        max_length=255,
+    profile_photo = models.ImageField(
+        upload_to='profile_photos/',
         blank=True,
         null=True,
     )
@@ -70,6 +70,17 @@ class User(AbstractUser):
         default=False,
         help_text="If True, the user must change their password on next login (e.g. after admin sets a temporary password).",
     )
+    pin_hash = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text="SHA-256 hash of the user's 6-digit PIN. Used for quick re-authentication.",
+    )
+    pin_set_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of last PIN change. Used to invalidate stale PIN verification tokens.",
+    )
 
     # Use email as the login field
     USERNAME_FIELD = 'email'
@@ -103,6 +114,25 @@ class User(AbstractUser):
         return self.role_mappings.filter(
             is_active=True,
         ).select_related('tenant')
+
+    @staticmethod
+    def _hash_pin(pin: str) -> str:
+        return hashlib.sha256(pin.encode()).hexdigest()
+
+    def set_pin(self, pin: str):
+        self.pin_hash = self._hash_pin(pin)
+        self.pin_set_at = timezone.now()
+        self.save(update_fields=['pin_hash', 'pin_set_at'])
+
+    def verify_pin(self, pin: str) -> bool:
+        if not self.pin_hash:
+            return False
+        return self.pin_hash == self._hash_pin(pin)
+
+    def remove_pin(self):
+        self.pin_hash = None
+        self.pin_set_at = None
+        self.save(update_fields=['pin_hash', 'pin_set_at'])
 
 
 class UserRoleMapping(models.Model):
@@ -194,3 +224,60 @@ class UserSession(models.Model):
 
     def __str__(self):
         return f"{self.user.email} — {self.device_name or self.device_type} ({self.ip_address})"
+
+
+class Invitation(models.Model):
+    """
+    Invitation token for onboarding users who are not onsite.
+    The admin creates an invite, shares the link, and the user sets their own password.
+    """
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        ACCEPTED = 'accepted', 'Accepted'
+        EXPIRED = 'expired', 'Expired'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField()
+    role = models.CharField(max_length=20, choices=UserRoleMapping.Role.choices)
+    tenant = models.ForeignKey(
+        'tenants.Tenant',
+        on_delete=models.CASCADE,
+        related_name='invitations',
+    )
+    invited_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='sent_invitations',
+    )
+    token = models.CharField(max_length=64, unique=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+
+    class Meta:
+        db_table = 'invitations'
+        ordering = ['-created_at']
+        verbose_name = 'Invitation'
+        verbose_name_plural = 'Invitations'
+
+    def __str__(self):
+        return f"Invite {self.email} → {self.get_role_display()} @ {self.tenant.school_name}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def login_url(self):
+        from django.conf import settings
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        portal = {
+            'admin': 'admin', 'super_admin': 'admin',
+            'teacher': 'teacher', 'parent': 'parent',
+            'bursar': 'bursar',
+        }.get(self.role, 'login')
+        return f"{frontend_url}/invite/{self.token}"

@@ -18,6 +18,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+if not DEBUG and '*' in ALLOWED_HOSTS:
+    raise ValueError("ALLOWED_HOSTS must not contain '*' in production.")
+
 # ──────────────────────────────────────────────
 # Application Definition
 # ──────────────────────────────────────────────
@@ -211,7 +214,7 @@ if os.environ.get('AWS_STORAGE_BUCKET_NAME'):
             'region_name': os.environ.get('AWS_S3_REGION_NAME') or None,
             'endpoint_url': os.environ.get('AWS_S3_ENDPOINT_URL') or None,
             'custom_domain': os.environ.get('AWS_S3_CUSTOM_DOMAIN') or None,
-            'default_acl': os.environ.get('AWS_S3_DEFAULT_ACL', 'public-read'),
+            'default_acl': os.environ.get('AWS_S3_DEFAULT_ACL', 'private'),
             'querystring_auth': os.environ.get('AWS_S3_QUERYSTRING_AUTH', 'false').lower() == 'true',
         },
     }
@@ -253,6 +256,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'x-tenant-id',
     'x-session-id',
 ]
+CORS_ORIGIN_ALLOW_ALL = False
 
 # ──────────────────────────────────────────────
 # Django REST Framework
@@ -311,8 +315,20 @@ SIMPLE_JWT = {
 }
 
 # ──────────────────────────────────────────────
-# Security Settings (production)
+# Security Settings
 # ──────────────────────────────────────────────
+# Cookie security — secure in production, relaxed in dev so HTTP works
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = True
+
+# Proxy-aware SSL redirect — only when behind a reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if not os.environ.get('DISABLE_SSL_REDIRECT'):
+    SECURE_SSL_REDIRECT = True
+
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -320,11 +336,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    # Referrer Policy - only send origin on cross-origin requests
     SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-    # Permissions Policy - restrict browser features
     SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
     SECURE_CROSS_ORIGIN_EMBEDDER_POLICY = 'require-corp'
 
@@ -368,3 +380,36 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@schoolos.sos'
 
 # Frontend URL for password reset links
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
