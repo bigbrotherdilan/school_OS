@@ -5,6 +5,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useTenantStore } from '../../../stores/tenantStore';
 import { useParentStore } from '../../../stores/parentStore';
 import NotificationsDropdown from '../NotificationsDropdown';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 const ParentLayout: React.FC = () => {
     const { t } = useTranslation('layout');
@@ -98,7 +99,8 @@ const ParentLayout: React.FC = () => {
                             })}
                         </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <LanguageSwitcher />
                         <NotificationsDropdown />
                         <button
                             onClick={handleLogout}
