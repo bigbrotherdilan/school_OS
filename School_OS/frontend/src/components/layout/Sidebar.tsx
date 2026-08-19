@@ -14,6 +14,7 @@ const navItems = [
   { icon: 'settings_input_component', label: 'Administration', path: '/admin/operations' },
   { icon: 'campaign', label: 'Announcements', path: '/admin/community/communications' },
   { icon: 'group', label: 'PTA & Community', path: '/admin/community' },
+  { icon: 'analytics', label: 'Analytics', path: '/admin/academic/analytics' },
   { icon: 'fact_check', label: 'Inspections', path: '/admin/compliance' },
   { icon: 'settings', label: 'System', path: '/admin/system' },
 ];

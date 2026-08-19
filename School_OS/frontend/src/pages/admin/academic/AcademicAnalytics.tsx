@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { analyticsApi } from '../../../services/analyticsApi';
 import { api } from '../../../services/api';
 import { useTranslation } from 'react-i18next';
@@ -235,33 +236,59 @@ export default function AcademicAnalytics() {
           </div>
 
           {/* Grade Distribution */}
-          <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
-            <h3 className="text-lg font-bold text-on-surface mb-6">{t('Grade Distribution')}</h3>
-            <div className="space-y-3">
-              {Object.entries(examData.grade_distribution || {}).map(([bucket, count]: any) => {
-                const total = examData.overall?.count || 1;
-                const pct = ((count / total) * 100).toFixed(1);
-                const barColor = bucket.startsWith('Distinction') ? 'bg-secondary' :
-                  bucket.startsWith('Merit') ? 'bg-primary' :
-                  bucket.startsWith('Credit') ? 'bg-on-tertiary-container' :
-                  bucket.startsWith('Pass') ? 'bg-tertiary-fixed' : 'bg-error';
-                return (
-                  <div key={bucket} className="flex items-center gap-4">
-                    <span className="text-xs font-bold text-on-surface-variant w-36 text-right">{bucket}</span>
-                    <div className="flex-1 bg-surface-container rounded-full h-5 overflow-hidden">
-                      <div className={`h-full ${barColor} rounded-full transition-all duration-500 flex items-center justify-end pr-2`}
-                        style={{ width: Math.min(parseFloat(pct), 100) + '%', minWidth: count > 0 ? '2rem' : '0' }}>
-                        {count > 0 && <span className="text-[10px] font-bold text-white">{count}</span>}
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-on-surface-variant w-16">{pct}%</span>
-                  </div>
-                );
-              })}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bar Chart */}
+            <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
+              <h3 className="text-lg font-bold text-on-surface mb-6">{t('Grade Distribution')}</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={Object.entries(examData.grade_distribution || {}).map(([bucket, count]: any) => ({ name: bucket.length > 12 ? bucket.substring(0, 12) + '…' : bucket, count, full: bucket }))} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" tick={{ fontSize: 11 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip formatter={(value: any, _name: any, props: any) => [value, props.payload.full]} />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {Object.entries(examData.grade_distribution || {}).map(([_bucket], idx) => (
+                      <Cell key={idx} fill={['#2e7d32', '#1565c0', '#6a1b9a', '#e65100', '#c62828'][idx % 5]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Pie Chart */}
+            <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
+              <h3 className="text-lg font-bold text-on-surface mb-6">{t('Performance Split')}</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={Object.entries(examData.grade_distribution || {}).map(([bucket, count]: any) => ({ name: bucket, value: count }))}
+                    cx="50%" cy="50%" outerRadius={110} dataKey="value" label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {Object.entries(examData.grade_distribution || {}).map(([_bucket], idx) => (
+                      <Cell key={idx} fill={['#2e7d32', '#1565c0', '#6a1b9a', '#e65100', '#c62828'][idx % 5]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Subject Breakdown */}
+          {/* Subject Breakdown Chart */}
+          <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
+            <h3 className="text-lg font-bold text-on-surface mb-6">{t('Subject Average Comparison')}</h3>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={(examData.subject_breakdown || []).map((s: any) => ({ name: s.subject_name.length > 15 ? s.subject_name.substring(0, 15) + '…' : s.subject_name, average: s.average, pass_rate: s.pass_rate }))} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 20]} />
+                <Tooltip />
+                <Bar dataKey="average" name={t('Average')} radius={[6, 6, 0, 0]} fill="#1565c0" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Subject Breakdown Table */}
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
               <h3 className="text-lg font-bold text-on-surface">{t('Subject Performance Breakdown')}</h3>
@@ -323,6 +350,20 @@ export default function AcademicAnalytics() {
               <StatBox label={t('Highest')} value={subjectData.overall?.highest || '-'} color="text-secondary" />
               <StatBox label={t('Lowest')} value={subjectData.overall?.lowest || '-'} color="text-error" />
             </div>
+          </div>
+
+          {/* Per-Class Comparison Chart */}
+          <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
+            <h3 className="text-lg font-bold text-on-surface mb-6">{t('Class Comparison')}</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={(subjectData.class_breakdown || []).map((c: any) => ({ name: c.class_name, average: c.average, pass_rate: c.pass_rate }))} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 20]} />
+                <Tooltip />
+                <Bar dataKey="average" name={t('Average')} radius={[6, 6, 0, 0]} fill="#1565c0" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Class breakdown */}
@@ -413,6 +454,20 @@ export default function AcademicAnalytics() {
               <StatBox label={t('Subjects')} value={(classData.subject_breakdown || []).length} />
                     <StatBox label={t('Section')} value={classData.section || t('N/A')} />
             </div>
+          </div>
+
+          {/* Subject Comparison Chart */}
+          <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
+            <h3 className="text-lg font-bold text-on-surface mb-6">{t('Subject Comparison')}</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={(classData.subject_breakdown || []).map((s: any) => ({ name: s.subject_name.length > 15 ? s.subject_name.substring(0, 15) + '…' : s.subject_name, average: s.average, pass_rate: s.pass_rate }))} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 20]} />
+                <Tooltip />
+                <Bar dataKey="average" name={t('Average')} radius={[6, 6, 0, 0]} fill="#1565c0" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Subject breakdown */}

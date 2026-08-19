@@ -116,6 +116,8 @@ const StudentPromotion = lazy(() => import('./pages/admin/academic/StudentPromot
 const ReportCardManagement = lazy(() => import('./pages/admin/academic/ReportCardManagement'));
 const IDCardGenerator = lazy(() => import('./pages/admin/academic/IDCardGenerator'));
 const AcademicAnalytics = lazy(() => import('./pages/admin/academic/AcademicAnalytics'));
+const AttendanceAnalytics = lazy(() => import('./pages/admin/attendance/AttendanceAnalytics'));
+const CurriculumAnalytics = lazy(() => import('./pages/admin/curriculum/CurriculumAnalytics'));
 const TeacherDirectory = lazy(() => import('./pages/admin/operations/TeacherDirectory'));
 const UserDirectory = lazy(() => import('./pages/admin/operations/UserDirectory'));
 const BulkImportStudents = lazy(() => import('./pages/admin/operations/BulkImportStudents'));
@@ -353,6 +355,8 @@ export default function App() {
           <Route path="academic/report-cards" element={<ReportCardManagement />} />
           <Route path="academic/id-cards" element={<IDCardGenerator />} />
           <Route path="academic/analytics" element={<AcademicAnalytics />} />
+          <Route path="attendance/analytics" element={<AttendanceAnalytics />} />
+          <Route path="academic/curriculum-analytics" element={<CurriculumAnalytics />} />
           <Route path="year-review" element={<SchoolYearReview />} />
           <Route path="audit" element={<AuditLogs />} />
           <Route path="settings" element={<Settings />} />
