@@ -227,7 +227,7 @@ export default function TeacherCoveragePage() {
           <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-4">{t('Overall Completion')}</p>
           <div className="flex items-baseline gap-2">
             <span className="text-6xl font-black">{totalProgress()}%</span>
-            <span className="text-lg font-bold opacity-60">Covered</span>
+            <span className="text-lg font-bold opacity-60">{t('Covered')}</span>
           </div>
           <div className="mt-6 w-full bg-white/10 h-2 rounded-full overflow-hidden">
             <div className="bg-secondary-container h-full transition-all duration-1000" style={{ width: `${totalProgress()}%` }} />
@@ -236,7 +236,7 @@ export default function TeacherCoveragePage() {
 
         <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Lessons Logged</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">{t('Lessons Logged')}</p>
             <div className="flex items-baseline gap-2">
               <span className="text-5xl font-black text-primary">{completedLessons}</span>
               <span className="text-lg font-bold text-slate-300">/ {allLessons.length}</span>

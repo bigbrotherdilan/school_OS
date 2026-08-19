@@ -88,9 +88,9 @@ export default function TeacherTimetablePage() {
         if (dayKey && dayKey !== 'time') {
           row[dayKey] = {
             id: slot.id,
-            subject: slot.subject_details?.name || 'Unknown',
-            className: slot.class_details?.name || 'N/A',
-            room: slot.classroom || 'N/A',
+            subject: slot.subject_details?.name || t('Unknown'),
+            className: slot.class_details?.name || t('N/A'),
+            room: slot.classroom || t('N/A'),
             type: 'lecture', // Default for now
             isActive: false
           };

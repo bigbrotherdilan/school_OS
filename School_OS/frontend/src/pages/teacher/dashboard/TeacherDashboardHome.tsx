@@ -67,11 +67,11 @@ export default function TeacherDashboardHome() {
       setAnalytics(data);
     } catch (err: any) {
       console.error('Failed to fetch teacher analytics', err);
-      setAnalyticsError(err?.response?.data?.detail || 'Failed to load performance data.');
+      setAnalyticsError(err?.response?.data?.detail || t('Failed to load performance data.'));
     } finally {
       setAnalyticsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (selectedTerm) {
@@ -234,7 +234,7 @@ export default function TeacherDashboardHome() {
               >
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>edit_square</span>
-                  <h4 className="text-sm font-bold text-primary">Mark Entry Open</h4>
+                  <h4 className="text-sm font-bold text-primary">{t('Mark Entry Open')}</h4>
                   {!markWindowsCollapsed && (
                     <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">{openWindows.length}</span>
                   )}
@@ -246,11 +246,11 @@ export default function TeacherDashboardHome() {
                   {openWindows.map((w: any) => (
                     <div key={w.id} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-primary/10">
                       <div>
-                        <p className="text-sm font-bold text-slate-800">{w.sequence_name || `Sequence ${w.sequence}`}</p>
-                        <p className="text-xs text-slate-400">{w.term_name || `Term ${w.term}`}</p>
+                        <p className="text-sm font-bold text-slate-800">{w.sequence_name || t('Sequence {{seq}}', { seq: w.sequence })}</p>
+                        <p className="text-xs text-slate-400">{w.term_name || t('Term {{term}}', { term: w.term })}</p>
                       </div>
                       <button onClick={() => navigate(`/teacher/assessments?sequence=${w.sequence}`)} className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-all min-h-[40px]">
-                        Enter Marks
+                        {t('Enter Marks')}
                       </button>
                     </div>
                   ))}
@@ -266,9 +266,9 @@ export default function TeacherDashboardHome() {
               >
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-tertiary-fixed-dim text-xl">campaign</span>
-                  <h4 className="text-sm font-bold text-slate-700">Announcements</h4>
+                  <h4 className="text-sm font-bold text-slate-700">{t('Announcements')}</h4>
                   {announcementsCollapsed && (
-                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">{announcements.length} new</span>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">{t('{{count}} new', { count: announcements.length })}</span>
                   )}
                 </div>
                 <span className={`material-symbols-outlined text-slate-400 transition-transform duration-200 ${announcementsCollapsed ? '' : 'rotate-180'}`}>expand_more</span>
@@ -292,7 +292,7 @@ export default function TeacherDashboardHome() {
       <div id="analytics-section" className="space-y-8">
         {/* Term Selector Header */}
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-xl font-bold text-primary tracking-tight">Performance Analytics</h3>
+          <h3 className="text-xl font-bold text-primary tracking-tight">{t('Performance Analytics')}</h3>
           {terms.length > 0 && (
             <select
               value={selectedTerm}
@@ -337,7 +337,7 @@ export default function TeacherDashboardHome() {
             <span className="material-symbols-outlined text-4xl text-error/60 mb-3 block">error</span>
             <p className="text-sm font-bold text-on-surface">{analyticsError}</p>
             <button onClick={() => fetchAnalytics(selectedTerm)} className="mt-4 px-5 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 transition-all">
-              Retry
+              {t('Retry')}
             </button>
           </div>
         )}
@@ -350,28 +350,28 @@ export default function TeacherDashboardHome() {
               {overall && (
                 <>
                   <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">Overall Average</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">{t('Overall Average')}</p>
                     <p className={`text-3xl font-black ${overall.average_percentage >= 70 ? 'text-secondary' : overall.average_percentage >= 50 ? 'text-primary' : 'text-error'}`}>
                       {overall.average_percentage != null ? `${overall.average_percentage}%` : 'N/A'}
                     </p>
-                    <p className="text-xs text-on-surface-variant mt-1">{overall.count} total results</p>
+                    <p className="text-xs text-on-surface-variant mt-1">{overall.count} {t('total results')}</p>
                   </div>
                   <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">Pass Rate</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">{t('Pass Rate')}</p>
                     <p className={`text-3xl font-black ${overall.pass_rate >= 70 ? 'text-secondary' : overall.pass_rate >= 50 ? 'text-primary' : 'text-error'}`}>
                       {overall.pass_rate != null ? `${overall.pass_rate}%` : 'N/A'}
                     </p>
-                    <p className="text-xs text-on-surface-variant mt-1">{overall.pass_count} passed of {overall.count}</p>
+                    <p className="text-xs text-on-surface-variant mt-1">{t('{{passed}} passed of {{total}}', { passed: overall.pass_count, total: overall.count })}</p>
                   </div>
                 </>
               )}
               <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">Assignments</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">{t('Assignments')}</p>
                 <p className="text-3xl font-black text-primary">{analytics.assignments_count || subjects.length}</p>
-                <p className="text-xs text-on-surface-variant mt-1">active subjects</p>
+                <p className="text-xs text-on-surface-variant mt-1">{t('active subjects')}</p>
               </div>
               <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">Curriculum</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-2">{t('Curriculum')}</p>
                 <p className="text-3xl font-black text-primary">{coveragePercent}%</p>
                 <div className="w-full bg-surface-container rounded-full h-1.5 mt-2">
                   <div className="bg-secondary h-1.5 rounded-full transition-all duration-500" style={{ width: `${coveragePercent}%` }} />
@@ -383,20 +383,20 @@ export default function TeacherDashboardHome() {
             {subjects.length > 0 && (
               <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
                 <div className="p-4 sm:p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
-                  <h3 className="text-lg font-bold text-on-surface">My Subject Performance</h3>
+                  <h3 className="text-lg font-bold text-on-surface">{t('My Subject Performance')}</h3>
                 </div>
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                        <th className="p-4 pl-6">Subject</th>
-                        <th className="p-4">Class</th>
-                        <th className="p-4">Students</th>
-                        <th className="p-4">Average</th>
-                        <th className="p-4">Pass Rate</th>
-                        <th className="p-4">Highest</th>
-                        <th className="p-4 pr-6">Lowest</th>
+                        <th className="p-4 pl-6">{t('Subject')}</th>
+                        <th className="p-4">{t('Class')}</th>
+                        <th className="p-4">{t('Students')}</th>
+                        <th className="p-4">{t('Average')}</th>
+                        <th className="p-4">{t('Pass Rate')}</th>
+                        <th className="p-4">{t('Highest')}</th>
+                        <th className="p-4 pr-6">{t('Lowest')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/10">
@@ -433,7 +433,7 @@ export default function TeacherDashboardHome() {
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-bold text-on-surface text-sm">{s.subject_name}</p>
-                          <p className="text-xs text-on-surface-variant">{s.class_name} &bull; {s.students_with_marks}/{s.total_students} students</p>
+                          <p className="text-xs text-on-surface-variant">{s.class_name} &bull; {s.students_with_marks}/{s.total_students} {t('students')}</p>
                         </div>
                         <span className={`text-lg font-black ${s.average_percentage >= 70 ? 'text-secondary' : s.average_percentage >= 50 ? 'text-primary' : 'text-error'}`}>
                           {s.average}
@@ -441,7 +441,7 @@ export default function TeacherDashboardHome() {
                       </div>
                       <div className="flex items-center gap-4 text-xs">
                         <div className="flex items-center gap-2 flex-1">
-                          <span className="text-on-surface-variant font-medium">Pass:</span>
+                          <span className="text-on-surface-variant font-medium">{t('Pass:')}</span>
                           <div className="flex-1 bg-surface-container rounded-full h-1.5">
                             <div className={`h-1.5 rounded-full ${s.pass_rate >= 70 ? 'bg-secondary' : s.pass_rate >= 50 ? 'bg-primary' : 'bg-error'}`}
                               style={{ width: `${Math.min(s.pass_rate || 0, 100)}%` }} />
@@ -450,8 +450,8 @@ export default function TeacherDashboardHome() {
                         </div>
                       </div>
                       <div className="flex gap-4 text-xs">
-                        <span className="text-secondary font-semibold">High: {s.highest}</span>
-                        <span className="text-error font-semibold">Low: {s.lowest}</span>
+                        <span className="text-secondary font-semibold">{t('High: {{high}}', { high: s.highest })}</span>
+                        <span className="text-error font-semibold">{t('Low: {{low}}', { low: s.lowest })}</span>
                       </div>
                     </div>
                   ))}
@@ -463,8 +463,8 @@ export default function TeacherDashboardHome() {
             {subjects.length === 0 && !isClassmaster && (
               <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 p-10 text-center">
                 <span className="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-3 block">analytics</span>
-                <p className="text-on-surface-variant font-medium">No performance data for this term yet.</p>
-                <p className="text-on-surface-variant/60 text-sm mt-1">Marks will appear here once exam results are entered.</p>
+                <p className="text-on-surface-variant font-medium">{t('No performance data for this term yet.')}</p>
+                <p className="text-on-surface-variant/60 text-sm mt-1">{t('Marks will appear here once exam results are entered.')}</p>
               </div>
             )}
 
@@ -474,8 +474,8 @@ export default function TeacherDashboardHome() {
                 <div className="p-4 sm:p-6 border-b border-outline-variant/15 bg-secondary-container/20 flex items-center gap-3">
                   <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
                   <div>
-                    <h3 className="text-lg font-bold text-on-surface">Classmaster Overview: {classmasterView.class_name}</h3>
-                    <p className="text-xs text-on-surface-variant">{classmasterView.section || classmasterView.cycle_name || 'N/A'} | {classmasterView.student_count} students</p>
+                    <h3 className="text-lg font-bold text-on-surface">{t('Classmaster Overview: {{class}}', { class: classmasterView.class_name })}</h3>
+                    <p className="text-xs text-on-surface-variant">{classmasterView.section || classmasterView.cycle_name || 'N/A'} | {classmasterView.student_count} {t('students')}</p>
                   </div>
                 </div>
                 {rankings.length > 0 ? (
@@ -485,12 +485,12 @@ export default function TeacherDashboardHome() {
                       <table className="w-full text-left">
                         <thead>
                           <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                            <th className="p-4 pl-6">Rank</th>
-                            <th className="p-4">Student</th>
-                            <th className="p-4">Admission</th>
-                            <th className="p-4">Average</th>
-                            <th className="p-4">Percentage</th>
-                            <th className="p-4 pr-6">Grade</th>
+                            <th className="p-4 pl-6">{t('Rank')}</th>
+                            <th className="p-4">{t('Student')}</th>
+                            <th className="p-4">{t('Admission')}</th>
+                            <th className="p-4">{t('Average')}</th>
+                            <th className="p-4">{t('Percentage')}</th>
+                            <th className="p-4 pr-6">{t('Grade')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-outline-variant/10">
@@ -545,7 +545,7 @@ export default function TeacherDashboardHome() {
                           onClick={() => setShowAllRankings(!showAllRankings)}
                           className="text-primary text-sm font-semibold hover:underline min-h-[44px] inline-flex items-center"
                         >
-                          {showAllRankings ? 'Show fewer' : `View all ${rankings.length} students`}
+                          {showAllRankings ? t('Show fewer') : t('View all {{count}} students', { count: rankings.length })}
                         </button>
                       </div>
                     )}
@@ -553,7 +553,7 @@ export default function TeacherDashboardHome() {
                 ) : (
                   <div className="p-10 text-center">
                     <span className="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-2 block">school</span>
-                    <p className="text-on-surface-variant font-medium text-sm">No student rankings available for this term.</p>
+                    <p className="text-on-surface-variant font-medium text-sm">{t('No student rankings available for this term.')}</p>
                   </div>
                 )}
               </div>
@@ -565,40 +565,40 @@ export default function TeacherDashboardHome() {
       {/* Today's Checklist - What to do right now */}
       <div className="space-y-4 sm:space-y-6">
         <div className="px-1 sm:px-2">
-          <h3 className="text-xl font-bold text-primary tracking-tight">Today's Checklist</h3>
-          <p className="text-xs text-slate-400 mt-1 font-medium">What needs your attention today</p>
+          <h3 className="text-xl font-bold text-primary tracking-tight">{t('Today\'s Checklist')}</h3>
+          <p className="text-xs text-slate-400 mt-1 font-medium">{t('What needs your attention today')}</p>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50">
           <ChecklistItem
             icon="edit_square"
-            title="Log today's lesson"
-            desc={currentClass ? `Record what you covered in ${currentClass.subject}` : 'Record your lesson in the logbook'}
+            title={t("Log today's lesson")}
+            desc={currentClass ? t('Record what you covered in {{subject}}', { subject: currentClass.subject }) : t('Record your lesson in the logbook')}
             done={isLessonLogged}
             onClick={() => navigate('/teacher/logbook')}
             urgent={!isLessonLogged && !!currentClass}
           />
           <ChecklistItem
             icon="grade"
-            title="Enter marks"
-            desc="Input exam or assessment scores for your classes"
+            title={t('Enter marks')}
+            desc={t('Input exam or assessment scores for your classes')}
             onClick={() => navigate('/teacher/assessments')}
           />
           <ChecklistItem
             icon="how_to_reg"
-            title="Take attendance"
-            desc={currentClass ? `Mark attendance for ${currentClass.name}` : 'Mark attendance for your next class'}
+            title={t('Take attendance')}
+            desc={currentClass ? t('Mark attendance for {{name}}', { name: currentClass.name }) : t('Mark attendance for your next class')}
             onClick={() => navigate('/teacher/timetable')}
           />
           <ChecklistItem
             icon="edit_note"
-            title="Prepare lesson plan"
-            desc="Draft your 5E lesson plan for upcoming classes"
+            title={t('Prepare lesson plan')}
+            desc={t('Draft your 5E lesson plan for upcoming classes')}
             onClick={() => navigate('/teacher/planner')}
           />
           <ChecklistItem
             icon="analytics"
-            title="Review class performance"
-            desc="Check averages, pass rates, and student rankings"
+            title={t('Review class performance')}
+            desc={t('Check averages, pass rates, and student rankings')}
             onClick={() => {
               const el = document.getElementById('analytics-section');
               el?.scrollIntoView({ behavior: 'smooth' });
@@ -610,14 +610,14 @@ export default function TeacherDashboardHome() {
       {/* Quick Actions - Grid */}
       <div className="space-y-4 sm:space-y-6">
         <div className="px-1 sm:px-2">
-          <h3 className="text-xl font-bold text-primary tracking-tight">Quick Actions</h3>
+          <h3 className="text-xl font-bold text-primary tracking-tight">{t('Quick Actions')}</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <ToolButton icon="task_alt" label="Logbook" desc="Record lesson" color="secondary" onClick={() => navigate('/teacher/logbook')} />
-          <ToolButton icon="menu_book" label="Scheme" desc="Curriculum modules" color="primary" onClick={() => navigate('/teacher/coverage')} />
-          <ToolButton icon="how_to_reg" label="Attendance" desc="Mark present/absent" color="primary" onClick={() => navigate('/teacher/timetable')} />
-          <ToolButton icon="assignment_add" label="Homework" desc="Set class tasks" color="primary" onClick={() => navigate('/teacher/planner')} />
-          <ToolButton icon="grade" label="Marks" desc="Enter scores" color="tertiary" onClick={() => navigate('/teacher/assessments')} />
+          <ToolButton icon="task_alt" label={t('Logbook')} desc={t('Record lesson')} color="secondary" onClick={() => navigate('/teacher/logbook')} />
+          <ToolButton icon="menu_book" label={t('Scheme')} desc={t('Curriculum modules')} color="primary" onClick={() => navigate('/teacher/coverage')} />
+          <ToolButton icon="how_to_reg" label={t('Attendance')} desc={t('Mark present/absent')} color="primary" onClick={() => navigate('/teacher/timetable')} />
+          <ToolButton icon="assignment_add" label={t('Homework')} desc={t('Set class tasks')} color="primary" onClick={() => navigate('/teacher/planner')} />
+          <ToolButton icon="grade" label={t('Marks')} desc={t('Enter scores')} color="tertiary" onClick={() => navigate('/teacher/assessments')} />
         </div>
       </div>
 
@@ -626,13 +626,13 @@ export default function TeacherDashboardHome() {
         <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h4 className="text-lg font-bold mb-1">Curriculum Progress</h4>
+            <h4 className="text-lg font-bold mb-1">{t('Curriculum Progress')}</h4>
             <p className="text-primary-fixed-dim text-xs opacity-80">{activeAssignment.subject_name} - {activeAssignment.class_name}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
               <span className="text-3xl font-black">{coveragePercent}%</span>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary-fixed-dim mt-1">{coveragePercent < 100 ? 'In Progress' : 'Complete'}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary-fixed-dim mt-1">{coveragePercent < 100 ? t('In Progress') : t('Complete')}</p>
             </div>
             <div className="w-16 h-16 rounded-full border-4 border-white/10 border-t-secondary-container flex items-center justify-center">
               <span className="text-lg font-bold">{coveragePercent}%</span>

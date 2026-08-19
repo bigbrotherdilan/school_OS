@@ -170,7 +170,7 @@ export default function TeacherAssessmentsPage() {
         if (seqObj) {
           try {
             await createExam({
-              name: `${seqObj.name} Assessment`,
+              name: t('{{name}} Assessment', { name: seqObj.name }),
               term: seqObj.term,
               academic_year: seqObj.academic_year_id,
               weight: 100,
@@ -180,7 +180,7 @@ export default function TeacherAssessmentsPage() {
             // Fallback synthetic exam column if createExam API fails
             examData = [{
               id: `seq_${selectedSequence}`,
-              name: `${seqObj.name} Marks`,
+              name: t('{{name}} Marks', { name: seqObj.name }),
               weight: '100',
               sequence: Number(selectedSequence),
             }];
@@ -190,7 +190,7 @@ export default function TeacherAssessmentsPage() {
 
       setExams(examData.length > 0 ? examData : [{
         id: `seq_${selectedSequence}`,
-        name: `${currentSeq?.name || 'Sequence'} Marks`,
+        name: t('{{name}} Marks', { name: currentSeq?.name || 'Sequence' }),
         weight: '100',
         sequence: Number(selectedSequence),
       }]);
@@ -198,6 +198,29 @@ export default function TeacherAssessmentsPage() {
 
     checkWindowAndExams();
   }, [selectedSequence, checkMarkWindowStatus, fetchExams, createExam, allSequences, currentSeq?.name]);
+
+  const handleAutoSave = useCallback(async () => {
+    const payload = Array.from(dirtyMarks.current).map(key => {
+      const [studentId, examId] = key.split(':');
+      const student = students.find(s => s.id === studentId);
+      const score = student?.marks[examId];
+      return {
+        exam: examId.startsWith('seq_') ? undefined : examId,
+        student: studentId,
+        subject: currentSubjectId,
+        sequence: selectedSequence || undefined,
+        score: score === '' ? null : Number(score),
+      };
+    });
+    if (payload.length > 0) {
+      await bulkUpdateMarks(payload);
+    }
+    dirtyMarks.current.clear();
+  }, [students, currentSubjectId, selectedSequence, bulkUpdateMarks]);
+
+  const { saveState, markDirty, triggerSave, resetState } = useAutoSave(handleAutoSave, {
+    enabled: isWindowOpen,
+  });
 
   // Load student rows & existing scores for the gradebook
   const loadGradebook = useCallback(async () => {
@@ -244,7 +267,7 @@ export default function TeacherAssessmentsPage() {
       resetState();
     } catch (err) {
       console.error('Failed to load gradebook:', err);
-      addToast('Failed to load student data.', 'error');
+      addToast(t('Failed to load student data.'), 'error');
     } finally {
       setTableLoading(false);
     }
@@ -253,29 +276,6 @@ export default function TeacherAssessmentsPage() {
   useEffect(() => {
     loadGradebook();
   }, [loadGradebook]);
-
-  const handleAutoSave = useCallback(async () => {
-    const payload = Array.from(dirtyMarks.current).map(key => {
-      const [studentId, examId] = key.split(':');
-      const student = students.find(s => s.id === studentId);
-      const score = student?.marks[examId];
-      return {
-        exam: examId.startsWith('seq_') ? undefined : examId,
-        student: studentId,
-        subject: currentSubjectId,
-        sequence: selectedSequence || undefined,
-        score: score === '' ? null : Number(score),
-      };
-    });
-    if (payload.length > 0) {
-      await bulkUpdateMarks(payload);
-    }
-    dirtyMarks.current.clear();
-  }, [students, currentSubjectId, selectedSequence, bulkUpdateMarks]);
-
-  const { saveState, markDirty, triggerSave, resetState } = useAutoSave(handleAutoSave, {
-    enabled: isWindowOpen,
-  });
 
   const handleMarkChange = (studentId: string, examId: string, value: string) => {
     if (!isWindowOpen) return;
@@ -316,7 +316,7 @@ export default function TeacherAssessmentsPage() {
 
   const handleSubmit = async () => {
     if (!isWindowOpen) {
-      addToast('Marks entry is closed for this sequence.', 'error');
+      addToast(t('Marks entry is closed for this sequence.'), 'error');
       return;
     }
 
@@ -331,9 +331,9 @@ export default function TeacherAssessmentsPage() {
 
     try {
       await triggerSave();
-      addToast('Marks officially submitted to Administration.', 'success');
+      addToast(t('Marks officially submitted to Administration.'), 'success');
     } catch {
-      addToast('Failed to submit marks. Please try again.', 'error');
+      addToast(t('Failed to submit marks. Please try again.'), 'error');
     }
   };
 
@@ -576,7 +576,7 @@ export default function TeacherAssessmentsPage() {
                                 onKeyDown={(e) => handleKeyDown(e, rowIndex, exam.id)}
                                 onFocus={(e) => e.target.select()}
                                 disabled={!isWindowOpen}
-                                placeholder="Enter mark"
+                                placeholder={t('Enter mark')}
                                 className={`w-full text-center bg-transparent border-2 border-slate-100 rounded-lg py-2 font-semibold transition-all ${
                                   isWindowOpen
                                     ? 'hover:border-slate-300 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 cursor-text'
@@ -681,7 +681,7 @@ export default function TeacherAssessmentsPage() {
             <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl transition-transform group-hover:scale-150 duration-700"></div>
             <div className="relative z-10 space-y-4">
               <div>
-                <p className="text-[10px] font-bold text-primary-fixed-dim uppercase tracking-widest mb-1">Pass Rate</p>
+                <p className="text-[10px] font-bold text-primary-fixed-dim uppercase tracking-widest mb-1">{t('Pass Rate')}</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-black">{calculateOverallPassRate()}%</span>
                   <span className="text-xs text-secondary-fixed">{currentAssignment?.class_name || '-'}</span>
@@ -696,23 +696,23 @@ export default function TeacherAssessmentsPage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-tertiary-fixed-dim" style={{ fontVariationSettings: "'FILL' 1" }}>insights</span>
-              Quick Insights
+              {t('Quick Insights')}
             </h4>
             <ul className="space-y-4">
               <li className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Highest Score</span>
+                <span className="text-slate-500">{t('Highest Score')}</span>
                 <span className="font-bold text-secondary">{highest.max > 0 ? `${highest.max} (${highest.label})` : '-'}</span>
               </li>
               <li className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Lowest Score</span>
+                <span className="text-slate-500">{t('Lowest Score')}</span>
                 <span className="font-bold text-error">{lowest.min <= maxScore && lowest.label ? `${lowest.min} (${lowest.label})` : '-'}</span>
               </li>
               <li className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Missing Entries</span>
+                <span className="text-slate-500">{t('Missing Entries')}</span>
                 <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">{getMissingEntries()}</span>
               </li>
               <li className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Total Students</span>
+                <span className="text-slate-500">{t('Total Students')}</span>
                 <span className="font-bold text-slate-800">{students.length}</span>
               </li>
             </ul>
