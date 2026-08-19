@@ -8,6 +8,7 @@ from .analytics_views import (
     class_performance_detail,
     teacher_analytics_summary,
     analytics_metadata,
+    dashboard_overview,
 )
 
 router = DefaultRouter()
@@ -28,4 +29,5 @@ urlpatterns = [
     path('analytics/class-performance/', class_performance_detail, name='class-performance'),
     path('analytics/teacher-summary/', teacher_analytics_summary, name='teacher-summary'),
     path('analytics/metadata/', analytics_metadata, name='analytics-metadata'),
+    path('analytics/dashboard-overview/', dashboard_overview, name='dashboard-overview'),
 ]

@@ -5,6 +5,7 @@ import { useToastStore } from '../../../stores/toastStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { useSectionStore } from '../../../stores/sectionStore';
 import { api } from '../../../services/api';
+import { analyticsApi } from '../../../services/analyticsApi';
 import SetupProgressBar from '../../../components/admin/SetupProgressBar';
 
 interface AuditLog {
@@ -143,6 +144,7 @@ export default function DashboardHome() {
   const [auditFetched, setAuditFetched] = useState(false);
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false);
   const [timeSaved, setTimeSaved] = useState<number | null>(null);
+  const [overview, setOverview] = useState<any>(null);
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -203,6 +205,9 @@ export default function DashboardHome() {
     };
 
     fetchKpis();
+
+    // Fetch comprehensive dashboard overview
+    analyticsApi.getDashboardOverview().then(setOverview).catch(() => {});
   }, [activeSectionId]);
 
   useEffect(() => {
@@ -596,9 +601,137 @@ export default function DashboardHome() {
         </div>
       </div>
 
+      {/* ─── Academic Performance & Curriculum ─── */}
+      {overview && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Academic Performance */}
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-indigo-500 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
+              </div>
+              <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('Academic Performance')}</span>
+            </div>
+            {overview.academics?.overall_average != null ? (
+              <div className="space-y-3">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl font-bold text-on-surface">{overview.academics.overall_average}%</span>
+                  <span className="text-xs text-on-surface-variant">{t('school average')}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-container rounded-xl p-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Pass Rate')}</span>
+                    <p className="text-lg font-bold text-on-surface mt-1">{overview.academics.pass_rate}%</p>
+                  </div>
+                  <div className="bg-surface-container rounded-xl p-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Term')}</span>
+                    <p className="text-sm font-bold text-on-surface mt-1">{overview.academics.current_term || '-'}</p>
+                  </div>
+                </div>
+                {overview.academics.best_subject && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
+                    <span className="text-on-surface-variant">{t('Best')}: <span className="font-bold text-on-surface">{overview.academics.best_subject.name}</span> ({overview.academics.best_subject.average}%)</span>
+                  </div>
+                )}
+                {overview.academics.worst_subject && overview.academics.worst_subject.name !== overview.academics.best_subject?.name && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="material-symbols-outlined text-error text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
+                    <span className="text-on-surface-variant">{t('Needs focus')}: <span className="font-bold text-on-surface">{overview.academics.worst_subject.name}</span> ({overview.academics.worst_subject.average}%)</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-on-surface-variant text-sm">{t('No exam data yet for this term.')}</p>
+            )}
+          </div>
+
+          {/* Curriculum Compliance */}
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-emerald-500 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>menu_book</span>
+              </div>
+              <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('Curriculum Coverage')}</span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-bold text-on-surface">{overview.curriculum?.coverage_pct ?? 0}%</span>
+                <span className="text-xs text-on-surface-variant">{t('overall coverage')}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-surface-container rounded-xl p-2.5 text-center">
+                  <p className="text-lg font-bold text-on-surface">{overview.curriculum?.total_modules ?? 0}</p>
+                  <span className="text-[10px] font-bold uppercase text-on-surface-variant">{t('Modules')}</span>
+                </div>
+                <div className="bg-surface-container rounded-xl p-2.5 text-center">
+                  <p className="text-lg font-bold text-on-surface">{overview.curriculum?.completed_lessons ?? 0}/{overview.curriculum?.total_lessons ?? 0}</p>
+                  <span className="text-[10px] font-bold uppercase text-on-surface-variant">{t('Lessons')}</span>
+                </div>
+                <div className="bg-surface-container rounded-xl p-2.5 text-center">
+                  <p className={`text-lg font-bold ${(overview.curriculum?.teachers_without_modules ?? 0) > 0 ? 'text-error' : 'text-secondary'}`}>
+                    {overview.curriculum?.teachers_without_modules ?? 0}
+                  </p>
+                  <span className="text-[10px] font-bold uppercase text-on-surface-variant">{t('Inactive')}</span>
+                </div>
+              </div>
+              {(overview.curriculum?.teachers_without_modules ?? 0) > 0 && (
+                <button
+                  onClick={() => navigate('/admin/academic/curriculum')}
+                  className="w-full text-left text-xs font-medium text-error hover:underline flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-xs">warning</span>
+                  {t('{{count}} teacher(s) have not created any modules', { count: overview.curriculum.teachers_without_modules })}
+                </button>
+              )}
+              <button
+                onClick={() => navigate('/admin/academic/curriculum')}
+                className="w-full bg-primary/10 text-primary text-xs font-bold py-2 rounded-lg hover:bg-primary/20 transition-colors"
+              >
+                {t('View Full Coverage')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── C. Action Center ─── */}
       <section>
         <h3 className="text-sm font-bold text-on-surface mb-4">{t('What needs your attention today')}</h3>
+
+        {/* Alerts from dashboard overview */}
+        {overview?.alerts && overview.alerts.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {overview.alerts.map((alert: any, i: number) => (
+              <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
+                alert.severity === 'critical'
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
+              }`}>
+                <span className="material-symbols-outlined text-lg">
+                  {alert.severity === 'critical' ? 'error' : 'warning'}
+                </span>
+                <span className="text-sm font-medium flex-1">{alert.message}</span>
+                {alert.type === 'marks' && (
+                  <button onClick={() => navigate('/admin/academic/mark-status')} className="text-xs font-bold underline">
+                    {t('View')}
+                  </button>
+                )}
+                {alert.type === 'curriculum' && (
+                  <button onClick={() => navigate('/admin/academic/curriculum')} className="text-xs font-bold underline">
+                    {t('View')}
+                  </button>
+                )}
+                {alert.type === 'attendance' && (
+                  <button onClick={() => navigate('/admin/attendance')} className="text-xs font-bold underline">
+                    {t('View')}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {quickActions.length > 0 ? (
           <div className="space-y-3">
             {urgentActions.length > 0 && (

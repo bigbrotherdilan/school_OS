@@ -475,5 +475,16 @@
   "{{type}} report generated successfully.": "Rapport {{type}} généré avec succès.",
   "— Free tier: 100 emails/day. Sign up at sendgrid.com.": "— Niveau gratuit : 100 emails/jour. Inscrivez-vous sur sendgrid.com.",
   "— Free tier: 300 emails/day. Sign up at brevo.com.": "— Niveau gratuit : 300 emails/jour. Inscrivez-vous sur brevo.com.",
-  "— Free. Enable 2FA, generate App Password in Google Account > Security.": "— Gratuit. Activez la 2FA, générez un mot de passe d'application dans Compte Google > Sécurité."
+  "— Free. Enable 2FA, generate App Password in Google Account > Security.": "— Gratuit. Activez la 2FA, générez un mot de passe d'application dans Compte Google > Sécurité.",
+  "school average": "moyenne de l’école",
+  "Needs focus": "À améliorer",
+  "Best": "Meilleur",
+  "No exam data yet for this term.": "Aucune donnée d’examen pour ce trimestre.",
+  "Curriculum Coverage": "Couverture du Programme",
+  "overall coverage": "couverture globale",
+  "Modules": "Modules",
+  "Lessons": "Cours",
+  "Inactive": "Inactifs",
+  "{{count}} teacher(s) have not created any modules": "{{count}} enseignant(s) n’ont créé aucun module",
+  "View Full Coverage": "Voir la Couverture Complète"
 }

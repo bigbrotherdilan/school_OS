@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.utils import timezone
 
 
 class SchemeOfWork(models.Model):
@@ -56,6 +57,12 @@ class CurriculumModule(models.Model):
     subject = models.ForeignKey('academic.Subject', on_delete=models.CASCADE, related_name='modules')
     name = models.CharField(max_length=255)
     order = models.PositiveSmallIntegerField(default=1)
+    created_by = models.ForeignKey(
+        'staff.Teacher', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='created_modules',
+        help_text='Teacher who created this module.',
+    )
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         db_table = 'curriculum_modules'
@@ -76,6 +83,12 @@ class CurriculumLesson(models.Model):
     content_brief = models.TextField(blank=True)
     order = models.PositiveSmallIntegerField(default=1)
     is_completed = models.BooleanField(default=False)
+    completed_by = models.ForeignKey(
+        'authentication.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='completed_lessons',
+        help_text='User who toggled this lesson completion.',
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'curriculum_lessons'

@@ -27,4 +27,9 @@ export const analyticsApi = {
     const res = await api.get(`${BASE}/metadata/`);
     return res.data;
   },
+
+  getDashboardOverview: async () => {
+    const res = await api.get(`${BASE}/dashboard-overview/`);
+    return res.data;
+  },
 };

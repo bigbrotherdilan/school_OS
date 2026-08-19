@@ -72,7 +72,8 @@ class CurriculumModuleViewSet(viewsets.ModelViewSet):
                 f'{subject.name} is not added to your school yet. '
                 'Assign it to a section or class first (School Setup → Subjects).'
             )
-        serializer.save(tenant_id=tenant_id)
+        teacher = Teacher.objects.filter(user=self.request.user, tenant_id=tenant_id).first()
+        serializer.save(tenant_id=tenant_id, created_by=teacher)
 
     @action(detail=False, methods=['get'])
     def school_coverage(self, request):
@@ -229,6 +230,7 @@ class CurriculumModuleViewSet(viewsets.ModelViewSet):
             existing.delete()
 
         modules_copied = lessons_copied = 0
+        copier = Teacher.objects.filter(user=request.user, tenant_id=tenant_id).first()
         for source in source_modules:
             module = CurriculumModule.objects.create(
                 tenant_id=tenant_id,
@@ -236,6 +238,7 @@ class CurriculumModuleViewSet(viewsets.ModelViewSet):
                 subject=subject,
                 name=source.name,
                 order=source.order,
+                created_by=copier,
             )
             modules_copied += 1
             for lesson in source.lessons.all().order_by('order'):
@@ -297,6 +300,110 @@ class CurriculumModuleViewSet(viewsets.ModelViewSet):
             'modules': modules_data,
         })
 
+    @action(detail=False, methods=['get'])
+    def teacher_compliance(self, request):
+        """
+        Admin-only: per-teacher curriculum compliance report.
+        Shows which teachers have/haven't created modules and their coverage.
+        """
+        tenant_id = request.tenant_id
+        is_admin = request.user.role_mappings.filter(
+            tenant_id=tenant_id, role__in=['admin', 'super_admin']
+        ).exists()
+        if not is_admin:
+            return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+
+        active_year = AcademicYear.objects.filter(tenant_id=tenant_id, is_active=True).first()
+        if not active_year:
+            return Response({'results': []})
+
+        assignments = TeachingAssignment.objects.filter(
+            teacher__tenant_id=tenant_id,
+            academic_year=active_year,
+        ).select_related('teacher__user', 'subject', 'academic_class')
+
+        teacher_map = {}
+        for a in assignments:
+            t = a.teacher
+            if t.id not in teacher_map:
+                teacher_map[t.id] = {
+                    'teacher_id': str(t.id),
+                    'teacher_name': t.user.full_name if t.user else str(t.id),
+                    'assigned_classes': [],
+                    'assigned_subjects': [],
+                    'modules_created': 0,
+                    'total_lessons': 0,
+                    'completed_lessons': 0,
+                    'last_activity': None,
+                }
+            info = teacher_map[t.id]
+            class_name = a.academic_class.name if a.academic_class else 'N/A'
+            subject_name = a.subject.name if a.subject else 'N/A'
+            if class_name not in info['assigned_classes']:
+                info['assigned_classes'].append(class_name)
+            if subject_name not in info['assigned_subjects']:
+                info['assigned_subjects'].append(subject_name)
+
+        # Aggregate module/lesson data per teacher
+        module_data = (
+            CurriculumModule.objects.filter(
+                tenant_id=tenant_id,
+                created_by__isnull=False,
+            )
+            .values(
+                'created_by__id',
+                'created_by__user__first_name',
+                'created_by__user__last_name',
+            )
+            .annotate(
+                modules_created=Count('id'),
+            )
+        )
+        for row in module_data:
+            tid = row['created_by__id']
+            if tid in teacher_map:
+                teacher_map[tid]['modules_created'] = row['modules_created']
+
+        lesson_data = (
+            CurriculumLesson.objects.filter(
+                module__tenant_id=tenant_id,
+                completed_by__isnull=False,
+            )
+            .values('completed_by__id')
+            .annotate(
+                total_lessons=Count('id'),
+                completed_lessons=Count('id', filter=Q(is_completed=True)),
+                last_activity=Max('completed_at'),
+            )
+        )
+        for row in lesson_data:
+            tid = row['completed_by__id']
+            if tid in teacher_map:
+                teacher_map[tid]['total_lessons'] = row['total_lessons']
+                teacher_map[tid]['completed_lessons'] = row['completed_lessons']
+                teacher_map[tid]['last_activity'] = row['last_activity']
+
+        results = []
+        for info in teacher_map.values():
+            total = info['total_lessons']
+            completed = info['completed_lessons']
+            coverage = round((completed / total) * 100) if total > 0 else 0
+            if info['modules_created'] == 0 and total == 0:
+                status_label = 'non_compliant'
+            elif coverage < 30:
+                status_label = 'needs_attention'
+            else:
+                status_label = 'compliant'
+            results.append({
+                **info,
+                'coverage_pct': coverage,
+                'status': status_label,
+            })
+
+        results.sort(key=lambda r: r['coverage_pct'])
+
+        return Response({'results': results})
+
 class CurriculumLessonViewSet(viewsets.ModelViewSet):
     serializer_class = CurriculumLessonSerializer
     permission_classes = [IsAuthenticated, IsSchoolMember]
@@ -333,6 +440,12 @@ class CurriculumLessonViewSet(viewsets.ModelViewSet):
         """
         lesson = self.get_object()
         lesson.is_completed = not lesson.is_completed
+        if lesson.is_completed:
+            lesson.completed_by = request.user
+            lesson.completed_at = timezone.now()
+        else:
+            lesson.completed_by = None
+            lesson.completed_at = None
         lesson.save()
 
         # Auto-link to logbook when marking complete

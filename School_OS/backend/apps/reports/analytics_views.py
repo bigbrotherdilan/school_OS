@@ -554,3 +554,206 @@ def analytics_metadata(request):
     # them fresh after admins add classes/subjects/years.
     cache.set(cache_key, data, 60)
     return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsSchoolAdmin])
+def dashboard_overview(request):
+    """
+    GET /api/v1/reports/analytics/dashboard-overview/
+    Comprehensive admin dashboard data: students, teachers, academics,
+    attendance, curriculum compliance, mark filling status, and alerts.
+    """
+    tenant = _get_tenant(request)
+    if not tenant:
+        return Response({'detail': 'Tenant not found.'}, status=400)
+
+    active_year = AcademicYear.objects.filter(tenant=tenant, is_active=True).first()
+    current_term = Term.objects.filter(academic_year=active_year).order_by('order_number').last() if active_year else None
+    education_type = tenant.education_type
+    max_scale = 100 if education_type == 'anglophone' else 20
+
+    # ── Students ──
+    students_qs = Student.objects.filter(tenant=tenant)
+    total_students = students_qs.count()
+    active_students = students_qs.filter(status__in=['active', 'registered']).count()
+    new_this_month = students_qs.filter(
+        enrollment_date__gte=timezone.now().date() - timezone.timedelta(days=30)
+    ).count()
+
+    # ── Teachers ──
+    from apps.staff.models import Teacher
+    teachers_qs = Teacher.objects.filter(tenant=tenant)
+    total_teachers = teachers_qs.count()
+    active_assignments = TeachingAssignment.objects.filter(
+        teacher__tenant=tenant,
+        academic_year=active_year,
+    ).count() if active_year else 0
+
+    # ── Academics ──
+    overall_average = None
+    pass_rate = None
+    best_subject = None
+    worst_subject = None
+    grade_distribution = {}
+
+    if current_term:
+        exams = Exam.objects.filter(tenant=tenant, term=current_term)
+        results = ExamResult.objects.filter(exam__in=exams)
+        if results.exists():
+            overall = _compute_subject_stats(results, education_type, max_scale)
+            overall_average = overall['average_percentage']
+            pass_rate = overall['pass_rate']
+            grade_distribution = overall['grade_distribution']
+
+            # Best/worst subject
+            subject_perf = []
+            for subj_id in results.values_list('subject_id', flat=True).distinct():
+                subj_results = results.filter(subject_id=subj_id)
+                subj = subj_results.first().subject
+                stats = _compute_subject_stats(subj_results, education_type, max_scale)
+                if stats['average'] is not None:
+                    subject_perf.append({
+                        'name': subj.name,
+                        'average': stats['average_percentage'],
+                        'pass_rate': stats['pass_rate'],
+                    })
+            if subject_perf:
+                subject_perf.sort(key=lambda x: x['average'], reverse=True)
+                best_subject = subject_perf[0]
+                worst_subject = subject_perf[-1]
+
+    # ── Attendance ──
+    attendance_rate = None
+    at_risk_count = 0
+    if current_term:
+        sessions = AttendanceSession.objects.filter(tenant=tenant, term=current_term)
+        total_records = AttendanceRecord.objects.filter(session__in=sessions)
+        if total_records.exists():
+            present_count = total_records.filter(status__in=['present', 'late']).count()
+            attendance_rate = round((present_count / total_records.count()) * 100, 1)
+
+        # At-risk: absent > 20% in last 30 days
+        recent_sessions = sessions.filter(
+            date__gte=timezone.now().date() - timezone.timedelta(days=30)
+        )
+        recent_records = AttendanceRecord.objects.filter(
+            session__in=recent_sessions, status='absent'
+        ).values('student').annotate(absent_count=Count('id'))
+        recent_session_count = recent_sessions.count()
+        if recent_session_count > 0:
+            threshold = recent_session_count * 0.2
+            at_risk_count = recent_records.filter(absent_count__gt=threshold).count()
+
+    # ── Curriculum ──
+    total_modules = CurriculumModule.objects.filter(tenant=tenant).count()
+    total_lessons = CurriculumLesson.objects.filter(module__tenant=tenant).count()
+    completed_lessons = CurriculumLesson.objects.filter(
+        module__tenant=tenant, is_completed=True
+    ).count()
+    curriculum_coverage = round((completed_lessons / total_lessons) * 100) if total_lessons > 0 else 0
+
+    # Teachers with 0 modules created
+    teachers_with_modules = set(
+        CurriculumModule.objects.filter(
+            tenant=tenant, created_by__isnull=False
+        ).values_list('created_by_id', flat=True)
+    )
+    all_teacher_ids = set(teachers_qs.values_list('id', flat=True))
+    teachers_no_modules = len(all_teacher_ids - teachers_with_modules)
+
+    # ── Marks ──
+    mark_fill_rate = None
+    pending_teachers = []
+    if current_term:
+        windows = MarkEntryWindow.objects.filter(tenant=tenant, sequence__term=current_term)
+        for window in windows:
+            if window.is_open:
+                # Count teachers who haven't filled for this sequence
+                assigned_teachers = TeachingAssignment.objects.filter(
+                    teacher__tenant=tenant,
+                    academic_year=active_year,
+                ).values_list('teacher_id', flat=True).distinct()
+                filled_teachers = ExamResult.objects.filter(
+                    exam__tenant=tenant, sequence=window.sequence
+                ).values('exam__teacher').distinct().count() if hasattr(ExamResult, 'exam__teacher') else 0
+                # Simplified: just track if any results exist for this sequence
+                has_results = ExamResult.objects.filter(
+                    exam__tenant=tenant, sequence=window.sequence
+                ).exists()
+                if not has_results and assigned_teachers:
+                    pending_teachers.append({
+                        'sequence': str(window.sequence_id),
+                        'is_open': window.is_open,
+                    })
+
+        total_windows = windows.count()
+        open_windows = windows.filter(is_open=True).count()
+        closed_windows = total_windows - open_windows
+        if total_windows > 0:
+            mark_fill_rate = round((closed_windows / total_windows) * 100, 1) if total_windows > 0 else 0
+
+    # ── Alerts ──
+    alerts = []
+    if teachers_no_modules > 0:
+        alerts.append({
+            'type': 'curriculum',
+            'severity': 'warning',
+            'message': f'{teachers_no_modules} teacher(s) have not created any curriculum modules.',
+        })
+    if at_risk_count > 0:
+        alerts.append({
+            'type': 'attendance',
+            'severity': 'critical',
+            'message': f'{at_risk_count} student(s) are at risk of chronic absenteeism.',
+        })
+    if pending_teachers:
+        alerts.append({
+            'type': 'marks',
+            'severity': 'warning',
+            'message': f'{len(pending_teachers)} sequence(s) are open but have no marks submitted.',
+        })
+    if attendance_rate is not None and attendance_rate < 80:
+        alerts.append({
+            'type': 'attendance',
+            'severity': 'critical',
+            'message': f'School attendance rate is {attendance_rate}% (below 80% threshold).',
+        })
+
+    return Response({
+        'students': {
+            'total': total_students,
+            'active': active_students,
+            'new_this_month': new_this_month,
+        },
+        'teachers': {
+            'total': total_teachers,
+            'active_assignments': active_assignments,
+            'without_modules': teachers_no_modules,
+        },
+        'academics': {
+            'current_term': current_term.name if current_term else None,
+            'academic_year': active_year.name if active_year else None,
+            'overall_average': overall_average,
+            'pass_rate': pass_rate,
+            'best_subject': best_subject,
+            'worst_subject': worst_subject,
+            'grade_distribution': grade_distribution,
+        },
+        'attendance': {
+            'rate': attendance_rate,
+            'at_risk_count': at_risk_count,
+        },
+        'curriculum': {
+            'total_modules': total_modules,
+            'total_lessons': total_lessons,
+            'completed_lessons': completed_lessons,
+            'coverage_pct': curriculum_coverage,
+            'teachers_without_modules': teachers_no_modules,
+        },
+        'marks': {
+            'fill_rate': mark_fill_rate,
+            'pending_sequences': len(pending_teachers),
+        },
+        'alerts': alerts,
+    })
