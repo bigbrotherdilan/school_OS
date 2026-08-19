@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { 
@@ -20,6 +21,7 @@ interface TeachingAssignmentModalProps {
 }
 
 export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: TeachingAssignmentModalProps) {
+  const { t } = useTranslation('adminStaffOps');
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(false);
   const [assignments, setAssignments] = useState<any[]>(teacher.assignments || []);
@@ -37,6 +39,13 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
 
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
 
+  const selectedClass = metadata.classes.find(c => c.id === formData.academic_class);
+  const cycleFilteredSubjects = selectedClass
+    ? metadata.subjects.filter(
+        s => !s.cycle || !selectedClass.cycle || s.cycle === selectedClass.cycle
+      )
+    : metadata.subjects;
+
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
@@ -51,7 +60,7 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
           years: yearsRes.data.results || yearsRes.data
         });
       } catch (err) {
-        addToast('Failed to load academic metadata.', 'error');
+        addToast(t('Failed to load academic metadata.'), 'error');
       }
     };
     fetchMetadata();
@@ -69,7 +78,11 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
     );
     if (duplicate) {
       setConflictWarning(
-        `This teacher already has an assignment for ${duplicate.subject_name} in ${duplicate.class_name} (${duplicate.academic_year_name}).`
+        t('This teacher already has an assignment for {{subject}} in {{class}} ({{year}}).', {
+          subject: duplicate.subject_name,
+          class: duplicate.class_name,
+          year: duplicate.academic_year_name,
+        })
       );
     } else {
       const sameSubject = assignments.find(
@@ -80,11 +93,16 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
       );
       if (sameSubject) {
         setConflictWarning(
-          `Note: This teacher already teaches ${sameSubject.subject_name} in ${sameSubject.class_name} this year.`
+          t('Note: This teacher already teaches {{subject}} in {{class}} this year.', {
+            subject: sameSubject.subject_name,
+            class: sameSubject.class_name,
+          })
         );
       } else if (sameClass) {
         setConflictWarning(
-          `Note: This teacher already has a subject in ${sameClass.class_name} this year.`
+          t('Note: This teacher already has a subject in {{class}} this year.', {
+            class: sameClass.class_name,
+          })
         );
       } else {
         setConflictWarning(null);
@@ -100,7 +118,7 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
         teacher: teacher.id,
         ...formData
       });
-      addToast('Teaching assignment saved.', 'success');
+      addToast(t('Teaching assignment saved.'), 'success');
       setAssignments([...assignments, response.data]);
       setFormData({ subject: '', academic_class: '', academic_year: '' });
       setConflictWarning(null);
@@ -108,7 +126,7 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
     } catch (error: any) {
       const data = error.response?.data;
       const msg = typeof data === 'string' ? data
-        : data?.detail || data?.non_field_errors?.[0] || data?.subject?.[0] || data?.teacher?.[0] || data?.academic_class?.[0] || data?.academic_year?.[0] || JSON.stringify(data) || 'Failed to create assignment.';
+        : data?.detail || data?.non_field_errors?.[0] || data?.subject?.[0] || data?.teacher?.[0] || data?.academic_class?.[0] || data?.academic_year?.[0] || JSON.stringify(data) || t('Failed to create assignment.');
       addToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -118,11 +136,11 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
   const handleDeleteAssignment = async (assignmentId: string) => {
     try {
       await api.delete(`/staff/assignments/${assignmentId}/`);
-      addToast('Assignment removed.', 'success');
+      addToast(t('Assignment removed.'), 'success');
       setAssignments(assignments.filter(a => a.id !== assignmentId));
       onUpdate();
     } catch (error) {
-      addToast('Failed to remove assignment.', 'error');
+      addToast(t('Failed to remove assignment.'), 'error');
     }
   };
 
@@ -133,9 +151,9 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
         {/* Modal Header */}
         <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-1">Strategic Oversight</span>
-            <h2 className="text-2xl font-black text-on-surface tracking-tight">Assignment Manager</h2>
-            <p className="text-xs text-on-surface-variant font-medium mt-1 uppercase tracking-widest">Faculty: <span className="text-primary">{teacher.user_details?.full_name}</span></p>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-1">{t('Strategic Oversight')}</span>
+            <h2 className="text-2xl font-black text-on-surface tracking-tight">{t('Assignment Manager')}</h2>
+            <p className="text-xs text-on-surface-variant font-medium mt-1 uppercase tracking-widest">{t('Faculty: ')}<span className="text-primary">{teacher.user_details?.full_name}</span></p>
           </div>
           <button 
             onClick={onClose}
@@ -150,46 +168,54 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
           {/* New Assignment Form */}
           <section className="space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-              <Plus className="w-4 h-4 text-primary" /> Create New Assignment
+              <Plus className="w-4 h-4 text-primary" /> {t('Create New Assignment')}
             </h3>
             
             <form onSubmit={handleAddAssignment} className="bg-surface-container-low/50 p-6 rounded-3xl border border-outline-variant/5 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Academic Year</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Academic Year')}</label>
                 <select 
                   required
                   value={formData.academic_year}
                   onChange={e => setFormData({ ...formData, academic_year: e.target.value })}
                   className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                 >
-                  <option value="">Select Year</option>
+                  <option value="">{t('Select Year')}</option>
                   {metadata.years.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Class</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Class')}</label>
                 <select 
                   required
                   value={formData.academic_class}
                   onChange={e => setFormData({ ...formData, academic_class: e.target.value })}
                   className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                 >
-                  <option value="">Select Class</option>
-                  {metadata.classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="">{t('Select Class')}</option>
+                  {metadata.classes.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.cycle_name ? ` \u2014 ${c.cycle_name}` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Subject</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Subject')}</label>
                 <select 
                   required
                   value={formData.subject}
                   onChange={e => setFormData({ ...formData, subject: e.target.value })}
                   className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                 >
-                  <option value="">Select Subject</option>
-                  {metadata.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="">{t('Select Subject')}</option>
+                  {cycleFilteredSubjects.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}{s.cycle_name ? ` \u2014 ${s.cycle_name}` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -206,7 +232,7 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
                   className="bg-primary text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-50 active:scale-95"
                 >
                   {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                  Deploy Assignment
+                  {t('Deploy Assignment')}
                 </button>
               </div>
             </form>
@@ -215,14 +241,14 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
           {/* Existing Assignments List */}
           <section className="space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-primary" /> Current Deployment
+              <GraduationCap className="w-4 h-4 text-primary" /> {t('Current Deployment')}
             </h3>
             
             <div className="space-y-3">
               {assignments.length === 0 ? (
                 <div className="py-12 bg-surface-container-low/30 rounded-3xl border border-dashed border-outline-variant/20 flex flex-col items-center justify-center text-center opacity-40 grayscale">
                   <span className="material-symbols-outlined text-4xl mb-2">event_busy</span>
-                  <p className="text-[10px] font-black uppercase tracking-widest">No active assignments found</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">{t('No active assignments found')}</p>
                 </div>
               ) : (
                 assignments.map((assignment) => (
@@ -232,6 +258,11 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
                         <div className="flex items-center gap-2">
                           <BookOpen className="w-3 h-3 text-primary" />
                           <span className="text-sm font-black text-on-surface">{assignment.subject_name}</span>
+                          {assignment.subject_cycle_name && (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                              {assignment.subject_cycle_name}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1.5 grayscale opacity-50">
@@ -261,7 +292,7 @@ export default function TeachingAssignmentModal({ teacher, onClose, onUpdate }: 
         
         {/* Footer */}
         <div className="p-6 bg-surface-container-low/30 border-t border-outline-variant/10 flex justify-center">
-            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-on-surface-variant/30 italic">Institutional Standard - Faculty Registry Protocol</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-on-surface-variant/30 italic">{t('Institutional Standard - Faculty Registry Protocol')}</p>
         </div>
 
       </div>

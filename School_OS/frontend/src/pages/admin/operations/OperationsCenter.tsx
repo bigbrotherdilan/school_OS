@@ -1,9 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 
 export default function OperationsCenter() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminStaffOps');
   const [teacherCount, setTeacherCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,17 +34,17 @@ export default function OperationsCenter() {
               <span className="material-symbols-outlined text-3xl">settings_input_component</span>
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block">Administration Hub</span>
-              <h2 className="text-4xl font-bold tracking-tight text-on-surface">School Administration</h2>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block">{t('Administration Hub')}</span>
+              <h2 className="text-4xl font-bold tracking-tight text-on-surface">{t('School Administration')}</h2>
             </div>
           </div>
           <p className="text-on-surface-variant text-lg max-w-2xl leading-relaxed">
-            Staff management, discipline records, and daily school logistics oversight.
+            {t('Staff management, discipline records, and daily school logistics oversight.')}
           </p>
         </div>
         <div className="flex gap-4">
           <div className="bg-surface-container-low px-6 py-4 rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col items-end">
-            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Teachers on Staff</span>
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('Teachers on Staff')}</span>
             {loading ? (
               <span className="text-2xl font-black text-primary">...</span>
             ) : teacherCount !== null ? (
@@ -71,7 +73,7 @@ export default function OperationsCenter() {
             <div className={`w-10 h-10 rounded-lg ${mod.color} flex items-center justify-center text-white mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
               <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{mod.icon}</span>
             </div>
-            <span className="text-xs font-bold text-on-surface block leading-tight">{mod.label}</span>
+            <span className="text-xs font-bold text-on-surface block leading-tight">{t(mod.label)}</span>
           </button>
         ))}
       </section>
@@ -81,10 +83,10 @@ export default function OperationsCenter() {
           <span className="material-symbols-outlined text-4xl">factory</span>
         </div>
         <p className="text-on-surface-variant italic font-serif text-2xl max-w-2xl leading-relaxed">
-          "School administration is the backbone of educational excellence."
+          {t('"School administration is the backbone of educational excellence."')}
         </p>
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/30">- School Administration</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/30">{t('- School Administration')}</p>
           <div className="flex gap-1 mt-4">
             <div className="w-1.5 h-1.5 rounded-full bg-primary/20"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-primary/40"></div>

@@ -1,8 +1,10 @@
 ﻿import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGovStore } from '../../stores/govStore';
 import { api } from '../../services/api';
 
 const GovCompliance: React.FC = () => {
+    const { t } = useTranslation('gov');
     const { dashboardData, fetchDashboard } = useGovStore();
     const [_complianceScore, setComplianceScore] = useState<string>('...');
     const [recalculating, setRecalculating] = useState(false);
@@ -46,8 +48,8 @@ const GovCompliance: React.FC = () => {
         <div className="max-w-[1600px] mx-auto space-y-12">
             <div className="mb-10 flex justify-between items-end">
                 <div>
-                    <h1 className="text-4xl font-black text-primary tracking-tight mb-2">Finance & Compliance</h1>
-                    <p className="text-on-surface-variant font-medium">Governance oversight and national financial transparency matrix.</p>
+                    <h1 className="text-4xl font-black text-primary tracking-tight mb-2">{t('Finance & Compliance')}</h1>
+                    <p className="text-on-surface-variant font-medium">{t('Governance oversight and national financial transparency matrix.')}</p>
                 </div>
                 <div className="flex gap-3">
                     <button
@@ -55,7 +57,7 @@ const GovCompliance: React.FC = () => {
                         className="px-4 py-2 bg-white shadow-sm border border-outline-variant/20 text-on-surface text-sm font-semibold rounded hover:bg-slate-50 transition-colors flex items-center gap-2"
                     >
                         <span className="material-symbols-outlined text-lg">download</span>
-                        Export Report
+                        {t('Export Report')}
                     </button>
                     <button
                         onClick={handleRecalculate}
@@ -63,7 +65,7 @@ const GovCompliance: React.FC = () => {
                         className="px-6 py-2 bg-primary text-white text-sm font-bold rounded shadow-lg hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
                         <span className={`material-symbols-outlined text-lg ${recalculating ? 'animate-spin' : ''}`}>refresh</span>
-                        {recalculating ? 'Recalculating...' : 'Recalculate Compliance'}
+                        {recalculating ? t('Recalculating...') : t('Recalculate Compliance')}
                     </button>
                 </div>
             </div>
@@ -72,15 +74,15 @@ const GovCompliance: React.FC = () => {
             <section className="bg-primary-container p-8 rounded-xl shadow-lg relative overflow-hidden">
                 <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="flex flex-col">
-                        <span className="text-on-primary-container text-[10px] font-bold tracking-widest uppercase mb-2">Total Schools</span>
+                        <span className="text-on-primary-container text-[10px] font-bold tracking-widest uppercase mb-2">{t('Total Schools')}</span>
                         <div className="text-4xl font-black text-white tracking-tighter">{dashboardData?.overview.total_schools || 0}</div>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-on-primary-container text-[10px] font-bold tracking-widest uppercase mb-2">Total Students</span>
+                        <span className="text-on-primary-container text-[10px] font-bold tracking-widest uppercase mb-2">{t('Total Students')}</span>
                         <div className="text-4xl font-black text-white tracking-tighter">{dashboardData?.overview.total_students || 0}</div>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-on-primary-container text-[10px] font-bold tracking-widest uppercase mb-2">National Attendance</span>
+                        <span className="text-on-primary-container text-[10px] font-bold tracking-widest uppercase mb-2">{t('National Attendance')}</span>
                         <div className="text-4xl font-black text-white tracking-tighter">{dashboardData?.overview.national_attendance_rate || 0}%</div>
                         <div className="h-2 w-full bg-white/20 rounded-full mt-4">
                             <div className="h-full bg-white rounded-full" style={{ width: `${dashboardData?.overview.national_attendance_rate || 0}%` }}></div>
@@ -92,7 +94,7 @@ const GovCompliance: React.FC = () => {
             {/* Compliance Scores */}
             {recalcResult && (
                 <section className="bg-white p-8 rounded-xl shadow-sm border border-outline-variant/10">
-                    <h3 className="text-xl font-bold mb-6">Compliance Breakdown</h3>
+                    <h3 className="text-xl font-bold mb-6">{t('Compliance Breakdown')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {Object.entries(recalcResult.scores || {}).map(([key, value]) => (
                             <div key={key} className="p-4 bg-slate-50 rounded-lg">
@@ -101,7 +103,7 @@ const GovCompliance: React.FC = () => {
                             </div>
                         ))}
                         <div className="p-4 bg-primary-container rounded-lg">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-on-primary-container">Overall</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-on-primary-container">{t('Overall')}</p>
                             <p className="text-2xl font-black text-primary mt-1">{recalcResult.overall_score}</p>
                         </div>
                     </div>
@@ -112,13 +114,13 @@ const GovCompliance: React.FC = () => {
             <section>
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-1 h-8 bg-primary"></div>
-                    <h3 className="text-2xl font-bold">Compliance Alerts</h3>
+                    <h3 className="text-2xl font-bold">{t('Compliance Alerts')}</h3>
                 </div>
                 <div className="space-y-4">
                     {alerts.length === 0 ? (
                         <div className="p-8 bg-white rounded-xl text-center shadow-sm border border-outline-variant/10">
                             <span className="material-symbols-outlined text-4xl text-emerald-300 mb-2 block">check_circle</span>
-                            <p className="text-on-surface-variant font-medium">No compliance alerts.</p>
+                            <p className="text-on-surface-variant font-medium">{t('No compliance alerts.')}</p>
                         </div>
                     ) : (
                         alerts.map(alert => (

@@ -1,7 +1,9 @@
 ﻿import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGovStore } from '../../stores/govStore';
 
 const GovDashboard: React.FC = () => {
+    const { t } = useTranslation('gov');
     const { dashboardData, isLoading, error, fetchDashboard } = useGovStore();
 
     useEffect(() => {
@@ -19,7 +21,7 @@ const GovDashboard: React.FC = () => {
     if (error) {
         return (
             <div className="bg-error-container p-6 rounded-xl border-l-4 border-error">
-                <h3 className="text-error font-bold mb-2">Failed to Load Dashboard</h3>
+                <h3 className="text-error font-bold mb-2">{t('Failed to Load Dashboard')}</h3>
                 <p className="text-on-error-container text-sm">{error}</p>
             </div>
         );
@@ -37,10 +39,10 @@ const GovDashboard: React.FC = () => {
             <div className="mb-12">
                 <div className="flex items-baseline gap-4 mb-2">
                     <div className="w-1 h-8 bg-primary"></div>
-                    <h1 className="text-4xl font-black tracking-tight text-on-surface">National Education Dashboard</h1>
+                    <h1 className="text-4xl font-black tracking-tight text-on-surface">{t('National Education Dashboard')}</h1>
                 </div>
                 <p className="text-on-surface-variant font-medium ml-5 italic opacity-70">
-                    Reporting Scope: {overview.scope} • Live Data
+                    {t('Reporting Scope: {{scope}} • Live Data', { scope: overview.scope })}
                 </p>
             </div>
 
@@ -49,11 +51,11 @@ const GovDashboard: React.FC = () => {
                 {/* Connected Schools */}
                 <div className="bg-primary-container p-6 shadow-sm rounded-xl relative overflow-hidden group">
                     <div className="relative z-10">
-                        <p className="text-on-primary-container/70 text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Schools Connected</p>
+                        <p className="text-on-primary-container/70 text-[10px] font-bold uppercase tracking-[0.1em] mb-2">{t('Schools Connected')}</p>
                         <h3 className="text-3xl font-black text-white">{overview.total_schools.toLocaleString()}</h3>
                         <div className="flex items-center gap-1 mt-4 text-[#6ffbbe]">
                             <span className="material-symbols-outlined text-sm">trending_up</span>
-                            <span className="text-[10px] font-bold">Active Nodes</span>
+                            <span className="text-[10px] font-bold">{t('Active Nodes')}</span>
                         </div>
                     </div>
                     <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-white/5 group-hover:scale-110 transition-transform duration-500">school</span>
@@ -61,31 +63,31 @@ const GovDashboard: React.FC = () => {
 
                 {/* Students Nationwide */}
                 <div className="bg-white p-6 shadow-sm rounded-xl border-l-4 border-primary">
-                    <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Total Students</p>
+                    <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">{t('Total Students')}</p>
                     <h3 className="text-3xl font-black text-on-surface">{overview.total_students.toLocaleString()}</h3>
                     <div className="flex items-center gap-1 mt-4 text-primary">
                         <span className="material-symbols-outlined text-sm">groups</span>
-                        <span className="text-[10px] font-medium">National Census</span>
+                        <span className="text-[10px] font-medium">{t('National Census')}</span>
                     </div>
                 </div>
 
                 {/* Attendance Rate */}
                 <div className="bg-white p-6 shadow-sm rounded-xl border-l-4 border-primary">
-                    <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Attendance Rate</p>
+                    <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">{t('Attendance Rate')}</p>
                     <h3 className="text-3xl font-black text-on-surface">{overview.national_attendance_rate}%</h3>
                     <div className="flex items-center gap-1 mt-4 text-[#006c49]">
                         <span className="material-symbols-outlined text-sm">check_circle</span>
-                        <span className="text-[10px] font-medium">National Average</span>
+                        <span className="text-[10px] font-medium">{t('National Average')}</span>
                     </div>
                 </div>
 
                 {/* Program Coverage */}
                 <div className="bg-white p-6 shadow-sm rounded-xl border-l-4 border-primary">
-                    <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">Program Coverage</p>
+                    <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.1em] mb-2">{t('Program Coverage')}</p>
                     <h3 className="text-3xl font-black text-on-surface">{overview.program_coverage_percent}%</h3>
                     <div className="flex items-center gap-1 mt-4 text-primary">
                         <span className="material-symbols-outlined text-sm">map</span>
-                        <span className="text-[10px] font-medium">Curriculum Progress</span>
+                        <span className="text-[10px] font-medium">{t('Curriculum Progress')}</span>
                     </div>
                 </div>
             </div>
@@ -98,7 +100,7 @@ const GovDashboard: React.FC = () => {
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-3">
                                 <div className="w-1 h-6 bg-primary"></div>
-                                <h2 className="text-xl font-bold tracking-tight">Regional Distribution</h2>
+                                <h2 className="text-xl font-bold tracking-tight">{t('Regional Distribution')}</h2>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -106,7 +108,7 @@ const GovDashboard: React.FC = () => {
                                 <div key={region.name} className="p-4 bg-surface rounded-lg border border-outline-variant/10">
                                     <h4 className="text-xs font-black uppercase text-on-surface mb-1">{region.name}</h4>
                                     <p className="text-2xl font-black text-primary">{region.schools_count}</p>
-                                    <p className="text-[10px] text-on-surface-variant">Active Schools</p>
+                                    <p className="text-[10px] text-on-surface-variant">{t('Active Schools')}</p>
                                 </div>
                             ))}
                             {regional_distribution.length === 0 && (

@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTeacherData } from '../../../hooks/useTeacherData';
 import { useToastStore } from '../../../stores/toastStore';
 import { api } from '../../../services/api';
@@ -45,6 +46,7 @@ function timeRange(slot: BackendTimeSlot): string {
 }
 
 export default function TeacherTimetablePage() {
+  const { t } = useTranslation('teacher');
   const { fetchTimetables, fetchMyAssignments } = useTeacherData();
   const { addToast } = useToastStore();
   const [schedule, setSchedule] = useState<TimeSlotRow[]>([]);
@@ -168,11 +170,11 @@ export default function TeacherTimetablePage() {
 
   const handleSave = async () => {
     if (!form.classId || !form.subjectId) {
-      addToast('Select a class and a subject first.', 'error');
+      addToast(t('Select a class and a subject first.'), 'error');
       return;
     }
     if (form.startTime >= form.endTime) {
-      addToast('The lesson must end after it starts.', 'error');
+      addToast(t('The lesson must end after it starts.'), 'error');
       return;
     }
     setSaving(true);
@@ -185,24 +187,24 @@ export default function TeacherTimetablePage() {
         end_time: form.endTime,
         classroom: form.classroom,
       });
-      addToast('Lesson added to your timetable.', 'success');
+      addToast(t('Lesson added to your timetable.'), 'success');
       setForm((f) => ({ ...f, classroom: '' }));
       await loadTimetable();
     } catch (err: any) {
-      addToast(err.response?.data?.detail || err.response?.data?.[0] || 'Failed to add lesson.', 'error');
+      addToast(err.response?.data?.detail || err.response?.data?.[0] || t('Failed to add lesson.'), 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (slotId: string) => {
-    if (!window.confirm('Remove this lesson from your timetable?')) return;
+    if (!window.confirm(t('Remove this lesson from your timetable?'))) return;
     try {
       await api.delete(`/timetable/time-slots/${slotId}/`);
-      addToast('Lesson removed.', 'success');
+      addToast(t('Lesson removed.'), 'success');
       await loadTimetable();
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to remove lesson.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to remove lesson.'), 'error');
     }
   };
 
@@ -219,8 +221,8 @@ export default function TeacherTimetablePage() {
     <div className="space-y-6 sm:space-y-8 pb-12 animate-in fade-in duration-500">
       <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">My Timetable</h2>
-          <p className="text-on-surface-variant text-sm mt-1">Week {currentWeek}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{t('My Timetable')}</h2>
+          <p className="text-on-surface-variant text-sm mt-1">{t('Week {{week}}', { week: currentWeek })}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -229,12 +231,12 @@ export default function TeacherTimetablePage() {
             className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">{showEditor ? 'close' : 'edit_calendar'}</span>
-            {showEditor ? 'Close editor' : 'Edit schedule'}
+            {showEditor ? t('Close editor') : t('Edit schedule')}
           </button>
           <button onClick={() => setCurrentWeek(w => Math.max(1, w - 1))} className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-500 hover:text-primary transition-colors hover:shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center">
             <span className="material-symbols-outlined text-xl">chevron_left</span>
           </button>
-          <span className="text-sm font-bold text-slate-700 w-24 text-center">Week {currentWeek}</span>
+          <span className="text-sm font-bold text-slate-700 w-24 text-center">{t('Week {{week}}', { week: currentWeek })}</span>
           <button onClick={() => setCurrentWeek(w => w + 1)} className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-500 hover:text-primary transition-colors hover:shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center">
             <span className="material-symbols-outlined text-xl">chevron_right</span>
           </button>
@@ -245,12 +247,12 @@ export default function TeacherTimetablePage() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="material-symbols-outlined text-primary">edit_calendar</span>
-            <h3 className="font-bold text-slate-800">Input your schedule</h3>
-            <span className="text-xs text-slate-400 ml-1">Lessons you add appear below and are kept even if the admin regenerates timetables.</span>
+            <h3 className="font-bold text-slate-800">{t('Input your schedule')}</h3>
+            <span className="text-xs text-slate-400 ml-1">{t('Lessons you add appear below and are kept even if the admin regenerates timetables.')}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {inputRow('Class', (
+            {inputRow(t('Class'), (
               <select
                 className={selectCls}
                 value={form.classId}
@@ -259,7 +261,7 @@ export default function TeacherTimetablePage() {
                 {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             ))}
-            {inputRow('Subject', (
+            {inputRow(t('Subject'), (
               <select
                 className={selectCls}
                 value={form.subjectId}
@@ -268,16 +270,16 @@ export default function TeacherTimetablePage() {
                 {subjectsForClass.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             ))}
-            {inputRow('Day', (
+            {inputRow(t('Day'), (
               <select
                 className={selectCls}
                 value={form.day}
                 onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))}
               >
-                {DAY_NAMES.map((day, i) => <option key={day} value={i + 1}>{day}</option>)}
+                {DAY_NAMES.map((day, i) => <option key={day} value={i + 1}>{t(day)}</option>)}
               </select>
             ))}
-            {inputRow('Start time', (
+            {inputRow(t('Start time'), (
               <input
                 type="time"
                 className={selectCls}
@@ -285,7 +287,7 @@ export default function TeacherTimetablePage() {
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
               />
             ))}
-            {inputRow('End time', (
+            {inputRow(t('End time'), (
               <input
                 type="time"
                 className={selectCls}
@@ -293,11 +295,11 @@ export default function TeacherTimetablePage() {
                 onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
               />
             ))}
-            {inputRow('Room (optional)', (
+            {inputRow(t('Room (optional)'), (
               <input
                 type="text"
                 className={selectCls}
-                placeholder="e.g. Lab 2"
+                placeholder={t('e.g. Lab 2')}
                 value={form.classroom}
                 onChange={(e) => setForm((f) => ({ ...f, classroom: e.target.value }))}
               />
@@ -310,19 +312,19 @@ export default function TeacherTimetablePage() {
               disabled={saving}
               className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
             >
-              {saving ? 'Adding...' : <><span className="material-symbols-outlined text-lg">add</span> Add lesson</>}
+              {saving ? t('Adding...') : <><span className="material-symbols-outlined text-lg">add</span> {t('Add lesson')}</>}
             </button>
             <button
               onClick={() => setShowEditor(false)}
               className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
             >
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
 
           {allSlots.length > 0 && (
             <div className="mt-6">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Your scheduled lessons ({allSlots.length})</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('Your scheduled lessons ({{count}})', { count: allSlots.length })}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {allSlots.map((slot) => (
                   <div key={slot.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2">
@@ -334,7 +336,7 @@ export default function TeacherTimetablePage() {
                     <button
                       onClick={() => handleDelete(slot.id)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      title="Remove lesson"
+                      title={t('Remove lesson')}
                     >
                       <span className="material-symbols-outlined text-lg">delete</span>
                     </button>
@@ -349,19 +351,19 @@ export default function TeacherTimetablePage() {
       {loading ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center animate-pulse">
           <span className="material-symbols-outlined text-4xl text-slate-300 mb-3 block">schedule</span>
-          <p className="text-slate-400 font-medium">Loading timetable...</p>
+          <p className="text-slate-400 font-medium">{t('Loading timetable...')}</p>
         </div>
       ) : schedule.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
           <span className="material-symbols-outlined text-5xl text-slate-200 mb-3 block">calendar_today</span>
-          <h3 className="text-lg font-bold text-slate-700 mb-2">No Timetable Yet</h3>
-          <p className="text-sm text-slate-400 max-w-sm mx-auto">Your timetable hasn't been set up yet. It will appear here once your administrator publishes the school timetable — or input your own schedule below.</p>
+          <h3 className="text-lg font-bold text-slate-700 mb-2">{t('No Timetable Yet')}</h3>
+          <p className="text-sm text-slate-400 max-w-sm mx-auto">{t("Your timetable hasn't been set up yet. It will appear here once your administrator publishes the school timetable — or input your own schedule below.")}</p>
           <button
             onClick={() => setShowEditor(true)}
             className="mt-5 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm inline-flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">edit_calendar</span>
-            Input your schedule
+            {t('Input your schedule')}
           </button>
         </div>
       ) : (
@@ -370,10 +372,10 @@ export default function TeacherTimetablePage() {
           <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="min-w-[800px] overflow-x-auto">
               <div className="grid grid-cols-6 border-b border-slate-100 bg-slate-50/50">
-                <div className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Time</div>
+                <div className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">{t('Time')}</div>
                 {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => (
                   <div key={day} className={`p-4 text-xs font-bold uppercase tracking-wider text-center border-l border-slate-100 ${day === today ? 'text-primary bg-primary/5' : 'text-slate-500'}`}>
-                    {day}
+                    {t(day)}
                     {day === today && <span className="block w-1.5 h-1.5 bg-primary rounded-full mx-auto mt-1"></span>}
                   </div>
                 ))}
@@ -389,7 +391,7 @@ export default function TeacherTimetablePage() {
 
                     {slot.time.includes('Break') ? (
                       <div className="col-span-5 border-l border-slate-100 flex items-center justify-center bg-slate-50/50 text-slate-400 text-sm font-bold tracking-widest uppercase">
-                        <span className="material-symbols-outlined mr-2">restaurant</span> Student Break
+                        <span className="material-symbols-outlined mr-2">restaurant</span> {t('Student Break')}
                       </div>
                     ) : (
                       <>
@@ -425,8 +427,8 @@ export default function TeacherTimetablePage() {
                         <div className={`w-1 h-8 rounded-full ${isTodayDay ? 'bg-primary' : 'bg-slate-200'}`}></div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isTodayDay ? 'text-primary' : 'text-slate-400'}`}>{dayLabel}</span>
-                            {isTodayDay && <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded">TODAY</span>}
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isTodayDay ? 'text-primary' : 'text-slate-400'}`}>{t(dayLabel)}</span>
+                            {isTodayDay && <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded">{t('TODAY')}</span>}
                           </div>
                           <p className="font-bold text-sm text-slate-800 mt-0.5">{session.subject}</p>
                           <p className="text-xs text-slate-500">{session.className} &bull; {session.room}</p>
@@ -446,6 +448,7 @@ export default function TeacherTimetablePage() {
 }
 
 function TimeSlotCell({ session, isToday }: { session?: Session, isToday?: boolean }) {
+  const { t } = useTranslation('teacher');
   if (!session) {
     return <div className={`p-2 border-l border-slate-100 ${isToday ? 'bg-primary/5' : ''}`}></div>;
   }
@@ -467,7 +470,7 @@ function TimeSlotCell({ session, isToday }: { session?: Session, isToday?: boole
         <div className="h-full bg-primary text-white rounded-xl p-3 flex flex-col justify-between shadow-lg shadow-primary/20 relative z-10 hover:-translate-y-1 transition-transform cursor-pointer group">
           <div className="flex justify-between items-start">
             <span className="text-[9px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm flex items-center gap-1">
-               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> LIVE
+               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> {t('LIVE')}
             </span>
             <span className="material-symbols-outlined text-sm opacity-70 group-hover:opacity-100">{config.icon}</span>
           </div>

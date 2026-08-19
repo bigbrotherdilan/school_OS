@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 import { api } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface VerifyResult {
     valid: boolean;
@@ -18,6 +19,7 @@ interface VerifyResult {
 }
 
 export default function ReceiptVerify() {
+    const { t } = useTranslation('publicSite');
     const [value, setValue] = useState('');
     const [result, setResult] = useState<VerifyResult | null>(null);
     const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function ReceiptVerify() {
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault();
         const num = normalize(value);
-        if (!num) { setError('Enter a receipt number to verify.'); return; }
+        if (!num) { setError(t('Enter a receipt number to verify.')); return; }
         setError('');
         setLoading(true);
         setResult(null);
@@ -40,7 +42,7 @@ export default function ReceiptVerify() {
             if (httpErr.response?.status === 404 && httpErr.response?.data) {
                 setResult(httpErr.response.data);
             } else {
-                setResult({ valid: false, detail: 'Could not reach the verification service. Check your connection and try again.' });
+                setResult({ valid: false, detail: t('Could not reach the verification service. Check your connection and try again.') });
             }
         } finally {
             setLoading(false);
@@ -56,15 +58,13 @@ export default function ReceiptVerify() {
                     <div className="text-center mb-10">
                         <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-full mb-5">
                             <span className="material-symbols-outlined text-primary text-base">verified</span>
-                            <span className="text-xs font-bold tracking-widest text-primary uppercase">Public Authenticity Check</span>
+                            <span className="text-xs font-bold tracking-widest text-primary uppercase">{t('Public Authenticity Check')}</span>
                         </span>
                         <h1 className="text-4xl md:text-5xl font-extrabold text-primary tracking-tighter">
-                            Verify a Fee Receipt
+                            {t('Verify a Fee Receipt')}
                         </h1>
                         <p className="max-w-lg mx-auto text-on-surface-variant mt-4 leading-relaxed">
-                            Enter the receipt number printed on any fee receipt issued by a school on School OS.
-                            We will confirm whether the receipt is genuine and show a few details so you can
-                            compare them with your paper copy.
+                            {t('Enter the receipt number printed on any fee receipt issued by a school on School OS. We will confirm whether the receipt is genuine and show a few details so you can compare them with your paper copy.')}
                         </p>
                     </div>
 
@@ -77,7 +77,7 @@ export default function ReceiptVerify() {
                                     type="text"
                                     value={value}
                                     onChange={(e) => { setValue(e.target.value); setResult(null); }}
-                                    placeholder="e.g. RCT-X6MYBNUP"
+                                    placeholder={t('e.g. RCT-X6MYBNUP')}
                                     autoCapitalize="characters"
                                     spellCheck={false}
                                     className="w-full bg-surface-container-low border border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl pl-12 pr-4 py-4 text-sm font-bold uppercase tracking-widest transition-all placeholder:text-on-surface-variant/40"
@@ -93,7 +93,7 @@ export default function ReceiptVerify() {
                                 ) : (
                                     <span className="material-symbols-outlined text-lg">verified</span>
                                 )}
-                                {loading ? 'Checking...' : 'Verify'}
+                                {loading ? t('Checking...') : t('Verify')}
                             </button>
                         </form>
 
@@ -107,55 +107,53 @@ export default function ReceiptVerify() {
                                     <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
                                         <span className="material-symbols-outlined text-emerald-600 text-2xl">verified</span>
                                         <div>
-                                            <p className="font-black text-emerald-800">Genuine receipt</p>
-                                            <p className="text-xs text-emerald-700 font-medium">This receipt number matches an official payment record.</p>
+                                            <p className="font-black text-emerald-800">{t('Genuine receipt')}</p>
+                                            <p className="text-xs text-emerald-700 font-medium">{t('This receipt number matches an official payment record.')}</p>
                                         </div>
                                     </div>
 
                                     <dl className="mt-6 rounded-2xl border border-outline-variant/10 divide-y divide-outline-variant/10 overflow-hidden bg-surface-container-lowest">
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Receipt No.</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('Receipt No.')}</dt>
                                             <dd className="col-span-2 font-mono text-sm font-bold text-on-surface">{result.receipt_number}</dd>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">School</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('School')}</dt>
                                             <dd className="col-span-2 text-sm font-bold text-on-surface">{result.school}</dd>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Student</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('Student')}</dt>
                                             <dd className="col-span-2 text-sm font-bold text-on-surface">{result.student}</dd>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Amount</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('Amount')}</dt>
                                             <dd className="col-span-2 text-sm font-black text-on-surface">{Number(result.amount).toLocaleString()} {result.currency}</dd>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Paid On</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('Paid On')}</dt>
                                             <dd className="col-span-2 text-sm font-bold text-on-surface">{result.payment_date}</dd>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Method</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('Method')}</dt>
                                             <dd className="col-span-2 text-sm font-bold text-on-surface capitalize">{result.method}</dd>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 px-5 py-3.5 bg-surface-container-low/60">
-                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Security Code</dt>
+                                            <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">{t('Security Code')}</dt>
                                             <dd className="col-span-2 font-mono text-sm font-black text-primary">{result.verification_code}</dd>
                                         </div>
                                     </dl>
 
                                     <p className="mt-4 text-xs text-on-surface-variant/70 leading-relaxed">
-                                        Compare the student name and amount above with your paper receipt. The security code
-                                        is a machine-readable authenticity signature — a valid code confirms the receipt was
-                                        issued by the school named above.
+                                        {t('Compare the student name and amount above with your paper receipt. The security code is a machine-readable authenticity signature — a valid code confirms the receipt was issued by the school named above.')}
                                     </p>
                                 </div>
                             ) : (
                                 <div className="mt-8 flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
                                     <span className="material-symbols-outlined text-error text-2xl">gpp_bad</span>
                                     <div>
-                                        <p className="font-black text-red-800">Not found</p>
-                                        <p className="text-xs text-red-700 font-medium mt-0.5">{result.detail || 'No official receipt matches this number.'}</p>
-                                        <p className="text-xs text-red-600/70 mt-1">Double-check the number on your paper copy, or ask the school's bursar for the correct receipt number.</p>
+                                        <p className="font-black text-red-800">{t('Not found')}</p>
+                                        <p className="text-xs text-red-700 font-medium mt-0.5">{result.detail || t('No official receipt matches this number.')}</p>
+                                        <p className="text-xs text-red-600/70 mt-1">{t('Double-check the number on your paper copy, or ask the school\'s bursar for the correct receipt number.')}</p>
                                     </div>
                                 </div>
                             )
@@ -163,8 +161,8 @@ export default function ReceiptVerify() {
                     </div>
 
                     <p className="mt-6 text-center text-xs text-on-surface-variant/70">
-                        Don't have a receipt to check?{' '}
-                        <Link to="/login" className="font-bold text-primary hover:underline">Sign in to your portal</Link> to view or print your receipts.
+                        {t("Don't have a receipt to check?")}{' '}
+                        <Link to="/login" className="font-bold text-primary hover:underline">{t('Sign in to your portal')}</Link> {t('to view or print your receipts.')}
                     </p>
                 </div>
             </main>

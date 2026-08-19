@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 
 interface HealthData {
@@ -8,6 +9,7 @@ interface HealthData {
 }
 
 export default function SystemControl() {
+  const { t } = useTranslation('adminGov');
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -36,10 +38,10 @@ export default function SystemControl() {
     <div className="p-4 lg:p-12 space-y-12 max-w-[1600px] mx-auto bg-slate-50 min-h-screen">
       <section className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-slate-200 pb-12">
         <div>
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/40 mb-3 block">System Administration</span>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase">System Settings</h1>
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/40 mb-3 block">{t('System Administration')}</span>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase">{t('System Settings')}</h1>
           <p className="text-slate-500 mt-4 max-w-xl text-lg font-medium leading-relaxed">
-            Configure school system settings, manage platform preferences, and monitor system health.
+            {t('Configure school system settings, manage platform preferences, and monitor system health.')}
           </p>
         </div>
         <button
@@ -48,7 +50,7 @@ export default function SystemControl() {
           className="bg-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
         >
           <span className={`material-symbols-outlined text-lg ${loading ? 'animate-spin' : ''}`}>refresh</span>
-          Refresh Status
+          {t('Refresh Status')}
         </button>
       </section>
 
@@ -62,14 +64,14 @@ export default function SystemControl() {
               </span>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">API Status</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('API Status')}</p>
               <h3 className="text-2xl font-black text-slate-900">
-                {loading ? 'Checking...' : error ? 'Unreachable' : health?.status || 'Unknown'}
+                {loading ? t('Checking...') : error ? t('Unreachable') : health?.status || t('Unknown')}
               </h3>
             </div>
           </div>
           {lastChecked && (
-            <p className="text-xs text-slate-400 font-medium">Last checked: {lastChecked.toLocaleTimeString()}</p>
+            <p className="text-xs text-slate-400 font-medium">{t('Last checked: {{time}}', { time: lastChecked.toLocaleTimeString() })}</p>
           )}
         </div>
 
@@ -79,11 +81,11 @@ export default function SystemControl() {
               <span className="material-symbols-outlined text-3xl text-primary">dns</span>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Platform</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('Platform')}</p>
               <h3 className="text-2xl font-black text-slate-900">{health?.platform || '-'}</h3>
             </div>
           </div>
-          <p className="text-xs text-slate-400 font-medium">Multi-tenant education management system</p>
+          <p className="text-xs text-slate-400 font-medium">{t('Multi-tenant education management system')}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-8 border border-slate-200">
@@ -92,44 +94,44 @@ export default function SystemControl() {
               <span className="material-symbols-outlined text-3xl text-amber-600">info</span>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Version</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('Version')}</p>
               <h3 className="text-2xl font-black text-slate-900">{health?.version || '-'}</h3>
             </div>
           </div>
-          <p className="text-xs text-slate-400 font-medium">Current platform build</p>
+          <p className="text-xs text-slate-400 font-medium">{t('Current platform build')}</p>
         </div>
       </div>
 
       {/* Quick Settings */}
       <div className="bg-white rounded-2xl border border-slate-200 p-8">
-        <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-6">System Quick Info</h3>
+        <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-6">{t('System Quick Info')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-slate-50 rounded-xl p-6 flex items-center gap-4">
             <span className="material-symbols-outlined text-primary text-2xl">shield</span>
             <div>
-              <p className="font-bold text-slate-900">JWT Authentication</p>
-              <p className="text-xs text-slate-400">Token-based auth with automatic refresh</p>
+              <p className="font-bold text-slate-900">{t('JWT Authentication')}</p>
+              <p className="text-xs text-slate-400">{t('Token-based auth with automatic refresh')}</p>
             </div>
           </div>
           <div className="bg-slate-50 rounded-xl p-6 flex items-center gap-4">
             <span className="material-symbols-outlined text-primary text-2xl">apartment</span>
             <div>
-              <p className="font-bold text-slate-900">Multi-Tenancy</p>
-              <p className="text-xs text-slate-400">School-scoped data isolation via middleware</p>
+              <p className="font-bold text-slate-900">{t('Multi-Tenancy')}</p>
+              <p className="text-xs text-slate-400">{t('School-scoped data isolation via middleware')}</p>
             </div>
           </div>
           <div className="bg-slate-50 rounded-xl p-6 flex items-center gap-4">
             <span className="material-symbols-outlined text-primary text-2xl">database</span>
             <div>
-              <p className="font-bold text-slate-900">PostgreSQL</p>
-              <p className="text-xs text-slate-400">Production database via DATABASE_URL</p>
+              <p className="font-bold text-slate-900">{t('PostgreSQL')}</p>
+              <p className="text-xs text-slate-400">{t('Production database via DATABASE_URL')}</p>
             </div>
           </div>
           <div className="bg-slate-50 rounded-xl p-6 flex items-center gap-4">
             <span className="material-symbols-outlined text-primary text-2xl">cloud</span>
             <div>
-              <p className="font-bold text-slate-900">Railway Deployment</p>
-              <p className="text-xs text-slate-400">Backend hosting with gunicorn</p>
+              <p className="font-bold text-slate-900">{t('Railway Deployment')}</p>
+              <p className="text-xs text-slate-400">{t('Backend hosting with gunicorn')}</p>
             </div>
           </div>
         </div>
@@ -138,14 +140,14 @@ export default function SystemControl() {
       <footer className="py-24 border-t border-slate-200 text-center flex flex-col items-center gap-12">
         <div className="flex items-center gap-4">
           <div className="w-12 h-0.5 bg-primary/20"></div>
-          <span className="text-2xl font-black tracking-[0.5em] text-slate-900 uppercase">System Settings</span>
+          <span className="text-2xl font-black tracking-[0.5em] text-slate-900 uppercase">{t('System Settings')}</span>
           <div className="w-12 h-0.5 bg-primary/20"></div>
         </div>
         <div className="space-y-4">
           <p className="text-slate-400 italic font-serif text-xl max-w-2xl leading-relaxed">
-            "System stability is the foundation of educational excellence."
+            "{t('System stability is the foundation of educational excellence.')}"
           </p>
-          <p className="text-[10px] font-black uppercase tracking-[0.6em] text-primary/30">- School OS Administration</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.6em] text-primary/30">{t('- School OS Administration')}</p>
         </div>
       </footer>
     </div>

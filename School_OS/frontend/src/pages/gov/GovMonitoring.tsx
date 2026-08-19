@@ -1,7 +1,9 @@
 ﻿import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGovStore } from '../../stores/govStore';
 
 const GovMonitoring: React.FC = () => {
+    const { t } = useTranslation('gov');
     const { monitoringData, fetchMonitoring } = useGovStore();
 
     useEffect(() => {
@@ -12,7 +14,7 @@ const GovMonitoring: React.FC = () => {
         <div className="max-w-[1600px] mx-auto space-y-8">
             <div className="flex items-center gap-4">
                 <div className="w-1.5 h-10 bg-primary"></div>
-                <h1 className="text-4xl font-black text-on-surface tracking-tight">Institutional Monitoring</h1>
+                <h1 className="text-4xl font-black text-on-surface tracking-tight">{t('Institutional Monitoring')}</h1>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -20,16 +22,16 @@ const GovMonitoring: React.FC = () => {
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-outline-variant/10">
                     <div className="flex items-center gap-3 mb-6">
                         <span className="material-symbols-outlined text-primary text-3xl">menu_book</span>
-                        <h3 className="font-bold text-lg">Logbook Activity</h3>
+                        <h3 className="font-bold text-lg">{t('Logbook Activity')}</h3>
                     </div>
                     {monitoringData ? (
                         <div className="space-y-4">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Total Entries</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Total Entries')}</p>
                                 <p className="text-3xl font-black text-on-surface">{monitoringData.logbook.total_entries}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Last 30 Days</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Last 30 Days')}</p>
                                 <p className="text-3xl font-black text-primary">{monitoringData.logbook.recent_entries}</p>
                             </div>
                         </div>
@@ -44,16 +46,16 @@ const GovMonitoring: React.FC = () => {
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-outline-variant/10">
                     <div className="flex items-center gap-3 mb-6">
                         <span className="material-symbols-outlined text-primary text-3xl">fact_check</span>
-                        <h3 className="font-bold text-lg">Attendance Submission</h3>
+                        <h3 className="font-bold text-lg">{t('Attendance Submission')}</h3>
                     </div>
                     {monitoringData ? (
                         <div className="space-y-4">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Sessions (30d)</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Sessions (30d)')}</p>
                                 <p className="text-3xl font-black text-on-surface">{monitoringData.attendance.total_sessions_30d}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Submission Rate</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Submission Rate')}</p>
                                 <p className={`text-3xl font-black ${monitoringData.attendance.submission_rate >= 80 ? 'text-emerald-600' : monitoringData.attendance.submission_rate >= 50 ? 'text-amber-600' : 'text-error'}`}>
                                     {monitoringData.attendance.submission_rate}%
                                 </p>
@@ -70,12 +72,12 @@ const GovMonitoring: React.FC = () => {
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-outline-variant/10">
                     <div className="flex items-center gap-3 mb-6">
                         <span className="material-symbols-outlined text-primary text-3xl">school</span>
-                        <h3 className="font-bold text-lg">Curriculum Coverage</h3>
+                        <h3 className="font-bold text-lg">{t('Curriculum Coverage')}</h3>
                     </div>
                     {monitoringData ? (
                         <div className="space-y-4">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Coverage Rate</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Coverage Rate')}</p>
                                 <p className={`text-3xl font-black ${monitoringData.curriculum.coverage_percent >= 80 ? 'text-emerald-600' : monitoringData.curriculum.coverage_percent >= 50 ? 'text-amber-600' : 'text-error'}`}>
                                     {monitoringData.curriculum.coverage_percent}%
                                 </p>

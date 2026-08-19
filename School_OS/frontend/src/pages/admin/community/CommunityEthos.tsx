@@ -1,7 +1,9 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 
 export default function CommunityEthos() {
+  const { t } = useTranslation('adminGov');
   const [cultureData, setCultureData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,7 +78,7 @@ export default function CommunityEthos() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-4">diversity_3</span>
-            <p className="text-on-surface-variant">Loading community pulse...</p>
+            <p className="text-on-surface-variant">{t('Loading community pulse...')}</p>
           </div>
         </div>
       </div>
@@ -100,41 +102,41 @@ export default function CommunityEthos() {
       {/* Header */}
       <section className="flex flex-col gap-6">
         <div>
-          <span className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-primary/60 mb-3 block">Perspective & Culture</span>
-          <h1 className="text-[3.5rem] font-black leading-tight tracking-[-0.04em] text-on-surface">Community Ethos</h1>
+          <span className="text-[0.65rem] font-bold uppercase tracking-[0.3em] text-primary/60 mb-3 block">{t('Perspective & Culture')}</span>
+          <h1 className="text-[3.5rem] font-black leading-tight tracking-[-0.04em] text-on-surface">{t('Community Ethos')}</h1>
         </div>
         <p className="text-body-lg text-on-surface-variant max-w-xl leading-relaxed">
-          Nurturing the institutional soul through radical engagement and the curation of core values. Monitor the pulse of student life across all bilingual sections.
+          {t('Nurturing the institutional soul through radical engagement and the curation of core values. Monitor the pulse of student life across all bilingual sections.')}
         </p>
       </section>
 
       {/* Key Metrics */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          label="Total Students"
+          label={t('Total Students')}
           value={totalStudents}
-          subtitle={`${activeStudents} active • ${totalStudents - activeStudents} pending`}
+          subtitle={t('{{active}} active • {{pending}} pending', { active: activeStudents, pending: totalStudents - activeStudents })}
           icon="groups"
           color="bg-blue-500"
         />
         <MetricCard
-          label="Attendance Rate"
+          label={t('Attendance Rate')}
           value={`${attendanceRate}%`}
-          subtitle={attendanceRate >= 85 ? 'Healthy' : attendanceRate >= 70 ? 'Needs Attention' : 'Critical'}
+          subtitle={attendanceRate >= 85 ? t('Healthy') : attendanceRate >= 70 ? t('Needs Attention') : t('Critical')}
           icon="how_to_reg"
           color={attendanceRate >= 85 ? 'bg-emerald-500' : attendanceRate >= 70 ? 'bg-amber-500' : 'bg-red-500'}
         />
         <MetricCard
-          label="Anglophone Section"
+          label={t('Anglophone Section')}
           value={sectionStats.find(s => s.language === 'en')?.active_students || 0}
-          subtitle={`${sectionStats.find(s => s.language === 'en')?.total_students || 0} enrolled`}
+          subtitle={t('{{count}} enrolled', { count: sectionStats.find(s => s.language === 'en')?.total_students || 0 })}
           icon="translate"
           color="bg-indigo-500"
         />
         <MetricCard
-          label="Francophone Section"
+          label={t('Francophone Section')}
           value={sectionStats.find(s => s.language === 'fr')?.active_students || 0}
-          subtitle={`${sectionStats.find(s => s.language === 'fr')?.total_students || 0} enrolled`}
+          subtitle={t('{{count}} enrolled', { count: sectionStats.find(s => s.language === 'fr')?.total_students || 0 })}
           icon="translate"
           color="bg-violet-500"
         />
@@ -146,14 +148,14 @@ export default function CommunityEthos() {
           section={anglophoneSection}
           stats={sectionStats.find(s => s.language === 'en')}
           students={students.filter((s: any) => s.stream === anglophoneSection?.id)}
-          label="Anglophone Section"
+          label={t('Anglophone Section')}
           color="bg-indigo-500"
         />
         <SectionPulseCard
           section={francophoneSection}
           stats={sectionStats.find(s => s.language === 'fr')}
           students={students.filter((s: any) => s.stream === francophoneSection?.id)}
-          label="Francophone Section"
+          label={t('Francophone Section')}
           color="bg-violet-500"
         />
       </section>
@@ -161,10 +163,10 @@ export default function CommunityEthos() {
       {/* Core Values */}
       <section>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-on-surface">Core Values & Institutional Culture</h2>
+          <h2 className="text-2xl font-bold text-on-surface">{t('Core Values & Institutional Culture')}</h2>
           <button className="bg-primary text-white px-4 py-2 rounded-xl font-medium text-sm flex items-center gap-2">
             <span className="material-symbols-outlined">add</span>
-            Add Value
+            {t('Add Value')}
           </button>
         </div>
         {values.length > 0 ? (
@@ -176,13 +178,13 @@ export default function CommunityEthos() {
         ) : (
           <div className="bg-surface-container-lowest rounded-2xl border border-dashed border-outline-variant/30 p-12 text-center">
             <span className="material-symbols-outlined text-4xl text-outline mb-4 block">sentiment_satisfied</span>
-            <h4 className="text-lg font-bold text-on-surface mb-2">No Core Values Defined</h4>
+            <h4 className="text-lg font-bold text-on-surface mb-2">{t('No Core Values Defined')}</h4>
             <p className="text-sm text-on-surface-variant max-w-sm mx-auto mb-6">
-              Define the institutional values that guide your community. These shape culture, inform decisions, and align behavior.
+              {t('Define the institutional values that guide your community. These shape culture, inform decisions, and align behavior.')}
             </p>
             <button className="bg-primary text-white px-6 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 mx-auto">
               <span className="material-symbols-outlined">add</span>
-              Create First Value
+              {t('Create First Value')}
             </button>
           </div>
         )}
@@ -191,25 +193,25 @@ export default function CommunityEthos() {
       {/* Student Life Indicators */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <LifeIndicatorCard
-          title="Engagement"
+          title={t('Engagement')}
           value={`${Math.min(100, Math.round((activeStudents / Math.max(totalStudents, 1)) * 100))}%`}
-          description="Active participation in school life"
+          description={t('Active participation in school life')}
           icon="volunteer_activism"
           trend="up"
           color="bg-emerald-500"
         />
         <LifeIndicatorCard
-          title="Well-being"
+          title={t('Well-being')}
           value={`${attendanceRate}%`}
-          description="Attendance as proxy for student wellness"
+          description={t('Attendance as proxy for student wellness')}
           icon="favorite"
           trend={attendanceRate >= 85 ? 'up' : attendanceRate >= 70 ? 'neutral' : 'down'}
           color={attendanceRate >= 85 ? 'bg-emerald-500' : attendanceRate >= 70 ? 'bg-amber-500' : 'bg-red-500'}
         />
         <LifeIndicatorCard
-          title="Inclusion"
-          value={`${sections.length} sections`}
-          description="Bilingual & specialized pathways available"
+          title={t('Inclusion')}
+          value={t('{{count}} sections', { count: sections.length })}
+          description={t('Bilingual & specialized pathways available')}
           icon="diversity_3"
           trend="up"
           color="bg-blue-500"
@@ -218,10 +220,10 @@ export default function CommunityEthos() {
 
       {/* Recent Student Activity */}
       <section>
-        <h2 className="text-2xl font-bold text-on-surface mb-6">Recent Community Activity</h2>
+        <h2 className="text-2xl font-bold text-on-surface mb-6">{t('Recent Community Activity')}</h2>
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-outline-variant/15">
-            <h3 className="text-lg font-bold text-on-surface">New Registrations (Last 10)</h3>
+            <h3 className="text-lg font-bold text-on-surface">{t('New Registrations (Last 10)')}</h3>
           </div>
           <div className="divide-y divide-outline-variant/10">
             {students.slice(0, 10).map((student: any) => (
@@ -233,7 +235,7 @@ export default function CommunityEthos() {
                   <div>
                     <div className="font-medium text-on-surface">{student.first_name} {student.last_name}</div>
                     <div className="text-sm text-on-surface-variant">
-                      {student.current_class?.name || 'Unassigned'} • {student.stream_display || student.section_display || 'No Section'}
+                      {student.current_class?.name || t('Unassigned')} • {student.stream_display || student.section_display || t('No Section')}
                     </div>
                   </div>
                 </div>
@@ -245,7 +247,7 @@ export default function CommunityEthos() {
             {students.length === 0 && (
               <div className="p-12 text-center text-on-surface-variant">
                 <span className="material-symbols-outlined text-3xl mb-4 block">group_off</span>
-                No students registered yet
+                {t('No students registered yet')}
               </div>
             )}
           </div>
@@ -258,10 +260,10 @@ export default function CommunityEthos() {
           <span className="material-symbols-outlined text-white text-3xl">diversity_3</span>
         </div>
         <p className="text-body-lg italic font-serif text-on-surface-variant max-w-2xl leading-relaxed opacity-60">
-          "Community is not merely a collection of individuals, but a curated resonance of purpose and institutional culture. We are the curators of our collective future."
+          "{t('Community is not merely a collection of individuals, but a curated resonance of purpose and institutional culture. We are the curators of our collective future.')}"
         </p>
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[0.6rem] font-black uppercase tracking-[0.5em] text-primary/40">- Digital Curator Charter v1.0</p>
+          <p className="text-[0.6rem] font-black uppercase tracking-[0.5em] text-primary/40">{t('- Digital Curator Charter v1.0')}</p>
           <div className="flex gap-2 mt-6">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="w-1 h-1 rounded-full bg-primary/20"></div>
@@ -291,6 +293,7 @@ function MetricCard({ label, value, subtitle, icon, color }: { label: string; va
 }
 
 function SectionPulseCard({ section, stats, students, label, color }: { section: any; stats: any; students: any[]; label: string; color: string }) {
+  const { t } = useTranslation('adminGov');
   const statusCounts = {
     active: students.filter(s => s.status === 'active').length,
     registered: students.filter(s => s.status === 'registered').length,
@@ -314,27 +317,27 @@ function SectionPulseCard({ section, stats, students, label, color }: { section:
         </div>
         <div>
           <h3 className="text-xl font-bold text-on-surface">{label}</h3>
-          <p className="text-sm text-on-surface-variant">{section?.section_type || 'Grammar'} • {section?.language === 'en' ? 'English' : 'French'}</p>
+          <p className="text-sm text-on-surface-variant">{section?.section_type || t('Grammar')} • {section?.language === 'en' ? t('English') : t('French')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-surface-container p-4 rounded-xl text-center">
           <p className="text-2xl font-bold text-on-surface">{stats?.active_students || 0}</p>
-          <p className="text-xs font-medium text-secondary uppercase">Active</p>
+          <p className="text-xs font-medium text-secondary uppercase">{t('Active')}</p>
         </div>
         <div className="bg-surface-container p-4 rounded-xl text-center">
           <p className="text-2xl font-bold text-on-surface">{stats?.registered_students || 0}</p>
-          <p className="text-xs font-medium text-primary uppercase">Registered</p>
+          <p className="text-xs font-medium text-primary uppercase">{t('Registered')}</p>
         </div>
         <div className="bg-surface-container p-4 rounded-xl text-center">
           <p className="text-2xl font-bold text-on-surface">{stats?.total_students || 0}</p>
-          <p className="text-xs font-medium text-outline uppercase">Total</p>
+          <p className="text-xs font-medium text-outline uppercase">{t('Total')}</p>
         </div>
       </div>
 
       <div className="space-y-2 mb-6">
-        <p className="text-sm font-medium text-on-surface-variant">Status Distribution</p>
+        <p className="text-sm font-medium text-on-surface-variant">{t('Status Distribution')}</p>
         <div className="flex gap-2 flex-wrap">
           {Object.entries(statusCounts).map(([status, count]) => (
             <span key={status} className={`px-2 py-1 rounded-full text-[10px] font-bold ${count > 0 ? 'bg-primary/10 text-primary' : 'bg-surface-container-highest text-outline'}`}>
@@ -345,16 +348,16 @@ function SectionPulseCard({ section, stats, students, label, color }: { section:
       </div>
 
       <div>
-        <p className="text-sm font-medium text-on-surface-variant mb-3">Classes</p>
+        <p className="text-sm font-medium text-on-surface-variant mb-3">{t('Classes')}</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(classDistribution as Record<string, number>).slice(0, 8).map(([cls, count]) => (
             <span key={cls} className="px-3 py-1.5 bg-surface-container rounded-lg text-sm font-medium text-on-surface border border-outline-variant/15">
-              {cls} ({count})
+              {t(cls)} ({count})
             </span>
           ))}
           {Object.keys(classDistribution).length > 8 && (
             <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">
-              +{Object.keys(classDistribution).length - 8} more
+              {t('+{{count}} more', { count: Object.keys(classDistribution).length - 8 })}
             </span>
           )}
         </div>

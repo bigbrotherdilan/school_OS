@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParentStore } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
 import { parentApi, type AnalyticsResult } from '../../services/parentApi';
@@ -11,6 +12,7 @@ interface GradingConfig {
 }
 
 const ParentAnalytics: React.FC = () => {
+    const { t } = useTranslation('parent');
     const { dashboardData, selectedWardId, setSelectedWardId } = useParentStore();
     const { schoolConfig } = useTenantStore();
     const wards = dashboardData?.wards || [];
@@ -130,8 +132,8 @@ const ParentAnalytics: React.FC = () => {
     return (
         <div className="flex flex-col gap-5 pb-6">
             <header>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Grades</h1>
-                <p className="text-sm text-slate-500 mt-1">Subject scores by sequence</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{t('Grades')}</h1>
+                <p className="text-sm text-slate-500 mt-1">{t('Subject scores by sequence')}</p>
             </header>
 
             {/* Ward Selector */}
@@ -180,11 +182,11 @@ const ParentAnalytics: React.FC = () => {
                     {/* Summary Stats */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
-                            <p className="text-xs font-semibold text-slate-500 uppercase">Attendance</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase">{t('Attendance')}</p>
                             <p className="text-2xl font-extrabold text-slate-900 mt-1">{wardData?.attendance_percentage != null ? `${wardData.attendance_percentage}%` : '-'}</p>
                         </div>
                         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
-                            <p className="text-xs font-semibold text-slate-500 uppercase">Subjects</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase">{t('Subjects')}</p>
                             <p className="text-2xl font-extrabold text-slate-900 mt-1">{Object.keys(subjectGroups).length}</p>
                         </div>
                     </div>
@@ -200,7 +202,7 @@ const ParentAnalytics: React.FC = () => {
                                         : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
                                 }`}
                             >
-                                All
+                                {t('All')}
                             </button>
                             {availableTerms.map(([order, name]) => (
                                 <button
@@ -229,7 +231,7 @@ const ParentAnalytics: React.FC = () => {
                                         : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
                                 }`}
                             >
-                                All sequences
+                                {t('All sequences')}
                             </button>
                             {availableSequences.map(([key, seq]) => (
                                 <button
@@ -254,13 +256,13 @@ const ParentAnalytics: React.FC = () => {
                                 ? `${availableTerms.find(t => t[0] === selectedTerm)?.[1] || ''} - ${availableSequences.find(s => s[1].order === selectedSequence)?.[1].name || ''}`
                                 : selectedTerm !== null
                                     ? `${availableTerms.find(t => t[0] === selectedTerm)?.[1] || ''}`
-                                    : 'All Results'
+                                    : t('All Results')
                             }
                         </h2>
                         {Object.keys(subjectGroups).length === 0 ? (
                             <div className="text-center py-8">
                                 <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">analytics</span>
-                                <p className="text-sm text-slate-500">No grades available for this selection</p>
+                                <p className="text-sm text-slate-500">{t('No grades available for this selection')}</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -291,7 +293,7 @@ const ParentAnalytics: React.FC = () => {
                                             </div>
                                             {data.scores.length > 1 && (
                                                 <p className="text-[10px] text-slate-400 mt-1">
-                                                    {data.scores.length} scores recorded
+                                                    {t('{{count}} scores recorded', { count: data.scores.length })}
                                                 </p>
                                             )}
                                         </div>

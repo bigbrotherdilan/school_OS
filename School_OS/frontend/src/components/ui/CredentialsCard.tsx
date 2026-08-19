@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Copy, Check, KeyRound, AlertTriangle, MessageCircle, Link2 } from 'lucide-react';
 import { useToastStore } from '../../stores/toastStore';
+import { useTranslation } from 'react-i18next';
 
 interface CredentialsCardProps {
   email: string;
@@ -11,6 +12,7 @@ interface CredentialsCardProps {
 }
 
 export default function CredentialsCard({ email, password, label = 'Temporary Password', note, loginPortal }: CredentialsCardProps) {
+  const { t } = useTranslation('ui');
   const { addToast } = useToastStore();
   const [copied, setCopied] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
@@ -29,7 +31,7 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
   };
 
   const copyAllCredentials = async () => {
-    const text = `School OS Login Credentials\n\nEmail: ${email}\nPassword: ${password}\nLogin: ${loginUrl}\n\nNote: You must change your password after first login.`;
+    const text = t('School OS Login Credentials\n\nEmail: {{email}}\nPassword: {{password}}\nLogin: {{loginUrl}}\n\nNote: You must change your password after first login.', { email, password, loginUrl });
     try {
       await navigator.clipboard.writeText(text);
       setCopiedAll(true);
@@ -41,7 +43,7 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
 
   const shareViaWhatsApp = () => {
     const text = encodeURIComponent(
-      `School OS Login Credentials\n\nEmail: ${email}\nPassword: ${password}\nLogin: ${loginUrl}\n\nNote: You must change your password after first login.`
+      t('School OS Login Credentials\n\nEmail: {{email}}\nPassword: {{password}}\nLogin: {{loginUrl}}\n\nNote: You must change your password after first login.', { email, password, loginUrl })
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -49,9 +51,9 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
   const copyLoginLink = async () => {
     try {
       await navigator.clipboard.writeText(loginUrl);
-      addToast('Login link copied to clipboard.', 'success');
+      addToast(t('Login link copied to clipboard.'), 'success');
     } catch {
-      addToast('Failed to copy link.', 'error');
+      addToast(t('Failed to copy link.'), 'error');
     }
   };
 
@@ -62,7 +64,7 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
           <KeyRound className="w-5 h-5 text-amber-600" />
         </div>
         <div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-amber-700/70">{label}</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-amber-700/70">{t(label)}</p>
           <p className="text-sm font-black text-on-surface">{email}</p>
         </div>
       </div>
@@ -75,7 +77,7 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
           className="shrink-0 flex items-center gap-2 px-3 py-2 bg-amber-600 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-amber-700 active:scale-95 transition-all"
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'Copied' : 'Copy'}
+          {copied ? t('Copied') : t('Copy')}
         </button>
       </div>
 
@@ -86,7 +88,7 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
           className="flex items-center gap-2 px-4 py-2.5 bg-white border border-amber-200/70 rounded-xl text-xs font-black uppercase tracking-widest text-amber-800 hover:bg-amber-100 active:scale-95 transition-all"
         >
           {copiedAll ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-          {copiedAll ? 'Copied!' : 'Copy Credentials'}
+          {copiedAll ? t('Copied!') : t('Copy Credentials')}
         </button>
         <button
           type="button"
@@ -102,14 +104,14 @@ export default function CredentialsCard({ email, password, label = 'Temporary Pa
           className="flex items-center gap-2 px-4 py-2.5 bg-white border border-amber-200/70 rounded-xl text-xs font-black uppercase tracking-widest text-amber-800 hover:bg-amber-100 active:scale-95 transition-all"
         >
           <Link2 className="w-3.5 h-3.5" />
-          Copy Login Link
+          {t('Copy Login Link')}
         </button>
       </div>
 
       <p className="flex items-start gap-2 text-xs text-amber-800/80 font-medium leading-relaxed">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
-          {note || 'This password is shown only once. Share it with the account holder in person, by phone, or via WhatsApp. They must change it after their first login.'}
+          {note || t('This password is shown only once. Share it with the account holder in person, by phone, or via WhatsApp. They must change it after their first login.')}
         </span>
       </p>
     </div>

@@ -61,6 +61,7 @@ teacher/student clash constraints softened, so we can report exactly
 """
 from collections import defaultdict
 from datetime import time
+import random
 
 from django.utils import timezone
 from ortools.sat.python import cp_model
@@ -665,16 +666,34 @@ class SchoolSolver:
 
         # --- Soft: objective terms ------------------------------------- #
 
-        # 1. No subject 3+ times in one day (per card)
+        # 1. No subject 3+ times in one day.
+        #    Aggregated across ALL the subject's lesson cards in the class —
+        #    a 3h subject (1 double + 1 single) can otherwise place 3 periods
+        #    on one day without tripping a per-card limit (each card alone
+        #    stays <= 2). Parallel student groups are counted separately.
+        #    Form 4 and above (level_order >= 4) may host 3 periods of one
+        #    subject but still pay a smaller penalty; lower classes pay a
+        #    penalty heavier than any clash term (10,000) so 3 same-subject
+        #    periods on one day are only ever a last resort.
         if not relax:
+            cards_by_subject = defaultdict(list)
             for card in target_cards:
+                cards_by_subject[
+                    (card.timetable_id, card.subject_id, card.student_group_id)
+                ].append(card)
+            level_by_tt = {
+                tt.id: (tt.class_obj.level_order if tt.class_obj else 1)
+                for tt in self.timetables
+            }
+            for (tt_id, subject_id, group_id), cards in cards_by_subject.items():
+                if tt_id not in self.target_ids:
+                    continue
+                senior = level_by_tt.get(tt_id, 1) >= 4
                 for d in D:
-                    count = sum(x[(card.id, d, p)] for p in range(len(grid[d])))
-                    excess = model.NewIntVar(0, len(grid[d]), f'excess_{card.id}_{d}')
+                    count = sum(x[(c.id, d, p)] for c in cards for p in range(len(grid[d])))
+                    excess = model.NewIntVar(0, len(grid[d]), f'subj_excess_{subject_id}_{group_id}_{tt_id}_{d}')
                     model.Add(count - 2 <= excess)
-                    # Use a penalty higher than the clash_vars penalty (10,000)
-                    # to strongly discourage 3+ periods
-                    penalties.append((excess, 10001))
+                    penalties.append((excess, 200 if senior else 10001))
 
         # 1b. Balanced class weeks
         if not relax:
@@ -982,6 +1001,11 @@ class SchoolSolver:
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.time_limit
         solver.parameters.num_search_workers = 4
+        # Randomize the search seed so regenerating with the same lessons can
+        # yield a different (equally valid) timetable instead of always
+        # reproducing the same one.
+        solver.parameters.random_seed = random.randint(0, 2**31 - 1)
+        solver.parameters.randomize_search = True
         status = solver.Solve(model)
 
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):

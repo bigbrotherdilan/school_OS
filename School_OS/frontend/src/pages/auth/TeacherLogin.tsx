@@ -1,9 +1,11 @@
 ﻿import { useAuthLogin } from '../../hooks/useAuthLogin';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import DeviceLimitDialog from '../../components/ui/DeviceLimitDialog';
 import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function TeacherLogin() {
+    const { t } = useTranslation('auth');
     const { email, setEmail, password, setPassword, error, isLoading, handleLogin, activeSessions, confirmKillSessions, cancelLogin } = useAuthLogin({ 
         allowedRole: 'teacher', 
         targetPath: '/teacher' 
@@ -21,8 +23,8 @@ export default function TeacherLogin() {
                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
                     <span className="material-symbols-outlined text-white text-3xl">local_library</span>
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Teacher's Portal</h2>
-                <p className="mt-2 text-sm text-slate-500 font-medium">Logbooks, assessments, and planning.</p>
+                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{t("Teacher's Portal")}</h2>
+                <p className="mt-2 text-sm text-slate-500 font-medium">{t('Logbooks, assessments, and planning.')}</p>
             </div>
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
@@ -30,7 +32,7 @@ export default function TeacherLogin() {
                     <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary"></div>
                     <form className="space-y-6" onSubmit={handleLogin}>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Teacher Email</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Teacher Email')}</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span className="material-symbols-outlined text-slate-400 text-[20px]">mail</span>
@@ -47,7 +49,7 @@ export default function TeacherLogin() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Password')}</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
                                 <PasswordInput
                                     value={password}
@@ -69,16 +71,16 @@ export default function TeacherLogin() {
                             disabled={isLoading}
                             className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-all"
                         >
-                            {isLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : "Login"}
+                            {isLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : t('Login')}
                         </button>
                     </form>
                 </div>
                 <div className="mt-6 text-center space-y-3">
                     <Link to="/forgot-password" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors block">
-                        Forgot your password?
+                        {t('Forgot your password?')}
                     </Link>
                     <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-1 justify-center">
-                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> Change Portal
+                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> {t('Change Portal')}
                     </Link>
                 </div>
             </div>

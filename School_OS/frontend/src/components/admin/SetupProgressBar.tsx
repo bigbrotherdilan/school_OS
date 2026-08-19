@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 
 interface SetupProgressBarProps {
@@ -18,6 +19,7 @@ interface ChecklistItem {
 
 export default function SetupProgressBar({ studentCount, classCount, sectionCount, hasFinance }: SetupProgressBarProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminStaffOps');
   const [dismissed, setDismissed] = useState(() => localStorage.getItem('sos-setup-dismissed') === 'true');
   const [reportCardCount, setReportCardCount] = useState<number | null>(null);
 
@@ -58,11 +60,11 @@ export default function SetupProgressBar({ studentCount, classCount, sectionCoun
             <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>progress_activity</span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-on-surface">School Setup</h3>
-            <p className="text-xs text-on-surface-variant">Your school is {percent}% set up</p>
+            <h3 className="text-sm font-bold text-on-surface">{t('School Setup')}</h3>
+            <p className="text-xs text-on-surface-variant">{t('Your school is {{percent}}% set up', { percent })}</p>
           </div>
         </div>
-        <button onClick={handleDismiss} className="w-7 h-7 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors" title="Hide this">
+        <button onClick={handleDismiss} className="w-7 h-7 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors" title={t('Hide this')}>
           <span className="material-symbols-outlined text-on-surface-variant text-lg">close</span>
         </button>
       </div>
@@ -98,7 +100,7 @@ export default function SetupProgressBar({ studentCount, classCount, sectionCoun
               {item.done ? 'check_circle' : item.icon}
             </span>
             <span className={`text-xs font-medium leading-tight ${item.done ? 'text-on-surface-variant line-through' : 'text-on-surface group-hover:text-primary'}`}>
-              {item.label}
+              {t(item.label)}
             </span>
           </button>
         ))}

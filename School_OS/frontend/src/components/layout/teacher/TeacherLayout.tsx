@@ -1,11 +1,13 @@
 ﻿import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import TeacherSidebar from './TeacherSidebar';
 import TeacherTopBar from './TeacherTopBar';
 import { useTeacherStore } from '../../../stores/teacherStore';
 
 
 export default function TeacherLayout() {
+  const { t } = useTranslation('layout');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { assignments, activeAssignment, fetchAssignments, loading } = useTeacherStore();
   const navigate = useNavigate();
@@ -22,7 +24,7 @@ export default function TeacherLayout() {
     }
   }, [loading, assignments.length, location.pathname, navigate]);
 
-  const activeClass = activeAssignment ? `${activeAssignment.class_name} Active` : undefined;
+  const activeClass = activeAssignment ? t('{{class_name}} Active', { class_name: activeAssignment.class_name }) : undefined;
   return (
     <div className="min-h-screen bg-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* Sidebar */}

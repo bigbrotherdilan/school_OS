@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { parentApi, type ReceiptRecord } from '../../services/parentApi';
 import { useParentStore } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
@@ -33,6 +34,7 @@ interface PaymentModalProps {
 }
 
 const ParentFees: React.FC = () => {
+    const { t } = useTranslation('parent');
     const { dashboardData } = useParentStore();
     const { schoolConfig } = useTenantStore();
     const wards = dashboardData?.wards || [];
@@ -66,7 +68,7 @@ const ParentFees: React.FC = () => {
             if (!map.has(sid)) {
                 map.set(sid, {
                     student_id: sid,
-                    student_name: inv.student_name || 'Unknown',
+                    student_name: inv.student_name || t('Unknown'),
                     invoices: [],
                     totalBalance: 0,
                     totalBilled: 0,
@@ -111,9 +113,9 @@ const ParentFees: React.FC = () => {
         <div className="flex flex-col gap-5 pb-6">
             {/* Header */}
             <header>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">School Fees</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{t('School Fees')}</h1>
                 <p className="text-sm text-slate-500 mt-1">
-                    {wards.length > 0 ? `For ${wards.map(w => w.first_name).join(', ')}` : 'Fee overview'}
+                    {wards.length > 0 ? t('For {{names}}', { names: wards.map(w => w.first_name).join(', ') }) : t('Fee overview')}
                 </p>
             </header>
 
@@ -121,17 +123,17 @@ const ParentFees: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                     <span className="material-symbols-outlined text-red-500 text-xl mb-2 block">account_balance_wallet</span>
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Outstanding</p>
-                    <p className="text-xl font-extrabold text-slate-900 mt-1">{totalBalance.toLocaleString()} <span className="text-sm font-semibold text-slate-500">XAF</span></p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">{t('Outstanding')}</p>
+                    <p className="text-xl font-extrabold text-slate-900 mt-1">{totalBalance.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{t('XAF')}</span></p>
                     {unpaidCount > 0 && (
-                        <p className="text-xs text-red-500 font-semibold mt-1">{unpaidCount} unpaid</p>
+                        <p className="text-xs text-red-500 font-semibold mt-1">{t('{{count}} unpaid', { count: unpaidCount })}</p>
                     )}
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                     <span className="material-symbols-outlined text-emerald-500 text-xl mb-2 block">check_circle</span>
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Paid</p>
-                    <p className="text-xl font-extrabold text-slate-900 mt-1">{totalPaid.toLocaleString()} <span className="text-sm font-semibold text-slate-500">XAF</span></p>
-                    <p className="text-xs text-slate-400 mt-1">of {totalBilled.toLocaleString()} {schoolConfig.currency_symbol} total</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">{t('Paid')}</p>
+                    <p className="text-xl font-extrabold text-slate-900 mt-1">{totalPaid.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{t('XAF')}</span></p>
+                    <p className="text-xs text-slate-400 mt-1">{t('of {{amount}} {{currency}} total', { amount: totalBilled.toLocaleString(), currency: schoolConfig.currency_symbol })}</p>
                 </div>
             </div>
 
@@ -171,7 +173,7 @@ const ParentFees: React.FC = () => {
                             <p className="text-2xl font-black tracking-tight mt-1">
                                 {selectedGroup.totalBalance.toLocaleString()} <span className="text-base font-bold text-red-200">{schoolConfig.currency_symbol}</span>
                             </p>
-                            <p className="text-xs text-red-100 mt-0.5">{selectedGroup.invoices.length} invoice{selectedGroup.invoices.length > 1 ? 's' : ''} outstanding</p>
+                            <p className="text-xs text-red-100 mt-0.5">{t(selectedGroup.invoices.length > 1 ? '{{count}} invoices outstanding' : '{{count}} invoice outstanding', { count: selectedGroup.invoices.length })}</p>
                             <button
                                 onClick={() => {
                                     const firstUnpaid = selectedGroup.invoices.find(i => i.status !== 'paid');
@@ -180,7 +182,7 @@ const ParentFees: React.FC = () => {
                                 className="mt-4 w-full py-3 bg-white text-red-700 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg"
                             >
                                 <span className="material-symbols-outlined text-lg">smartphone</span>
-                                Pay {selectedGroup.totalBalance.toLocaleString()} {schoolConfig.currency_symbol} Now
+                                {t('Pay {{amount}} {{currency}} Now', { amount: selectedGroup.totalBalance.toLocaleString(), currency: schoolConfig.currency_symbol })}
                             </button>
                         </div>
                     ) : (
@@ -189,7 +191,7 @@ const ParentFees: React.FC = () => {
                                 <span className="material-symbols-outlined text-2xl">check_circle</span>
                                 <div>
                                     <p className="font-bold text-lg">{selectedGroup.student_name}</p>
-                                    <p className="text-sm text-white/80">All fees paid</p>
+                                    <p className="text-sm text-white/80">{t('All fees paid')}</p>
                                 </div>
                             </div>
                         </div>
@@ -197,7 +199,7 @@ const ParentFees: React.FC = () => {
 
                     {/* Invoices for this child */}
                     <section>
-                        <h2 className="text-lg font-bold text-slate-900 mb-3">Invoices</h2>
+                        <h2 className="text-lg font-bold text-slate-900 mb-3">{t('Invoices')}</h2>
                         <div className="flex flex-col gap-2">
                             {selectedGroup.invoices.map((inv) => (
                                 <InvoiceCard
@@ -215,7 +217,7 @@ const ParentFees: React.FC = () => {
             {childGroups.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
                     <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">receipt</span>
-                    <p className="text-slate-500 font-medium">No fees found</p>
+                    <p className="text-slate-500 font-medium">{t('No fees found')}</p>
                 </div>
             )}
 
@@ -235,6 +237,7 @@ const ParentFees: React.FC = () => {
 };
 
 function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts: ReceiptRecord[]; onPay: () => void }) {
+    const { t } = useTranslation('parent');
     const { schoolConfig } = useTenantStore();
     const balance = parseFloat(invoice.balance || '0');
     const total = parseFloat(invoice.total_amount || '0');
@@ -259,35 +262,35 @@ function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts:
                     invoice.status === 'partial' ? 'bg-amber-100 text-amber-700' :
                     'bg-red-100 text-red-700'
                 }`}>
-                    {isPaid ? 'Paid' : invoice.status === 'partial' ? 'Incomplete Payment' : 'Unpaid'}
+                    {isPaid ? t('Paid') : invoice.status === 'partial' ? t('Incomplete Payment') : t('Unpaid')}
                 </span>
             </div>
 
             <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
-                    <p className="text-xs text-slate-500">Total</p>
+                    <p className="text-xs text-slate-500">{t('Total')}</p>
                     <p className="text-sm font-bold text-slate-900">{total.toLocaleString()} {schoolConfig.currency_symbol}</p>
                 </div>
                 <div>
-                    <p className="text-xs text-slate-500">Paid</p>
+                    <p className="text-xs text-slate-500">{t('Paid')}</p>
                     <p className="text-sm font-bold text-emerald-600">{paid.toLocaleString()} {schoolConfig.currency_symbol}</p>
                 </div>
                 <div>
-                    <p className="text-xs text-slate-500">Balance</p>
+                    <p className="text-xs text-slate-500">{t('Balance')}</p>
                     <p className="text-sm font-bold text-red-600">{balance.toLocaleString()} {schoolConfig.currency_symbol}</p>
                 </div>
             </div>
 
             {invoice.due_date && (
                 <p className="text-xs text-slate-400 mb-3">
-                    Due: {new Date(invoice.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {t('Due: {{date}}', { date: new Date(invoice.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) })}
                 </p>
             )}
 
             {receipts.length > 0 && (
                 <div className="border-t border-slate-100 pt-3 mt-3">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
-                        Receipts ({receipts.length})
+                        {t('Receipts ({{count}})', { count: receipts.length })}
                     </p>
                     <div className="flex flex-col gap-1.5">
                         {receipts.map(r => (
@@ -296,21 +299,21 @@ function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts:
                                     <p className="font-mono text-xs font-bold text-slate-800 truncate">{r.receipt_number}</p>
                                     <p className="text-[11px] text-slate-400">
                                         {new Date(r.payment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                                        {' · '}{r.method}{r.balance_after !== null && Number(r.balance_after) > 0 ? ` · bal ${Number(r.balance_after).toLocaleString()}` : ''}
+                                        {' · '}{r.method}{r.balance_after !== null && Number(r.balance_after) > 0 ? ` · ${t('bal {{amount}}', { amount: Number(r.balance_after).toLocaleString() })}` : ''}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
                                     <button
                                         onClick={() => downloadPdf(parentApi.receiptDownloadUrl(r.id), `receipt_${r.receipt_number}.pdf`)}
                                         className="p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors"
-                                        title="Download receipt"
+                                        title={t('Download receipt')}
                                     >
                                         <span className="material-symbols-outlined text-lg">download</span>
                                     </button>
                                     <button
                                         onClick={() => openPdfInNewTab(parentApi.receiptDownloadUrl(r.id), `receipt_${r.receipt_number}.pdf`)}
                                         className="p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors"
-                                        title="Print receipt"
+                                        title={t('Print receipt')}
                                     >
                                         <span className="material-symbols-outlined text-lg">print</span>
                                     </button>
@@ -323,7 +326,7 @@ function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts:
                         className="mt-2 w-full py-2 text-xs font-bold text-blue-900 border border-blue-100 bg-blue-50/50 rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-1.5"
                     >
                         <span className="material-symbols-outlined text-base">description</span>
-                        Download Statement
+                        {t('Download Statement')}
                     </button>
                 </div>
             )}
@@ -334,7 +337,7 @@ function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts:
                     className="w-full py-2.5 bg-blue-900 text-white rounded-xl text-sm font-bold active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                 >
                     <span className="material-symbols-outlined text-lg">smartphone</span>
-                    Pay Now
+                    {t('Pay Now')}
                 </button>
             )}
         </div>
@@ -342,6 +345,7 @@ function InvoiceCard({ invoice, receipts, onPay }: { invoice: Invoice; receipts:
 }
 
 function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
+    const { t } = useTranslation('parent');
     const balance = parseFloat(invoice.balance || '0');
     const { schoolConfig } = useTenantStore();
     const [method, setMethod] = useState<string>(schoolConfig.payment_methods[0] || 'mtn_momo');
@@ -386,7 +390,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                 {step === 'form' && (
                     <>
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-slate-900">Pay Fees</h3>
+                            <h3 className="text-xl font-bold text-slate-900">{t('Pay Fees')}</h3>
                             <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
                                 <span className="material-symbols-outlined text-slate-500">close</span>
                             </button>
@@ -396,11 +400,11 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                         <div className="bg-slate-50 rounded-xl p-4 mb-5">
                             <p className="text-sm font-medium text-slate-500">{invoice.invoice_number}</p>
                             <p className="text-2xl font-extrabold text-slate-900 mt-1">{balance.toLocaleString()} {schoolConfig.currency_symbol}</p>
-                            <p className="text-xs text-slate-400 mt-1">Outstanding balance</p>
+                            <p className="text-xs text-slate-400 mt-1">{t('Outstanding balance')}</p>
                         </div>
 
                         {/* Payment Method */}
-                        <p className="text-sm font-bold text-slate-700 mb-2">Payment Method</p>
+                        <p className="text-sm font-bold text-slate-700 mb-2">{t('Payment Method')}</p>
                         <div className="flex flex-col gap-2 mb-5">
                             {schoolConfig.payment_methods.map((m) => (
                                 <button
@@ -416,7 +420,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                                         {m === 'mtn_momo' ? 'smartphone' : m === 'orange_money' ? 'phone_android' : 'account_balance'}
                                     </span>
                                     <span className={`font-semibold text-sm ${method === m ? 'text-blue-900' : 'text-slate-700'}`}>
-                                        {methodLabels[m]}
+                                        {t(methodLabels[m])}
                                     </span>
                                     {method === m && <span className="material-symbols-outlined text-blue-900 ml-auto text-lg">check_circle</span>}
                                 </button>
@@ -426,7 +430,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                         {/* Phone Number (for Mobile Money) */}
                         {isMobileMoney && (
                             <div className="mb-5">
-                                <label className="text-sm font-bold text-slate-700 mb-1.5 block">Phone Number</label>
+                                <label className="text-sm font-bold text-slate-700 mb-1.5 block">{t('Phone Number')}</label>
                                 <input
                                     type="tel"
                                     value={phone}
@@ -439,7 +443,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
 
                         {/* Amount */}
                         <div className="mb-6">
-                            <label className="text-sm font-bold text-slate-700 mb-1.5 block">Amount (XAF)</label>
+                            <label className="text-sm font-bold text-slate-700 mb-1.5 block">{t('Amount (XAF)')}</label>
                             <input
                                 type="number"
                                 value={amount}
@@ -448,10 +452,10 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                                 max={balance}
                                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none"
                             />
-                            <p className="text-xs text-slate-400 mt-1">Maximum: {balance.toLocaleString()} {schoolConfig.currency_symbol}</p>
+                            <p className="text-xs text-slate-400 mt-1">{t('Maximum: {{amount}} {{currency}}', { amount: balance.toLocaleString(), currency: schoolConfig.currency_symbol })}</p>
                             <p className="text-xs text-blue-900/70 mt-1 flex items-center gap-1">
                                 <span className="material-symbols-outlined text-sm">install_mobile</span>
-                                You can pay in installments — each payment gets its own official receipt.
+                                {t('You can pay in installments — each payment gets its own official receipt.')}
                             </p>
                         </div>
 
@@ -465,7 +469,7 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                             ) : (
                                 <>
                                     <span className="material-symbols-outlined text-xl">lock</span>
-                                    Confirm Payment
+                                    {t('Confirm Payment')}
                                 </>
                             )}
                         </button>
@@ -475,8 +479,8 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                 {step === 'confirming' && (
                     <div className="flex flex-col items-center py-12 gap-4">
                         <span className="material-symbols-outlined animate-spin text-blue-900 text-4xl">sync</span>
-                        <p className="text-slate-700 font-semibold">Processing payment...</p>
-                        <p className="text-sm text-slate-400">Please do not close this window</p>
+                        <p className="text-slate-700 font-semibold">{t('Processing payment...')}</p>
+                        <p className="text-sm text-slate-400">{t('Please do not close this window')}</p>
                     </div>
                 )}
 
@@ -485,12 +489,16 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
                             <span className="material-symbols-outlined text-emerald-600 text-3xl">check_circle</span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900">Payment Received</h3>
+                        <h3 className="text-xl font-bold text-slate-900">{t('Payment Received')}</h3>
                         <p className="text-sm text-slate-500">
-                            Your payment of {parseFloat(amount).toLocaleString()} {schoolConfig.currency_symbol} via {methodLabels[method]} has been recorded.
+                            {t('Your payment of {{amount}} {{currency}} via {{method}} has been recorded.', {
+                                amount: parseFloat(amount).toLocaleString(),
+                                currency: schoolConfig.currency_symbol,
+                                method: t(methodLabels[method]),
+                            })}
                         </p>
                         <div className="bg-slate-50 rounded-xl px-4 py-3 mt-2">
-                            <p className="text-xs text-slate-500">Receipt Number</p>
+                            <p className="text-xs text-slate-500">{t('Receipt Number')}</p>
                             <p className="font-mono font-bold text-slate-900">{refNumber}</p>
                         </div>
                         {transactionId && (
@@ -500,25 +508,25 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                                     className="w-full py-3 bg-blue-900 text-white rounded-xl font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                                 >
                                     <span className="material-symbols-outlined text-lg">print</span>
-                                    Print Receipt
+                                    {t('Print Receipt')}
                                 </button>
                                 <button
                                     onClick={() => downloadPdf(parentApi.receiptDownloadUrl(transactionId), `receipt_${refNumber}.pdf`)}
                                     className="w-full py-3 border border-slate-200 rounded-xl font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                                 >
                                     <span className="material-symbols-outlined text-lg">download</span>
-                                    Download Receipt
+                                    {t('Download Receipt')}
                                 </button>
                             </div>
                         )}
                         <p className="text-xs text-slate-400">
-                            Your receipts are always available under Receipts on the parent portal.
+                            {t('Your receipts are always available under Receipts on the parent portal.')}
                         </p>
                         <button
                             onClick={() => { onSuccess(); }}
                             className="mt-1 px-8 py-3 bg-blue-900 text-white rounded-xl font-bold active:scale-95 transition-transform"
                         >
-                            Done
+                            {t('Done')}
                         </button>
                     </div>
                 )}
@@ -528,20 +536,20 @@ function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                             <span className="material-symbols-outlined text-red-600 text-3xl">error</span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900">Payment Failed</h3>
-                        <p className="text-sm text-slate-500">Something went wrong. Please try again.</p>
+                        <h3 className="text-xl font-bold text-slate-900">{t('Payment Failed')}</h3>
+                        <p className="text-sm text-slate-500">{t('Something went wrong. Please try again.')}</p>
                         <div className="flex gap-3 mt-4">
                             <button
                                 onClick={onClose}
                                 className="px-6 py-3 border border-slate-200 rounded-xl font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                             >
-                                Cancel
+                                {t('Cancel')}
                             </button>
                             <button
                                 onClick={() => setStep('form')}
                                 className="px-6 py-3 bg-blue-900 text-white rounded-xl font-bold active:scale-95 transition-transform"
                             >
-                                Try Again
+                                {t('Try Again')}
                             </button>
                         </div>
                     </div>

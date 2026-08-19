@@ -1,6 +1,8 @@
 ﻿import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function PublicFooter() {
+  const { t } = useTranslation('layout');
   return (
     <footer id="contact" className="bg-slate-50 w-full py-12 px-6 border-t border-slate-200">
       <div className="max-w-7xl mx-auto">
@@ -15,17 +17,17 @@ export default function PublicFooter() {
               </div>
             </Link>
             <p className="text-slate-500 text-sm leading-relaxed">
-              The modern operating system for schools. Streamline administration, finance, and learning in one platform.
+              {t('The modern operating system for schools. Streamline administration, finance, and learning in one platform.')}
             </p>
           </div>
 
           <div>
-            <h4 className="font-bold text-primary mb-4">Product</h4>
+            <h4 className="font-bold text-primary mb-4">{t('Product')}</h4>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li><Link to="/features" className="hover:text-primary transition-colors">Features</Link></li>
-              <li><Link to="/schools" className="hover:text-primary transition-colors">Find Schools</Link></li>
-              <li><Link to="/find-teachers" className="hover:text-primary transition-colors">Teacher Marketplace</Link></li>
-              <li><Link to="/login" className="hover:text-primary transition-colors">Login</Link></li>
+              <li><Link to="/features" className="hover:text-primary transition-colors">{t('Features')}</Link></li>
+              <li><Link to="/schools" className="hover:text-primary transition-colors">{t('Find Schools')}</Link></li>
+              <li><Link to="/find-teachers" className="hover:text-primary transition-colors">{t('Teacher Marketplace')}</Link></li>
+              <li><Link to="/login" className="hover:text-primary transition-colors">{t('Login')}</Link></li>
             </ul>
           </div>
 

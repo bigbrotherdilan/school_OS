@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PasswordInputProps {
   value: string;
@@ -8,6 +9,7 @@ interface PasswordInputProps {
 }
 
 export default function PasswordInput({ value, onChange, placeholder = '••••••••', className = '' }: PasswordInputProps) {
+  const { t } = useTranslation('ui');
   const [show, setShow] = useState(false);
 
   return (
@@ -26,7 +28,7 @@ export default function PasswordInput({ value, onChange, placeholder = '••�
       <button
         type="button"
         onClick={() => setShow(!show)}
-        aria-label={show ? 'Hide password' : 'Show password'}
+        aria-label={show ? t('Hide password') : t('Show password')}
         aria-pressed={show}
         className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
       >

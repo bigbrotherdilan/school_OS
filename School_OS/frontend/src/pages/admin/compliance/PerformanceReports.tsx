@@ -1,11 +1,13 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { reportsApi } from '../../../services/reportsApi';
 import { useToastStore } from '../../../stores/toastStore';
 
 export default function PerformanceReports() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminGov');
   const { addToast } = useToastStore();
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export default function PerformanceReports() {
 
   const handleGenerateReport = async (reportType: string) => {
     if (!selectedYear) {
-      addToast('Please select an academic year first.', 'info');
+      addToast(t('Please select an academic year first.'), 'info');
       return;
     }
     setGenerating(true);
@@ -73,10 +75,10 @@ export default function PerformanceReports() {
         term_id: selectedTerm || undefined,
         academic_year_id: selectedYear,
       });
-      addToast(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated successfully.`, 'success');
+      addToast(t('{{type}} report generated successfully.', { type: reportType.charAt(0).toUpperCase() + reportType.slice(1) }), 'success');
       fetchReports();
     } catch (err) {
-      addToast('Failed to generate report.', 'error');
+      addToast(t('Failed to generate report.'), 'error');
     } finally {
       setGenerating(false);
     }
@@ -95,9 +97,9 @@ export default function PerformanceReports() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block">Analytics & Governance</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">Performance Reports</h2>
-          <p className="text-on-surface-variant text-lg mt-2">Generate comprehensive reports for internal review and government dashboard submission.</p>
+          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Analytics & Governance')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Performance Reports')}</h2>
+          <p className="text-on-surface-variant text-lg mt-2">{t('Generate comprehensive reports for internal review and government dashboard submission.')}</p>
         </div>
         <div className="flex gap-4">
           <button
@@ -105,7 +107,7 @@ export default function PerformanceReports() {
             className="bg-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>
-            Student Report Cards
+            {t('Student Report Cards')}
           </button>
         </div>
       </div>
@@ -114,27 +116,27 @@ export default function PerformanceReports() {
       <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/15 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Academic Year</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Academic Year')}</label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
               className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm"
             >
-              <option value="">Select Year</option>
+              <option value="">{t('Select Year')}</option>
               {academicYears.map((y: any) => (
                 <option key={y.id} value={y.id}>{y.name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Term / Sequence</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Term / Sequence')}</label>
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(e.target.value)}
               disabled={!selectedYear}
               className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm disabled:opacity-50"
             >
-              <option value="">Full Year</option>
+              <option value="">{t('Full Year')}</option>
               {terms.map((t: any) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
@@ -146,7 +148,7 @@ export default function PerformanceReports() {
               className="w-full bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-all"
             >
               <span className="material-symbols-outlined text-lg">assignment</span>
-              Manage Report Cards
+              {t('Manage Report Cards')}
             </button>
           </div>
         </div>
@@ -166,7 +168,7 @@ export default function PerformanceReports() {
                 {generating ? 'sync' : rt.icon}
               </span>
             </div>
-            <span className="text-sm font-bold text-on-surface">{rt.label}</span>
+            <span className="text-sm font-bold text-on-surface">{t(rt.label)}</span>
           </button>
         ))}
       </div>
@@ -174,35 +176,35 @@ export default function PerformanceReports() {
       {/* Reports Table */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/30">
-          <h3 className="text-xl font-bold text-on-surface">Generated Reports</h3>
-          <span className="text-xs text-on-surface-variant font-medium">{reports.length} reports</span>
+          <h3 className="text-xl font-bold text-on-surface">{t('Generated Reports')}</h3>
+          <span className="text-xs text-on-surface-variant font-medium">{t('{{count}} reports', { count: reports.length })}</span>
         </div>
 
         {loading ? (
           <div className="p-12 text-center text-on-surface-variant flex flex-col items-center">
             <span className="material-symbols-outlined animate-spin text-3xl text-primary mb-4">sync</span>
-            <p>Loading reports...</p>
+            <p>{t('Loading reports...')}</p>
           </div>
         ) : reports.length === 0 ? (
           <div className="p-16 text-center">
             <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-3xl text-outline">assessment</span>
             </div>
-            <h4 className="text-lg font-bold text-on-surface mb-2">No Reports Generated</h4>
+            <h4 className="text-lg font-bold text-on-surface mb-2">{t('No Reports Generated')}</h4>
             <p className="text-sm text-on-surface-variant max-w-md mx-auto mb-6">
-              Select an academic year and use the quick generate buttons above to compile institutional analytics.
+              {t('Select an academic year and use the quick generate buttons above to compile institutional analytics.')}
             </p>
           </div>
         ) : (
           <table className="w-full text-left">
             <thead>
               <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                <th className="p-4 pl-6">Report Title</th>
-                <th className="p-4">Type</th>
-                <th className="p-4">Period</th>
-                <th className="p-4">Generated By</th>
-                <th className="p-4">Gov Status</th>
-                <th className="p-4 text-right pr-6">Date</th>
+                <th className="p-4 pl-6">{t('Report Title')}</th>
+                <th className="p-4">{t('Type')}</th>
+                <th className="p-4">{t('Period')}</th>
+                <th className="p-4">{t('Generated By')}</th>
+                <th className="p-4">{t('Gov Status')}</th>
+                <th className="p-4 text-right pr-6">{t('Date')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
@@ -217,16 +219,16 @@ export default function PerformanceReports() {
                       {r.report_type_display}
                     </span>
                   </td>
-                  <td className="p-4 text-sm text-on-surface-variant">{r.term_name || 'Full Year'}</td>
-                  <td className="p-4 text-sm text-on-surface-variant">{r.generated_by_name || 'System'}</td>
+                  <td className="p-4 text-sm text-on-surface-variant">{r.term_name || t('Full Year')}</td>
+                  <td className="p-4 text-sm text-on-surface-variant">{r.generated_by_name || t('System')}</td>
                   <td className="p-4">
                     {r.is_submitted_to_gov ? (
                       <div className="flex items-center gap-1 text-secondary">
                         <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                        <span className="text-xs font-bold">Submitted</span>
+                        <span className="text-xs font-bold">{t('Submitted')}</span>
                       </div>
                     ) : (
-                      <span className="text-xs font-bold text-on-surface-variant">Local Only</span>
+                      <span className="text-xs font-bold text-on-surface-variant">{t('Local Only')}</span>
                     )}
                   </td>
                   <td className="p-4 pr-6 text-right text-sm text-on-surface-variant">

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 
@@ -17,6 +18,9 @@ const milestones = [
 ];
 
 export default function AboutPage() {
+  const { t } = useTranslation('publicSite');
+  const valuesT = values.map(v => ({ ...v, title: t(v.title), desc: t(v.desc) }));
+  const milestonesT = milestones.map(m => ({ ...m, year: t(m.year), text: t(m.text) }));
   return (
     <div className="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
       <PublicNavbar />
@@ -27,15 +31,13 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-full mb-6">
             <span className="material-symbols-outlined text-primary text-sm">flag</span>
-            <span className="text-xs font-bold tracking-widest text-primary uppercase">Our Mission</span>
+            <span className="text-xs font-bold tracking-widest text-primary uppercase">{t('Our Mission')}</span>
           </span>
           <h1 className="text-4xl md:text-6xl font-extrabold text-primary tracking-tighter mb-6 leading-[1.05]">
-            Every School Deserves<br />a Modern Operating System
+            {t('Every School Deserves')}<br />{t('a Modern Operating System')}
           </h1>
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-on-surface-variant leading-relaxed">
-            School OS exists because we believe a child's records should never be lost to a rainy day,
-            a parent should never be told to "come back tomorrow," and a teacher should never grade
-            report cards at midnight.
+            {t("School OS exists because we believe a child's records should never be lost to a rainy day, a parent should never be told to \"come back tomorrow,\" and a teacher should never grade report cards at midnight.")}
           </p>
         </div>
       </header>
@@ -44,23 +46,18 @@ export default function AboutPage() {
       <section className="py-24 bg-surface-container-low">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-widest text-xs uppercase">Who We Are</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">What is School OS?</h2>
+            <span className="text-secondary font-bold tracking-widest text-xs uppercase">{t('Who We Are')}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">{t('What is School OS?')}</h2>
           </div>
           <div className="bg-white rounded-3xl border border-outline-variant/20 shadow-lg p-10 md:p-14 text-on-surface-variant text-lg leading-relaxed space-y-6">
             <p>
-              School OS is a school management platform built for African schools. It replaces every notebook,
-              spreadsheet, and paper system in a school with one platform: student records, attendance, fee
-              collection, report cards, timetables, and parent communication -- all from a single dashboard.
+              {t('School OS is a school management platform built for African schools. It replaces every notebook, spreadsheet, and paper system in a school with one platform: student records, attendance, fee collection, report cards, timetables, and parent communication -- all from a single dashboard.')}
             </p>
             <p>
-              Today, 80% of schools in Cameroon still run on paper. Teachers burn out on paperwork. Parents
-              can't get their children's results on time. Fee money is collected in cash with no receipts.
-              Student records disappear the moment a student transfers.
+              {t("Today, 80% of schools in Cameroon still run on paper. Teachers burn out on paperwork. Parents can't get their children's results on time. Fee money is collected in cash with no receipts. Student records disappear the moment a student transfers.")}
             </p>
             <p>
-              We built School OS to fix that -- deliberately, from scratch, for the schools that need it most,
-              not as a Western product bolted onto a new market.
+              {t('We built School OS to fix that -- deliberately, from scratch, for the schools that need it most, not as a Western product bolted onto a new market.')}
             </p>
           </div>
         </div>
@@ -70,11 +67,11 @@ export default function AboutPage() {
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-widest text-xs uppercase">What We Stand For</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">Our Values</h2>
+            <span className="text-secondary font-bold tracking-widest text-xs uppercase">{t('What We Stand For')}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">{t('Our Values')}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {values.map((v, i) => (
+            {valuesT.map((v, i) => (
               <article key={i} className="p-8 bg-surface-container-lowest rounded-3xl border border-outline-variant/20 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
                 <span className="material-symbols-outlined text-primary text-4xl mb-4 inline-block bg-primary/10 p-3 rounded-2xl">{v.icon}</span>
                 <h3 className="text-xl font-bold text-primary mb-2">{v.title}</h3>
@@ -89,11 +86,11 @@ export default function AboutPage() {
       <section className="py-24 bg-surface-container-low">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-widest text-xs uppercase">Our Story</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">The Road So Far</h2>
+            <span className="text-secondary font-bold tracking-widest text-xs uppercase">{t('Our Story')}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mt-2">{t('The Road So Far')}</h2>
           </div>
           <div className="space-y-8">
-            {milestones.map((m, i) => (
+            {milestonesT.map((m, i) => (
               <article key={i} className="flex flex-col md:flex-row gap-6 bg-white rounded-3xl border border-outline-variant/20 shadow-sm p-8">
                 <div className="md:w-48 shrink-0">
                   <span className="text-sm font-black tracking-widest text-primary uppercase">{m.year}</span>
@@ -112,23 +109,23 @@ export default function AboutPage() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             <h2 className="text-4xl md:text-5xl font-bold mb-6 relative z-10 tracking-tight">
-              Join the Schools That Escaped the Notebook
+              {t('Join the Schools That Escaped the Notebook')}
             </h2>
             <p className="text-lg opacity-80 mb-10 max-w-xl mx-auto relative z-10">
-              500+ schools already made the switch. Your school is next.
+              {t('500+ schools already made the switch. Your school is next.')}
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 relative z-10">
               <Link
                 to="/login"
                 className="w-full sm:w-auto px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-surface-container-low transition-colors shadow-lg text-center"
               >
-                Start Free -- No Credit Card
+                {t('Start Free -- No Credit Card')}
               </Link>
               <Link
                 to="/features"
                 className="w-full sm:w-auto px-10 py-4 bg-secondary text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-center"
               >
-                See the Features
+                {t('See the Features')}
               </Link>
             </div>
           </div>

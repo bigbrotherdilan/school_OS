@@ -7,6 +7,7 @@ import StudentIDCard, { type StudentIDCardData, type IDCardStyle, DEFAULT_CARD_S
 import IDCardCustomizer from '../../../components/admin/IDCardCustomizer';
 import PreviewFullscreenModal from '../../../components/admin/PreviewFullscreenModal';
 import ConfettiBurst from '../../../components/ui/ConfettiBurst';
+import { useTranslation } from 'react-i18next';
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
@@ -21,6 +22,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export default function IDCardGenerator() {
   const { addToast } = useToastStore();
+  const { t } = useTranslation('adminAcademicMgmt');
   const { activeSectionId } = useSectionStore();
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -166,11 +168,11 @@ export default function IDCardGenerator() {
 
   const handleGenerate = async () => {
     if (!selectedYear) {
-      setError('Please select an academic year.');
+      setError(t('Please select an academic year.'));
       return;
     }
     if (selectedStudents.length === 0 && !selectedClass) {
-      setError('Please select a class or students.');
+      setError(t('Please select a class or students.'));
       return;
     }
 
@@ -205,7 +207,7 @@ export default function IDCardGenerator() {
       if (contentType.includes('application/json')) {
         const text = new TextDecoder().decode(response.data);
         const parsed = JSON.parse(text);
-        setError(parsed.detail || parsed.error || 'Generation failed.');
+        setError(parsed.detail || parsed.error || t('Generation failed.'));
         return;
       }
 
@@ -218,7 +220,7 @@ export default function IDCardGenerator() {
       fetchGeneratedCards();
       setShowConfetti(true);
       const count = mode === 'individual' ? 1 : selectedStudents.length;
-      addToast(`ID cards ready! ${count} student${count !== 1 ? 's' : ''} now have their official school ID.`, 'success');
+      addToast(t('ID cards ready! {{count}} student(s) now have their official school ID.', { count }), 'success');
     } catch (err: any) {
       console.error('ID Card generation error:', err);
       if (err.response?.data) {
@@ -227,15 +229,15 @@ export default function IDCardGenerator() {
           try {
             const text = new TextDecoder().decode(err.response.data);
             const parsed = JSON.parse(text);
-            setError(parsed.detail || parsed.error || `Server error (${err.response.status})`);
+            setError(parsed.detail || parsed.error || t('Server error ({{status}})', { status: err.response.status }));
           } catch {
-            setError(`Server error (${err.response.status})`);
+setError(t('Server error ({{status}})', { status: err.response.status }));
           }
         } else {
           setError(`Server error (${err.response.status})`);
         }
       } else {
-        setError(err.message || 'Failed to generate ID cards.');
+        setError(err.message || t('Failed to generate ID cards.'));
       }
     } finally {
       setGenerating(false);
@@ -251,9 +253,9 @@ export default function IDCardGenerator() {
     }
   };
 
-  // Build card data from student + tenant
+// Build card data from student + tenant
   const buildCardData = (student: any): StudentIDCardData => {
-    const className = student.class_display || student.current_class_name || student.current_class?.name || 'N/A';
+    const className = student.class_display || student.current_class_name || student.current_class?.name || t('N/A');
     return {
       school_name: tenantInfo?.school_name || 'School Name',
       school_logo: tenantInfo?.logo_url || tenantInfo?.logo || undefined,
@@ -263,9 +265,9 @@ export default function IDCardGenerator() {
       school_phone: tenantInfo?.phone || undefined,
       school_email: tenantInfo?.email || undefined,
       student_name: student.full_name || `${student.last_name} ${student.first_name}`,
-      admission_number: student.admission_number || 'N/A',
+      admission_number: student.admission_number || t('N/A'),
       class_name: className,
-      gender: student.gender === 'M' ? 'Male' : 'Female',
+      gender: student.gender === 'M' ? t('Male') : t('Female'),
       date_of_birth: student.date_of_birth
         ? new Date(student.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()
         : '-',
@@ -285,10 +287,10 @@ export default function IDCardGenerator() {
           <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
             badge
           </span>
-          <h1 className="text-2xl font-bold text-on-surface">ID Card Generator</h1>
+          <h1 className="text-2xl font-bold text-on-surface">{t('ID Card Generator')}</h1>
         </div>
         <p className="text-on-surface-variant">
-          Generate premium student identification cards with live preview
+          {t('Generate premium student identification cards with live preview')}
         </p>
       </div>
 
@@ -297,7 +299,7 @@ export default function IDCardGenerator() {
         <div className="xl:col-span-3 space-y-4">
           {/* Mode Toggle */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-4">
-            <label className="text-sm font-medium text-on-surface mb-3 block">Generation Mode</label>
+            <label className="text-sm font-medium text-on-surface mb-3 block">{t('Generation Mode')}</label>
             <div className="flex gap-4">
               <button
                 onClick={() => { setMode('individual'); setSelectedStudents([]); setPreviewStudent(null); }}
@@ -308,7 +310,7 @@ export default function IDCardGenerator() {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg mr-2">person</span>
-                Individual
+                {t('Individual')}
               </button>
               <button
                 onClick={() => { setMode('batch'); setSelectedStudents([]); setPreviewStudent(null); }}
@@ -319,24 +321,24 @@ export default function IDCardGenerator() {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg mr-2">groups</span>
-                Class Batch
+                {t('Class Batch')}
               </button>
             </div>
           </div>
 
           {/* Selection */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-            <h2 className="text-lg font-semibold text-on-surface mb-4">Selection</h2>
+            <h2 className="text-lg font-semibold text-on-surface mb-4">{t('Selection')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="text-sm font-medium text-on-surface-variant mb-2 block">Academic Year *</label>
+                <label className="text-sm font-medium text-on-surface-variant mb-2 block">{t('Academic Year *')}</label>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
                   className="w-full px-4 py-3 bg-surface-container-highest border border-outline-variant/30 rounded-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="">Select Year</option>
+                  <option value="">{t('Select Year')}</option>
                   {academicYears.map((y: any) => (
                     <option key={y.id} value={y.id}>{y.name}</option>
                   ))}
@@ -344,13 +346,13 @@ export default function IDCardGenerator() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-on-surface-variant mb-2 block">Class *</label>
+                <label className="text-sm font-medium text-on-surface-variant mb-2 block">{t('Class *')}</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => { setSelectedClass(e.target.value); setSelectedStudents([]); }}
                   className="w-full px-4 py-3 bg-surface-container-highest border border-outline-variant/30 rounded-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="">Select Class</option>
+                  <option value="">{t('Select Class')}</option>
                   {classes.map((cls: any) => (
                     <option key={cls.id} value={cls.id}>{cls.name}</option>
                   ))}
@@ -361,26 +363,26 @@ export default function IDCardGenerator() {
             {mode === 'batch' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-on-surface-variant mb-2 block">Output Format</label>
+                  <label className="text-sm font-medium text-on-surface-variant mb-2 block">{t('Output Format')}</label>
                   <select
                     value={outputFormat}
                     onChange={(e) => setOutputFormat(e.target.value)}
                     className="w-full px-4 py-3 bg-surface-container-highest border border-outline-variant/30 rounded-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="multi">Multi-page PDF (cards on A4)</option>
-                    <option value="zip">ZIP Archive (individual PDFs)</option>
+                    <option value="multi">{t('Multi-page PDF (cards on A4)')}</option>
+                    <option value="zip">{t('ZIP Archive (individual PDFs)')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-on-surface-variant mb-2 block">Template (Optional)</label>
+                  <label className="text-sm font-medium text-on-surface-variant mb-2 block">{t('Template (Optional)')}</label>
                   <select
                     value={selectedTemplate}
                     onChange={(e) => setSelectedTemplate(e.target.value)}
                     className="w-full px-4 py-3 bg-surface-container-highest border border-outline-variant/30 rounded-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="">Default Template</option>
-                    {templates.map((t: any) => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
+                    <option value="">{t('Default Template')}</option>
+                    {templates.map((tpl: any) => (
+                      <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
                     ))}
                   </select>
                 </div>
@@ -393,10 +395,10 @@ export default function IDCardGenerator() {
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-on-surface">
-                  Students ({students.length})
+                  {t('Students ({{count}})', { count: students.length })}
                   {selectedStudents.length > 0 && (
                     <span className="text-sm font-normal text-on-surface-variant ml-2">
-                      - {selectedStudents.length} selected
+                      {t('- {{count}} selected', { count: selectedStudents.length })}
                     </span>
                   )}
                 </h2>
@@ -405,7 +407,7 @@ export default function IDCardGenerator() {
                     onClick={handleSelectAll}
                     className="text-primary text-sm font-medium hover:underline"
                   >
-                    {selectedStudents.length === students.length ? 'Deselect All' : 'Select All'}
+                    {selectedStudents.length === students.length ? t('Deselect All') : t('Select All')}
                   </button>
                 )}
               </div>
@@ -430,7 +432,7 @@ export default function IDCardGenerator() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-on-surface truncate">{student.full_name}</div>
                       <div className="text-sm text-on-surface-variant truncate">
-                        {student.admission_number} • {student.class_display || 'No class'}
+                        {student.admission_number} • {student.class_display || t('No class')}
                       </div>
                     </div>
                     {student.photo_url && (
@@ -449,7 +451,7 @@ export default function IDCardGenerator() {
           {selectedClass && students.length === 0 && (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-12 text-center">
               <span className="material-symbols-outlined text-on-surface-variant text-4xl mb-2 block">group_off</span>
-              <p className="text-on-surface-variant">No active students found in this class.</p>
+              <p className="text-on-surface-variant">{t('No active students found in this class.')}</p>
             </div>
           )}
 
@@ -470,12 +472,12 @@ export default function IDCardGenerator() {
             {generating ? (
               <>
                 <span className="material-symbols-outlined animate-spin">sync</span>
-                Generating...
+                {t('Generating...')}
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined">badge</span>
-                {mode === 'individual' ? 'Generate ID Card' : `Generate ${selectedStudents.length || ''} ID Cards`}
+                {mode === 'individual' ? t('Generate ID Card') : t('Generate {{count}} ID Cards', { count: selectedStudents.length || '' })}
               </>
             )}
           </button>
@@ -490,7 +492,7 @@ export default function IDCardGenerator() {
             }`}
           >
             <span className="material-symbols-outlined text-lg">palette</span>
-            {showDesigner ? 'Hide Design Studio' : 'Customize Design'}
+            {showDesigner ? t('Hide Design Studio') : t('Customize Design')}
           </button>
 
           {/* Design Studio (collapsible) */}
@@ -511,7 +513,7 @@ export default function IDCardGenerator() {
           {previewStudent ? (
             <div ref={previewRef} className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
               <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-lg font-semibold text-on-surface">Live Preview</h2>
+                <h2 className="text-lg font-semibold text-on-surface">{t('Live Preview')}</h2>
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1 bg-surface-container rounded-lg p-0.5">
                     {(['both', 'front', 'back'] as const).map((s) => (
@@ -524,46 +526,46 @@ export default function IDCardGenerator() {
                             : 'text-on-surface-variant hover:text-on-surface'
                         }`}
                       >
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                        {t(s === 'both' ? 'Both' : s === 'front' ? 'Front' : 'Back')}
                       </button>
                     ))}
                   </div>
                   <button
                     onClick={() => setShowFullscreen(true)}
                     className="flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                    title="Open fullscreen preview"
+                    title={t('Open fullscreen preview')}
                   >
                     <span className="material-symbols-outlined text-sm">fullscreen</span>
-                    Enlarge
+                    {t('Enlarge')}
                   </button>
                 </div>
               </div>
               {mode === 'batch' && (
                 <p className="text-xs text-on-surface-variant mb-2 -mt-2">
                   {selectedStudents.length > 1
-                    ? `Previewing first of ${selectedStudents.length} selected students`
+                    ? t('Previewing first of {{count}} selected students', { count: selectedStudents.length })
                     : selectedStudents.length === 1
-                      ? 'Previewing selected student'
-                      : 'Previewing first student in class'}
+                      ? t('Previewing selected student')
+                      : t('Previewing first student in class')}
                 </p>
               )}
               <div
                 className="flex justify-center overflow-x-auto py-2 cursor-zoom-in"
                 onClick={() => setShowFullscreen(true)}
-                title="Click to enlarge"
+                title={t('Click to enlarge')}
               >
                 <StudentIDCard data={buildCardData(previewStudent)} side={previewSide} style={customStyle} />
               </div>
             </div>
           ) : (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-              <h2 className="text-lg font-semibold text-on-surface mb-4">Card Preview</h2>
+              <h2 className="text-lg font-semibold text-on-surface mb-4">{t('Card Preview')}</h2>
               <div className="flex flex-col items-center justify-center py-12 text-on-surface-variant">
                 <span className="material-symbols-outlined text-5xl mb-3 opacity-40">badge</span>
                 <p className="text-sm text-center">
                   {mode === 'individual'
-                    ? 'Select a student to preview their ID card'
-                    : 'Select students to preview their ID cards'}
+                    ? t('Select a student to preview their ID card')
+                    : t('Select students to preview their ID cards')}
                 </p>
               </div>
             </div>
@@ -571,10 +573,10 @@ export default function IDCardGenerator() {
 
           {/* Generation History */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-            <h2 className="text-lg font-semibold text-on-surface mb-4">Recent Generations</h2>
+            <h2 className="text-lg font-semibold text-on-surface mb-4">{t('Recent Generations')}</h2>
             {generatedCards.length === 0 ? (
               <p className="text-on-surface-variant text-center py-6 text-sm font-medium">
-                No ID cards yet. Generate your first batch - students are waiting!
+                {t('No ID cards yet. Generate your first batch - students are waiting!')}
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -590,14 +592,14 @@ export default function IDCardGenerator() {
                     {card.is_printed ? (
                       <span className="px-2 py-0.5 bg-success-container text-on-success-container text-xs rounded-full flex items-center gap-1 flex-shrink-0">
                         <span className="material-symbols-outlined text-xs">check</span>
-                        Printed
+                        {t('Printed')}
                       </span>
                     ) : (
                       <button
                         onClick={() => handleMarkPrinted(card.id)}
                         className="px-2 py-0.5 bg-surface-container-highest text-on-surface text-xs rounded-full hover:bg-surface-container-high flex-shrink-0"
                       >
-                        Mark Printed
+                        {t('Mark Printed')}
                       </button>
                     )}
                   </div>
@@ -612,7 +614,7 @@ export default function IDCardGenerator() {
       <PreviewFullscreenModal
         open={showFullscreen && !!previewStudent}
         onClose={() => setShowFullscreen(false)}
-        title={previewStudent ? `ID Card — ${previewStudent.full_name}` : 'ID Card Preview'}
+        title={previewStudent ? t('ID Card — {{name}}', { name: previewStudent.full_name }) : t('ID Card Preview')}
         fit="contain"
         maxScale={6}
         controls={
@@ -628,7 +630,7 @@ export default function IDCardGenerator() {
                       : 'text-white/70 hover:text-white'
                   }`}
                 >
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {t(s === 'both' ? 'Both' : s === 'front' ? 'Front' : 'Back')}
                 </button>
               ))}
             </div>

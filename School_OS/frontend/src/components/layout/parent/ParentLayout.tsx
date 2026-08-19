@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Outlet, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTenantStore } from '../../../stores/tenantStore';
@@ -6,6 +7,7 @@ import { useParentStore } from '../../../stores/parentStore';
 import NotificationsDropdown from '../NotificationsDropdown';
 
 const ParentLayout: React.FC = () => {
+    const { t } = useTranslation('layout');
     const location = useLocation();
     const navigate = useNavigate();
     const params = useParams();
@@ -56,7 +58,7 @@ const ParentLayout: React.FC = () => {
                             <span className="material-symbols-outlined">{isMobileNavOpen ? 'close' : 'menu'}</span>
                         </button>
                         <Link to="/parent" className="text-xl font-bold text-blue-900 tracking-tight">
-                            Parent Portal
+                            {t('Parent Portal')}
                         </Link>
 
                         {/* Persistent Child Switcher */}
@@ -90,7 +92,7 @@ const ParentLayout: React.FC = () => {
                                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                                         }`}
                                     >
-                                        {link.name}
+                                        {t(link.name)}
                                     </Link>
                                 );
                             })}
@@ -101,7 +103,7 @@ const ParentLayout: React.FC = () => {
                         <button
                             onClick={handleLogout}
                             className="p-2.5 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors"
-                            title="Logout"
+                            title={t('Logout')}
                         >
                             <span className="material-symbols-outlined text-xl">logout</span>
                         </button>
@@ -165,7 +167,7 @@ const ParentLayout: React.FC = () => {
                                         }`}
                                     >
                                         <span className="material-symbols-outlined text-xl">{link.icon}</span>
-                                        {link.name}
+                                        {t(link.name)}
                                     </Link>
                                 );
                             })}
@@ -174,7 +176,7 @@ const ParentLayout: React.FC = () => {
                             {hasMultipleChildren && (
                                 <>
                                     <div className="border-t border-slate-100 my-2 pt-2">
-                                        <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Switch Child</p>
+                                        <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">{t('Switch Child')}</p>
                                     </div>
                                     {wards.map(ward => {
                                         const isActive = ward.id === (params.childId || selectedWardId);

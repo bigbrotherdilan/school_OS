@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useTenantStore } from '../../stores/tenantStore';
@@ -7,8 +8,10 @@ import { DEFAULT_THEME } from '../../utils/theme';
 import PortalSwitcher from './PortalSwitcher';
 import NotificationsDropdown from './NotificationsDropdown';
 import HelpPanel from './HelpPanel';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
+  const { t } = useTranslation('layout');
   const { user, logout, tenants } = useAuthStore();
   const { activeTenantId, themeConfig, draftTheme } = useTenantStore();
   const { sections, activeSectionId, setActiveSectionId } = useSectionStore();
@@ -48,7 +51,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
         <span className="text-xl font-bold tracking-tighter" style={{ color: primary }}>School OS</span>
         <nav className="hidden md:flex items-center gap-6">
           <a className="font-semibold border-b-2 font-sans text-sm tracking-tight py-5" style={{ color: primary, borderColor: primary }} href="#">
-            {academicYear} Academic Year
+            {t('{{year}} Academic Year', { year: academicYear })}
           </a>
           <span className="text-slate-600 transition-colors font-sans text-sm font-medium tracking-tight">
             {schoolName}
@@ -62,10 +65,10 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
             <button
               onClick={() => setSectionDropdownOpen(!sectionDropdownOpen)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/10 bg-white text-primary hover:bg-primary/5 transition-all text-sm font-semibold"
-              title="Switch section"
+              title={t('Switch section')}
             >
               <span className="w-2 h-2 bg-secondary rounded-full shrink-0"></span>
-              <span className="hidden lg:inline text-slate-500 font-medium">Section:</span>
+              <span className="hidden lg:inline text-slate-500 font-medium">{t('Section:')}</span>
               <span className="truncate max-w-[10rem]">{activeSection.name}</span>
               <span className="material-symbols-outlined text-sm">expand_more</span>
             </button>
@@ -75,7 +78,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <div className="fixed inset-0 z-40" onClick={() => setSectionDropdownOpen(false)}></div>
                 <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
                   <div className="p-2 bg-slate-50 text-xs font-bold uppercase tracking-widest text-slate-500 text-center border-b border-slate-100">
-                    Switch Section
+                    {t('Switch Section')}
                   </div>
                   <div className="max-h-60 overflow-y-auto">
                     {sections.map(s => (
@@ -105,12 +108,13 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
         <div className="hidden sm:block">
           <HelpPanel />
         </div>
+        <LanguageSwitcher />
         <div className="hidden sm:block h-8 w-px bg-slate-200 mx-2"></div>
         
         <div className="flex items-center gap-2 lg:gap-3 cursor-pointer group">
           <div className="text-right hidden md:block">
-            <p className="text-xs font-bold" style={{ color: primary }}>{user?.full_name || 'Admin User'}</p>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest">School Admin</p>
+            <p className="text-xs font-bold" style={{ color: primary }}>{user?.full_name || t('Admin User')}</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest">{t('School Admin')}</p>
           </div>
           <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center" style={{ border: `2px solid ${primary}`, backgroundColor: `${primary}1A` }}>
             <span className="text-xs font-bold" style={{ color: primary }}>{initials}</span>
@@ -118,7 +122,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
           <button 
             onClick={() => setShowLogoutConfirm(true)}
             className="ml-1 lg:ml-2 p-1 text-slate-400 hover:text-error transition-colors"
-            title="Logout"
+            title={t('Logout')}
           >
             <span className="material-symbols-outlined text-lg">logout</span>
           </button>
@@ -133,12 +137,12 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
             <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-slate-600 text-2xl">logout</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Confirm Logout</h3>
-            <p className="text-sm text-slate-500">You will be signed out and redirected to the login page.</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{t('Confirm Logout')}</h3>
+            <p className="text-sm text-slate-500">{t('You will be signed out and redirected to the login page.')}</p>
           </div>
           <div className="flex border-t border-slate-100">
-            <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button onClick={handleLogout} className="flex-1 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors border-l border-slate-100">Logout</button>
+            <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">{t('Cancel')}</button>
+            <button onClick={handleLogout} className="flex-1 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors border-l border-slate-100">{t('Logout')}</button>
           </div>
         </div>
       </div>

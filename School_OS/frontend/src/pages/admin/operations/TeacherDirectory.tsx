@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { 
@@ -14,6 +15,7 @@ import CredentialsCard from '../../../components/ui/CredentialsCard';
 
 export default function TeacherDirectory() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminStaffOps');
   const { addToast } = useToastStore();
   const [teachers, setTeachers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function TeacherDirectory() {
       const response = await api.get('/staff/teachers/');
       setTeachers(response.data.results || response.data);
     } catch (error) {
-      addToast('Failed to fetch teacher directory.', 'error');
+      addToast(t('Failed to fetch teacher directory.'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -56,20 +58,20 @@ export default function TeacherDirectory() {
   const handleToggleStatus = async (teacherId: string, currentStatus: boolean) => {
     try {
       await api.patch(`/staff/teachers/${teacherId}/`, { is_active: !currentStatus });
-      addToast(`Teacher status updated to ${!currentStatus ? 'Active' : 'Inactive'}.`, 'success');
+      addToast(t('Teacher status updated to {{status}}.', { status: !currentStatus ? t('Active') : t('Inactive') }), 'success');
       fetchTeachers();
     } catch (error) {
-      addToast('Failed to update teacher status.', 'error');
+      addToast(t('Failed to update teacher status.'), 'error');
     }
   };
 
   const handleRemoveTeacher = async (teacherId: string) => {
     try {
       await api.delete(`/staff/teachers/${teacherId}/`);
-      addToast('Teacher removed.', 'success');
+      addToast(t('Teacher removed.'), 'success');
       fetchTeachers();
     } catch (error) {
-      addToast('Failed to remove teacher.', 'error');
+      addToast(t('Failed to remove teacher.'), 'error');
     }
   };
 
@@ -77,9 +79,9 @@ export default function TeacherDirectory() {
     try {
       const res = await api.post(`/users/${userId}/reset-password/`);
       setResetResult(res.data);
-      addToast(`Password reset for ${userName}.`, 'success');
+      addToast(t('Password reset for {{name}}.', { name: userName }), 'success');
     } catch (error: any) {
-      const detail = error.response?.data?.detail || 'Failed to reset password.';
+      const detail = error.response?.data?.detail || t('Failed to reset password.');
       addToast(detail, 'error');
     }
   };
@@ -106,18 +108,18 @@ export default function TeacherDirectory() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-2">Staff Records</span>
-          <h1 className="text-4xl font-black text-on-surface tracking-tight">Staff Directory</h1>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-2">{t('Staff Records')}</span>
+          <h1 className="text-4xl font-black text-on-surface tracking-tight">{t('Staff Directory')}</h1>
           <p className="text-on-surface-variant mt-2 text-lg font-medium max-w-2xl leading-relaxed">
-            Manage teacher credentials, assignments, marketplace profiles, and performance.
+            {t('Manage teacher credentials, assignments, marketplace profiles, and performance.')}
           </p>
         </div>
         <div className="flex gap-3">
           <button onClick={() => navigate('/admin/operations/faculty/import')} className="flex items-center gap-2 px-6 py-4 bg-surface-container-high text-on-surface font-black rounded-2xl hover:bg-surface-container-highest transition-all active:scale-95 text-xs uppercase tracking-widest">
-            <Upload className="w-4 h-4" /> Bulk Import
+            <Upload className="w-4 h-4" /> {t('Bulk Import')}
           </button>
           <button onClick={() => navigate('/admin/operations/faculty/new')} className="flex items-center gap-2 px-8 py-4 bg-primary text-white font-black rounded-2xl hover:shadow-xl transition-all active:scale-95 text-xs uppercase tracking-widest bg-gradient-to-br from-primary to-blue-700 shadow-lg shadow-primary/20">
-            <UserPlus className="w-4 h-4" /> Onboard Teacher
+            <UserPlus className="w-4 h-4" /> {t('Onboard Teacher')}
           </button>
         </div>
       </div>
@@ -134,7 +136,7 @@ export default function TeacherDirectory() {
             <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary">{stat.icon}</div>
             <div>
               <p className="text-2xl font-black">{stat.value}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{stat.label}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t(stat.label)}</p>
             </div>
           </div>
         ))}
@@ -146,7 +148,7 @@ export default function TeacherDirectory() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant group-focus-within:text-primary transition-colors" />
           <input 
             type="text" 
-            placeholder="Search by name, ID, or department..." 
+            placeholder={t('Search by name, ID, or department...')} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-12 pr-6 py-4 bg-surface-container-lowest border border-outline-variant/10 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all w-96 shadow-sm"
@@ -155,7 +157,7 @@ export default function TeacherDirectory() {
         <div className="flex gap-2">
           {(['all', 'active', 'public'] as const).map(tab => (
             <button key={tab} onClick={() => setFilterTab(tab)} className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterTab === tab ? 'bg-primary text-white shadow-lg' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'}`}>
-              {tab === 'all' ? 'All' : tab === 'active' ? 'Active' : 'Marketplace'}
+              {tab === 'all' ? t('All') : tab === 'active' ? t('Active') : t('Marketplace')}
             </button>
           ))}
         </div>
@@ -165,14 +167,14 @@ export default function TeacherDirectory() {
       {isLoading ? (
         <div className="py-40 flex flex-col items-center justify-center gap-6">
           <Loader2 className="w-12 h-12 animate-spin text-primary opacity-30" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant">Synchronizing Global Directory...</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant">{t('Synchronizing Global Directory...')}</p>
         </div>
       ) : filteredTeachers.length === 0 ? (
         <div className="py-40 flex flex-col items-center justify-center text-center space-y-6 grayscale opacity-40">
            <span className="material-symbols-outlined text-[80px]">person_search</span>
            <div className="space-y-2">
-             <h3 className="text-xl font-bold">No teachers found</h3>
-             <p className="text-sm font-medium">Build your faculty. Add your first teacher to get started.</p>
+             <h3 className="text-xl font-bold">{t('No teachers found')}</h3>
+             <p className="text-sm font-medium">{t('Build your faculty. Add your first teacher to get started.')}</p>
            </div>
         </div>
       ) : (
@@ -192,16 +194,16 @@ export default function TeacherDirectory() {
                     <div className="flex gap-2 mt-3 flex-wrap">
                       {teacher.is_active ? (
                         <span className="px-3 py-1 bg-secondary/10 text-secondary text-[9px] font-black rounded-full uppercase tracking-widest border border-secondary/20 flex items-center gap-1.5 shadow-sm">
-                          <ShieldCheck className="w-3 h-3" /> Active
+                          <ShieldCheck className="w-3 h-3" /> {t('Active')}
                         </span>
                       ) : (
                         <span className="px-3 py-1 bg-error/10 text-error text-[9px] font-black rounded-full uppercase tracking-widest border border-error/20 flex items-center gap-1.5 shadow-sm">
-                          <ShieldX className="w-3 h-3" /> Deactivated
+                          <ShieldX className="w-3 h-3" /> {t('Deactivated')}
                         </span>
                       )}
                       {teacher.public_profile && (
                         <span className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black rounded-full uppercase tracking-widest border border-primary/20 flex items-center gap-1.5 shadow-sm">
-                          <Globe className="w-3 h-3" /> Public
+                          <Globe className="w-3 h-3" /> {t('Public')}
                         </span>
                       )}
                     </div>
@@ -217,28 +219,28 @@ export default function TeacherDirectory() {
                   {openMenuId === teacher.id && (
                     <div className="absolute right-0 top-full mt-1 w-56 bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant/15 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                       <button onClick={() => { setOpenMenuId(null); setProfileTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
-                        <span className="material-symbols-outlined text-lg text-primary">person</span> View Profile
+                        <span className="material-symbols-outlined text-lg text-primary">person</span> {t('View Profile')}
                       </button>
                       <button onClick={() => { setOpenMenuId(null); setEditTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
-                        <UserPen className="w-4 h-4 text-primary" /> Edit Profile
+                        <UserPen className="w-4 h-4 text-primary" /> {t('Edit Profile')}
                       </button>
                       <button onClick={() => { setOpenMenuId(null); setSelectedTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
-                        <Settings2 className="w-4 h-4 text-primary" /> Manage Assignment
+                        <Settings2 className="w-4 h-4 text-primary" /> {t('Manage Assignment')}
                       </button>
-                      <button onClick={() => { setOpenMenuId(null); addToast(`Opening mail composer for ${teacher.user_details?.email}...`, 'info'); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
-                        <Mail className="w-4 h-4 text-primary" /> Send Email
+                      <button onClick={() => { setOpenMenuId(null); addToast(t('Opening mail composer for {{email}}...', { email: teacher.user_details?.email }), 'info'); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
+                        <Mail className="w-4 h-4 text-primary" /> {t('Send Email')}
                       </button>
                       <button onClick={() => { setOpenMenuId(null); handleResetPassword(teacher.user_details?.id, teacher.user_details?.full_name); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left">
-                        <KeyRound className="w-4 h-4 text-amber-600" /> Reset Password
+                        <KeyRound className="w-4 h-4 text-amber-600" /> {t('Reset Password')}
                       </button>
                       <div className="border-t border-outline-variant/10 my-1" />
                       <button onClick={() => { setOpenMenuId(null); handleToggleStatus(teacher.id, teacher.is_active); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left ${teacher.is_active ? 'text-error' : 'text-secondary'}`}>
                         {teacher.is_active ? <ShieldX className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                        {teacher.is_active ? 'Deactivate' : 'Restore'}
+                        {teacher.is_active ? t('Deactivate') : t('Restore')}
                       </button>
                       <div className="border-t border-outline-variant/10 my-1" />
                       <button onClick={() => { setOpenMenuId(null); setRemoveTeacher(teacher); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-surface-container-low transition-colors text-left text-error">
-                        <Trash2 className="w-4 h-4" /> Remove Teacher
+                        <Trash2 className="w-4 h-4" /> {t('Remove Teacher')}
                       </button>
                     </div>
                   )}
@@ -263,7 +265,7 @@ export default function TeacherDirectory() {
                   <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                     <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                     <span className="font-bold">{teacher.average_rating.toFixed(1)}</span>
-                    <span className="text-on-surface-variant/60">({teacher.total_reviews} reviews)</span>
+                    <span className="text-on-surface-variant/60">{t('({{count}} reviews)', { count: teacher.total_reviews })}</span>
                   </div>
                 )}
                 {teacher.subjects_taught && teacher.subjects_taught.length > 0 && (
@@ -278,12 +280,12 @@ export default function TeacherDirectory() {
               <div className="px-8 mt-4 flex-1">
                 <div className="bg-surface-container-low/50 rounded-2xl p-5 border border-outline-variant/5">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-[0.2em] block">Strategic Assignment</span>
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-[0.2em] block">{t('Strategic Assignment')}</span>
                     <button 
                       onClick={() => setSelectedTeacher(teacher)}
                       className="flex items-center gap-1 text-[9px] font-black text-primary uppercase tracking-widest hover:underline"
                     >
-                      <Settings2 className="w-3 h-3" /> Manage
+                      <Settings2 className="w-3 h-3" /> {t('Manage')}
                     </button>
                   </div>
                   {teacher.assignments && teacher.assignments.length > 0 ? (
@@ -296,13 +298,13 @@ export default function TeacherDirectory() {
                             </div>
                             <span className="text-xs font-bold text-on-surface">{assignment.subject_name}</span>
                           </div>
-                          <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-lg border border-primary/10">Class: {assignment.class_name}</span>
+                          <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-lg border border-primary/10">{t('Class: {{className}}', { className: assignment.class_name })}</span>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="py-4 text-center">
-                      <p className="text-[10px] font-black text-on-surface-variant opacity-40 uppercase tracking-widest italic">No active assignments</p>
+                      <p className="text-[10px] font-black text-on-surface-variant opacity-40 uppercase tracking-widest italic">{t('No active assignments')}</p>
                     </div>
                   )}
                 </div>
@@ -312,13 +314,13 @@ export default function TeacherDirectory() {
               <div className="p-8 pt-6 mt-4 border-t border-outline-variant/5 flex items-center justify-between">
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => addToast(`Opening mail composer for ${teacher.user_details?.email}...`, 'info')}
+                    onClick={() => addToast(t('Opening mail composer for {{email}}...', { email: teacher.user_details?.email }), 'info')}
                     className="p-3 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-xl transition-all active:scale-95 group/icon"
                   >
                     <Mail className="w-4 h-4" />
                   </button>
                   <button 
-                    onClick={() => addToast(`Viewing full credentials for ${teacher.user_details?.full_name}...`, 'info')}
+                    onClick={() => addToast(t('Viewing full credentials for {{name}}...', { name: teacher.user_details?.full_name }), 'info')}
                     className="p-3 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-xl transition-all active:scale-95"
                   >
                     <BadgeCheck className="w-4 h-4" />
@@ -332,7 +334,7 @@ export default function TeacherDirectory() {
                     : 'bg-secondary text-white hover:shadow-lg hover:shadow-secondary/20'
                   }`}
                 >
-                  {teacher.is_active ? 'Deactivate' : 'Restore'}
+                  {teacher.is_active ? t('Deactivate') : t('Restore')}
                   <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
@@ -360,15 +362,15 @@ export default function TeacherDirectory() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-on-surface">{profileTeacher.user_details?.full_name}</h2>
-                  <p className="text-xs font-black text-on-surface-variant/50 uppercase tracking-widest mt-1">ID: {profileTeacher.employee_id}</p>
+                  <p className="text-xs font-black text-on-surface-variant/50 uppercase tracking-widest mt-1">{t('ID: ')}{profileTeacher.employee_id}</p>
                   <div className="flex gap-2 mt-3 flex-wrap">
                     {profileTeacher.is_active ? (
-                      <span className="px-3 py-1 bg-secondary/10 text-secondary text-[9px] font-black rounded-full uppercase tracking-widest border border-secondary/20 flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Active</span>
+                      <span className="px-3 py-1 bg-secondary/10 text-secondary text-[9px] font-black rounded-full uppercase tracking-widest border border-secondary/20 flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> {t('Active')}</span>
                     ) : (
-                      <span className="px-3 py-1 bg-error/10 text-error text-[9px] font-black rounded-full uppercase tracking-widest border border-error/20 flex items-center gap-1.5"><ShieldX className="w-3 h-3" /> Deactivated</span>
+                      <span className="px-3 py-1 bg-error/10 text-error text-[9px] font-black rounded-full uppercase tracking-widest border border-error/20 flex items-center gap-1.5"><ShieldX className="w-3 h-3" /> {t('Deactivated')}</span>
                     )}
                     {profileTeacher.public_profile && (
-                      <span className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black rounded-full uppercase tracking-widest border border-primary/20 flex items-center gap-1.5"><Globe className="w-3 h-3" /> Public</span>
+                      <span className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black rounded-full uppercase tracking-widest border border-primary/20 flex items-center gap-1.5"><Globe className="w-3 h-3" /> {t('Public')}</span>
                     )}
                   </div>
                 </div>
@@ -385,14 +387,14 @@ export default function TeacherDirectory() {
                 <div className="flex items-center gap-3 p-4 bg-surface-container-low rounded-2xl">
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest">Email</p>
-                    <p className="text-sm font-bold text-on-surface">{profileTeacher.user_details?.email || 'Not provided'}</p>
+                    <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest">{t('Email')}</p>
+                    <p className="text-sm font-bold text-on-surface">{profileTeacher.user_details?.email || t('Not provided')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-surface-container-low rounded-2xl">
                   <Briefcase className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest">Employment</p>
+                    <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest">{t('Employment')}</p>
                     <p className="text-sm font-bold text-on-surface">{profileTeacher.employment_type_display || profileTeacher.employment_type}</p>
                   </div>
                 </div>
@@ -401,7 +403,7 @@ export default function TeacherDirectory() {
               {/* Bio */}
               {profileTeacher.bio && (
                 <div>
-                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-2">Bio</p>
+                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-2">{t('Bio')}</p>
                   <p className="text-sm text-on-surface/80 leading-relaxed">{profileTeacher.bio}</p>
                 </div>
               )}
@@ -409,7 +411,7 @@ export default function TeacherDirectory() {
               {/* Languages */}
               {profileTeacher.languages_spoken?.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-2">Languages</p>
+                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-2">{t('Languages')}</p>
                   <div className="flex gap-2 flex-wrap">
                     {profileTeacher.languages_spoken.map((lang: string) => (
                       <span key={lang} className="px-3 py-1 bg-tertiary/10 text-tertiary text-xs font-bold rounded-full border border-tertiary/20 flex items-center gap-1.5">
@@ -423,7 +425,7 @@ export default function TeacherDirectory() {
               {/* Subjects */}
               {profileTeacher.subject_names?.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-3">Subjects Taught</p>
+                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-3">{t('Subjects Taught')}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {profileTeacher.subject_names.map((s: any, i: number) => (
                       <div key={i} className="flex items-center gap-3 p-4 bg-surface-container-low rounded-2xl hover:bg-primary/5 transition-colors">
@@ -443,7 +445,7 @@ export default function TeacherDirectory() {
               {/* Classes */}
               {profileTeacher.class_names?.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-3">Assigned Classes</p>
+                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-3">{t('Assigned Classes')}</p>
                   <div className="flex gap-2 flex-wrap">
                     {profileTeacher.class_names.map((c: any, i: number) => (
                       <span key={i} className="px-4 py-2 bg-secondary/10 text-secondary text-xs font-bold rounded-full border border-secondary/20 flex items-center gap-1.5">
@@ -457,11 +459,11 @@ export default function TeacherDirectory() {
               {/* Metadata */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-surface-container-low rounded-2xl">
-                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Max Weekly Hours</p>
+                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">{t('Max Weekly Hours')}</p>
                   <p className="text-lg font-black text-on-surface">{profileTeacher.max_weekly_hours || '—'}</p>
                 </div>
                 <div className="p-4 bg-surface-container-low rounded-2xl">
-                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Rating</p>
+                  <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">{t('Rating')}</p>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star key={star} className={`w-4 h-4 ${star <= Math.round(profileTeacher.avg_rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-on-surface-variant/20'}`} />
@@ -475,17 +477,17 @@ export default function TeacherDirectory() {
             {/* Modal Actions */}
             <div className="p-8 pt-0 flex flex-wrap gap-3">
               <button onClick={() => { setProfileTeacher(null); setSelectedTeacher(profileTeacher); }} className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
-                <Settings2 className="w-4 h-4" /> Manage Assignment
+                <Settings2 className="w-4 h-4" /> {t('Manage Assignment')}
               </button>
               <button onClick={() => { setProfileTeacher(null); handleResetPassword(profileTeacher.user_details?.id, profileTeacher.user_details?.full_name); }} className="flex items-center gap-2 px-6 py-3 bg-amber-50 text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-100 transition-all active:scale-95 border border-amber-200">
-                <KeyRound className="w-4 h-4" /> Reset Password
+                <KeyRound className="w-4 h-4" /> {t('Reset Password')}
               </button>
-              <button onClick={() => { setProfileTeacher(null); addToast(`Opening mail for ${profileTeacher.user_details?.email}...`, 'info'); }} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest rounded-xl font-bold text-sm transition-all active:scale-95">
-                <Mail className="w-4 h-4" /> Send Email
+              <button onClick={() => { setProfileTeacher(null); addToast(t('Opening mail for {{email}}...', { email: profileTeacher.user_details?.email }), 'info'); }} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest rounded-xl font-bold text-sm transition-all active:scale-95">
+                <Mail className="w-4 h-4" /> {t('Send Email')}
               </button>
               <button onClick={() => { setProfileTeacher(null); handleToggleStatus(profileTeacher.id, profileTeacher.is_active); }} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 ${profileTeacher.is_active ? 'bg-error/10 text-error hover:bg-error/20' : 'bg-secondary/10 text-secondary hover:bg-secondary/20'}`}>
                 {profileTeacher.is_active ? <ShieldX className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                {profileTeacher.is_active ? 'Deactivate' : 'Restore'}
+                {profileTeacher.is_active ? t('Deactivate') : t('Restore')}
               </button>
             </div>
           </div>
@@ -500,21 +502,21 @@ export default function TeacherDirectory() {
                   <KeyRound className="w-8 h-8 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-on-surface mb-1">Password Reset</h3>
-                  <p className="text-sm text-on-surface-variant">New temporary password for <span className="font-bold">{resetResult.user.full_name}</span></p>
+                  <h3 className="text-xl font-black text-on-surface mb-1">{t('Password Reset')}</h3>
+                  <p className="text-sm text-on-surface-variant">{t('New temporary password for {{name}}', { name: resetResult.user.full_name })}</p>
                 </div>
                 {resetResult.temporary_password && (
                   <div className="text-left">
                     <CredentialsCard
                       email={resetResult.user.email}
                       password={resetResult.temporary_password}
-                      label="New Temporary Password"
+                      label={t('New Temporary Password')}
                       loginPortal="teacher"
                     />
                   </div>
                 )}
                 <button onClick={() => setResetResult(null)} className="w-full py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:shadow-lg active:scale-95 transition-all">
-                  Done
+                  {t('Done')}
                 </button>
               </div>
           </div>
@@ -534,30 +536,30 @@ export default function TeacherDirectory() {
           <div className="bg-surface-container-lowest w-full max-w-md rounded-[40px] shadow-2xl border border-outline-variant/10 overflow-hidden flex flex-col">
             <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-error/5">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-error/60 block mb-1">Warning</span>
-                <h2 className="text-2xl font-black text-on-surface tracking-tight">Remove Teacher</h2>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-error/60 block mb-1">{t('Warning')}</span>
+                <h2 className="text-2xl font-black text-on-surface tracking-tight">{t('Remove Teacher')}</h2>
                 <p className="text-xs text-on-surface-variant font-medium mt-1 uppercase tracking-widest">{removeTeacher.user_details?.full_name} (<span className="text-primary">{removeTeacher.employee_id}</span>)</p>
               </div>
             </div>
             <div className="p-8 space-y-6 text-center">
               <AlertCircle className="w-16 h-16 text-error mx-auto" />
               <p className="text-on-surface-variant leading-relaxed">
-                This will permanently remove the teacher profile and deactivate their login access.
+                {t('This will permanently remove the teacher profile and deactivate their login access.')}
                 <br />
-                <span className="font-bold text-error">This action cannot be undone.</span>
+                <span className="font-bold text-error">{t('This action cannot be undone.')}</span>
               </p>
               <div className="flex justify-center gap-3">
                 <button
                   onClick={() => setRemoveTeacher(null)}
                   className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all active:scale-95"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button
                   onClick={() => { handleRemoveTeacher(removeTeacher.id); setRemoveTeacher(null); }}
                   className="px-6 py-3 bg-error text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:shadow-lg hover:shadow-error/20 transition-all active:scale-95"
                 >
-                  <Trash2 className="w-3 h-3" /> Remove Permanently
+                  <Trash2 className="w-3 h-3" /> {t('Remove Permanently')}
                 </button>
               </div>
             </div>
@@ -566,7 +568,7 @@ export default function TeacherDirectory() {
       )}
 
       <footer className="mt-12 py-12 border-t border-outline-variant/10 text-center">
-        <p className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.5em] mb-4">Institutional Integrity Managed by School OS v2.4</p>
+        <p className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.5em] mb-4">{t('Institutional Integrity Managed by School OS v2.4')}</p>
         <div className="w-12 h-1 bg-primary/20 rounded-full mx-auto"></div>
       </footer>
     </div>

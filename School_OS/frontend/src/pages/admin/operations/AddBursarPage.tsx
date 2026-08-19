@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToastStore } from '../../../stores/toastStore';
 import { ArrowLeft, UserCircle, BadgeCheck, CheckCircle, Banknote } from 'lucide-react';
 import { api } from '../../../services/api';
@@ -7,6 +8,7 @@ import CredentialsCard from '../../../components/ui/CredentialsCard';
 
 export default function AddBursarPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminStaffOps');
   const { addToast } = useToastStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -31,10 +33,10 @@ export default function AddBursarPage() {
     try {
       const res = await api.post('/staff/bursars/onboard/', formData);
       setResult(res.data);
-      addToast(`Bursar ${formData.first_name} onboarded successfully.`, 'success');
+      addToast(t('Bursar {{name}} onboarded successfully.', { name: formData.first_name }), 'success');
     } catch (error: any) {
       const data = error.response?.data;
-      let detail = 'Failed to onboard bursar.';
+      let detail = t('Failed to onboard bursar.');
       if (typeof data === 'string') {
         detail = data;
       } else if (data?.detail) {
@@ -58,7 +60,7 @@ export default function AddBursarPage() {
     return (
       <div className="p-4 lg:p-12 max-w-[1000px] mx-auto bg-surface min-h-screen">
         <button onClick={() => navigate('/admin/operations')} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors mb-8">
-          <ArrowLeft className="w-4 h-4" /> Back to Operations
+          <ArrowLeft className="w-4 h-4" /> {t('Back to Operations')}
         </button>
 
         <div className="bg-surface-container-lowest p-12 rounded-3xl border border-outline-variant/10 shadow-sm max-w-lg mx-auto text-center space-y-8">
@@ -66,27 +68,27 @@ export default function AddBursarPage() {
             <CheckCircle className="w-10 h-10 text-secondary" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-on-surface mb-2">Bursar Onboarded</h2>
-            <p className="text-on-surface-variant">{result.user.full_name} has been added to the system.</p>
+            <h2 className="text-2xl font-black text-on-surface mb-2">{t('Bursar Onboarded')}</h2>
+            <p className="text-on-surface-variant">{t('{{name}} has been added to the system.', { name: result.user.full_name })}</p>
           </div>
 
           <div className="bg-surface-container-low p-6 rounded-2xl space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Email</span>
+              <span className="text-on-surface-variant">{t('Email')}</span>
               <span className="font-bold text-on-surface">{result.user.email}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Staff ID</span>
+              <span className="text-on-surface-variant">{t('Staff ID')}</span>
               <span className="font-bold text-on-surface">{result.user.employee_id}</span>
             </div>
           </div>
 
           {result.temp_password && (
-            <CredentialsCard email={result.user.email} password={result.temp_password} label="Bursar Temporary Password" loginPortal="bursar" />
+            <CredentialsCard email={result.user.email} password={result.temp_password} label={t('Bursar Temporary Password')} loginPortal="bursar" />
           )}
 
           <button onClick={() => navigate('/admin/operations')} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">
-            Return to Operations
+            {t('Return to Operations')}
           </button>
         </div>
       </div>
@@ -96,14 +98,14 @@ export default function AddBursarPage() {
   return (
     <div className="p-4 lg:p-12 max-w-[1000px] mx-auto bg-surface min-h-screen">
       <button onClick={() => navigate('/admin/operations')} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors mb-8">
-        <ArrowLeft className="w-4 h-4" /> Administration
+        <ArrowLeft className="w-4 h-4" /> {t('Administration')}
       </button>
 
       <section className="mb-12">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 block mb-3">Finance Staff</span>
-        <h1 className="text-4xl font-black tracking-tight text-on-surface">Add Bursar</h1>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 block mb-3">{t('Finance Staff')}</span>
+        <h1 className="text-4xl font-black tracking-tight text-on-surface">{t('Add Bursar')}</h1>
         <p className="text-on-surface-variant mt-2 text-lg leading-relaxed max-w-2xl">
-          Register a new bursar with access to the financial treasury portal.
+          {t('Register a new bursar with access to the financial treasury portal.')}
         </p>
       </section>
 
@@ -113,42 +115,42 @@ export default function AddBursarPage() {
             
             <div className="space-y-6">
               <h3 className="text-xl font-bold tracking-tight flex items-center gap-3 border-b border-outline-variant/10 pb-4">
-                <UserCircle className="text-primary w-6 h-6" /> Personal Details
+                <UserCircle className="text-primary w-6 h-6" /> {t('Personal Details')}
               </h3>
               
               <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">First Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('First Name')}</label>
                   <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Middle Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Middle Name')}</label>
                   <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Last Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Last Name')}</label>
                   <input required type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all" />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Official Email Address</label>
-                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g. bursar@school.edu" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Official Email Address')}</label>
+                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('e.g. bursar@school.edu')} />
               </div>
             </div>
 
             <div className="space-y-6 pt-4">
               <h3 className="text-xl font-bold tracking-tight flex items-center gap-3 border-b border-outline-variant/10 pb-4">
-                <BadgeCheck className="text-primary w-6 h-6" /> Employment Details
+                <BadgeCheck className="text-primary w-6 h-6" /> {t('Employment Details')}
               </h3>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Staff ID Number</label>
-                  <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="Auto-generated if blank" />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Staff ID Number')}</label>
+                  <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('Auto-generated if blank')} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Phone (optional)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Phone (optional)')}</label>
                   <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="+237 6XX XXX XXX" />
                 </div>
               </div>
@@ -161,7 +163,7 @@ export default function AddBursarPage() {
                 ) : (
                   <CheckCircle className="w-5 h-5" />
                 )}
-                {isSubmitting ? 'Provisioning Bursar...' : 'Complete Onboarding'}
+                {isSubmitting ? t('Provisioning Bursar...') : t('Complete Onboarding')}
               </button>
             </div>
           </form>
@@ -172,9 +174,9 @@ export default function AddBursarPage() {
             <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-6">
               <Banknote className="w-8 h-8 text-emerald-600" />
             </div>
-            <h4 className="text-sm font-bold tracking-tight text-on-surface mb-3">Bursar Access</h4>
+            <h4 className="text-sm font-bold tracking-tight text-on-surface mb-3">{t('Bursar Access')}</h4>
             <p className="text-xs text-on-surface-variant font-medium leading-relaxed">
-              The bursar will have access to the Finance Treasury portal including invoices, payments, student ledger, and expense tracking. They cannot access academic or administration modules.
+              {t('The bursar will have access to the Finance Treasury portal including invoices, payments, student ledger, and expense tracking. They cannot access academic or administration modules.')}
             </p>
           </div>
         </div>

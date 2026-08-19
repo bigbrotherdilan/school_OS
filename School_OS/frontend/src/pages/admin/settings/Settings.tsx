@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ProfileEditor from '../../../components/ui/ProfileEditor';
 import PinSetupModal from '../../../components/ui/PinSetupModal';
@@ -13,6 +14,7 @@ import { api } from '../../../services/api';
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminGov');
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
   const { addToast } = useToastStore();
   const [twoFactor, setTwoFactor] = useState(false);
@@ -107,15 +109,15 @@ export default function Settings() {
 
   const handleSaveBranding = async () => {
     if (!hexToRgb(primaryColor) || !hexToRgb(secondaryColor)) {
-      addToast('Enter valid hex colors (e.g. #00236f).', 'error');
+      addToast(t('Enter valid hex colors (e.g. #00236f).'), 'error');
       return;
     }
     setSavingBranding(true);
     try {
       await updateThemeConfig({ primaryColor, secondaryColor, accentColor, fontFamily });
-      addToast('Brand colors and fonts confirmed and applied to everyone across the portal.', 'success');
+      addToast(t('Brand colors and fonts confirmed and applied to everyone across the portal.'), 'success');
     } catch {
-      addToast('Failed to save brand colors.', 'error');
+      addToast(t('Failed to save brand colors.'), 'error');
     } finally {
       setSavingBranding(false);
     }
@@ -126,7 +128,7 @@ export default function Settings() {
     setSecondaryColor(DEFAULT_THEME.secondaryColor);
     setAccentColor(DEFAULT_THEME.accentColor);
     setFontFamily(DEFAULT_THEME.fontFamily);
-    addToast('Previewing the default theme — click Confirm to apply it to everyone.', 'info');
+    addToast(t('Previewing the default theme — click Confirm to apply it to everyone.'), 'info');
   };
 
   const handleDiscardBranding = () => {
@@ -135,14 +137,14 @@ export default function Settings() {
     setSecondaryColor(themeConfig.secondaryColor);
     setAccentColor(themeConfig.accentColor);
     setFontFamily(themeConfig.fontFamily);
-    addToast('Reverted to the saved theme.', 'info');
+    addToast(t('Reverted to the saved theme.'), 'info');
   };
 
-  const handleApplyTemplate = (t: (typeof PRESET_TEMPLATES)[number]) => {
-    setPrimaryColor(t.colors.primaryColor);
-    setSecondaryColor(t.colors.secondaryColor);
-    setAccentColor(t.colors.accentColor);
-    addToast(`Previewing "${t.name}" — click Confirm to apply it to everyone.`, 'info');
+  const handleApplyTemplate = (tpl: (typeof PRESET_TEMPLATES)[number]) => {
+    setPrimaryColor(tpl.colors.primaryColor);
+    setSecondaryColor(tpl.colors.secondaryColor);
+    setAccentColor(tpl.colors.accentColor);
+    addToast(t('Previewing "{{name}}" — click Confirm to apply it to everyone.', { name: tpl.name }), 'info');
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,15 +152,15 @@ export default function Settings() {
     e.target.value = '';
     if (!file) return;
     if (!activeTenantId) {
-      addToast('No active school selected.', 'error');
+      addToast(t('No active school selected.'), 'error');
       return;
     }
     setUploadingLogo(true);
     try {
       await uploadLogo(activeTenantId, file);
-      addToast('Logo uploaded and saved. The URL is stored, not the file.', 'success');
+      addToast(t('Logo uploaded and saved. The URL is stored, not the file.'), 'success');
     } catch {
-      addToast('Failed to upload logo.', 'error');
+      addToast(t('Failed to upload logo.'), 'error');
     } finally {
       setUploadingLogo(false);
     }
@@ -170,32 +172,32 @@ export default function Settings() {
       await patchSchoolConfig({ finance_recording: value });
       addToast(
         value === 'bursar_only'
-          ? 'Finance recording restricted to bursars only.'
-          : 'Admins can record finance again.',
+          ? t('Finance recording restricted to bursars only.')
+          : t('Admins can record finance again.'),
         'success'
       );
     } catch {
-      addToast('Failed to update finance settings.', 'error');
+      addToast(t('Failed to update finance settings.'), 'error');
     } finally {
       setSavingFinance(false);
     }
   };
 
   const handlePurge = () => {
-    addToast('System cache completely purged. Operations restored to zero state.', 'success');
+    addToast(t('System cache completely purged. Operations restored to zero state.'), 'success');
   };
 
   const handleSaveSchoolInfo = async () => {
     if (!schoolInfoDraft.school_name?.trim()) {
-      addToast('School name is required.', 'error');
+      addToast(t('School name is required.'), 'error');
       return;
     }
     setSavingSchoolInfo(true);
     try {
       await updateSchoolInfo(schoolInfoDraft);
-      addToast('School information saved.', 'success');
+      addToast(t('School information saved.'), 'success');
     } catch {
-      addToast('Failed to save school information.', 'error');
+      addToast(t('Failed to save school information.'), 'error');
     } finally {
       setSavingSchoolInfo(false);
     }
@@ -210,14 +212,14 @@ export default function Settings() {
       document.getElementById(item.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
-    addToast('This section is not available yet.', 'info');
+    addToast(t('This section is not available yet.'), 'info');
   };
 
   return (
     <div className="p-4 lg:p-12 space-y-12 max-w-[1200px] mx-auto bg-white min-h-screen">
       <section className="border-b border-slate-100 pb-10">
-        <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Institutional Settings</h1>
-        <p className="text-slate-500 mt-2 font-medium">Configure the global operating parameters for your school instance.</p>
+        <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">{t('Institutional Settings')}</h1>
+        <p className="text-slate-500 mt-2 font-medium">{t('Configure the global operating parameters for your school instance.')}</p>
       </section>
 
       <div className="grid grid-cols-12 gap-12">
@@ -239,21 +241,21 @@ export default function Settings() {
               className="w-full flex items-center gap-3 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-slate-400 hover:bg-slate-50 hover:text-slate-900"
             >
               <span className="material-symbols-outlined text-lg">{item.icon}</span>
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </aside>
 
         <main className="col-span-12 lg:col-span-9 space-y-12">
           <div id="settings-profile" className="space-y-8">
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Profile & Authority</h3>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">{t('Profile & Authority')}</h3>
             <ProfileEditor role="admin" />
           </div>
 
           <div id="settings-school-info" className="space-y-8 pt-12 border-t border-slate-100">
             <div>
-              <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">School Information</h3>
-              <p className="text-xs text-slate-400 mt-1 font-medium">Details shown on report cards, ID cards, and public profile.</p>
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">{t('School Information')}</h3>
+              <p className="text-xs text-slate-400 mt-1 font-medium">{t('Details shown on report cards, ID cards, and public profile.')}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
@@ -269,51 +271,51 @@ export default function Settings() {
               ].map((field) => (
                 <div key={field.key} className={field.colSpan ? 'md:col-span-2' : ''}>
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                    {field.label} {field.required && <span className="text-error">*</span>}
+                    {t(field.label)} {field.required && <span className="text-error">*</span>}
                   </label>
                   <input
                     type={field.type || 'text'}
                     value={(schoolInfoDraft as Record<string, string>)?.[field.key] || ''}
                     onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, [field.key]: e.target.value })}
-                    placeholder={field.placeholder || ''}
+                    placeholder={field.placeholder ? t(field.placeholder) : ''}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
                   />
                 </div>
               ))}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Education System</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">{t('Education System')}</label>
                 <select
                   value={schoolInfoDraft.education_type || ''}
                   onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, education_type: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
                 >
-                  <option value="anglophone">Anglophone</option>
-                  <option value="francophone">Francophone</option>
-                  <option value="bilingual">Bilingual</option>
+                  <option value="anglophone">{t('Anglophone')}</option>
+                  <option value="francophone">{t('Francophone')}</option>
+                  <option value="bilingual">{t('Bilingual')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">School Type</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">{t('School Type')}</label>
                 <select
                   value={schoolInfoDraft.school_type || ''}
                   onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, school_type: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
                 >
-                  <option value="general">General</option>
-                  <option value="technical">Technical</option>
-                  <option value="vocational">Vocational</option>
+                  <option value="general">{t('General')}</option>
+                  <option value="technical">{t('Technical')}</option>
+                  <option value="vocational">{t('Vocational')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Session Type</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">{t('Session Type')}</label>
                 <select
                   value={schoolInfoDraft.session_type || ''}
                   onChange={(e) => setSchoolInfoDraft({ ...schoolInfoDraft, session_type: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
                 >
-                  <option value="morning">Morning</option>
-                  <option value="afternoon">Afternoon</option>
-                  <option value="both">Both</option>
+                  <option value="morning">{t('Morning')}</option>
+                  <option value="afternoon">{t('Afternoon')}</option>
+                  <option value="both">{t('Both')}</option>
                 </select>
               </div>
             </div>
@@ -323,25 +325,25 @@ export default function Settings() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {savingSchoolInfo ? <span className="material-symbols-outlined animate-spin text-base">sync</span> : <span className="material-symbols-outlined text-base">check_circle</span>}
-              {savingSchoolInfo ? 'Saving...' : 'Save School Information'}
+              {savingSchoolInfo ? t('Saving...') : t('Save School Information')}
             </button>
           </div>
 
           <div id="settings-branding" className="space-y-8 pt-12 border-t border-slate-100">
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Institution Branding</h3>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">{t('Institution Branding')}</h3>
             <div className="p-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-between group">
               <div className="flex items-center gap-6">
                 <div className="w-20 h-20 rounded-2xl bg-white shadow-md flex items-center justify-center border border-slate-100 overflow-hidden">
                   {logoUrl ? (
-                    <img src={logoUrl} alt="School logo" className="w-full h-full object-contain p-2" />
+                    <img src={logoUrl} alt={t('School logo')} className="w-full h-full object-contain p-2" />
                   ) : (
                     <span className="text-primary font-black text-2xl">{schoolInitials}</span>
                   )}
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Official Seal / Logo</h4>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('Official Seal / Logo')}</h4>
                   <p className="text-xs font-medium text-slate-400 mt-1">
-                    {logoUrl ? 'Logo uploaded — stored in object storage (URL only, not in the DB).' : 'No logo uploaded'}
+                    {logoUrl ? t('Logo uploaded — stored in object storage (URL only, not in the DB).') : t('No logo uploaded')}
                   </p>
                 </div>
               </div>
@@ -357,7 +359,7 @@ export default function Settings() {
                 disabled={uploadingLogo}
                 className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploadingLogo ? 'Uploading...' : logoUrl ? 'Replace' : 'Upload'}
+                {uploadingLogo ? t('Uploading...') : logoUrl ? t('Replace') : t('Upload')}
               </button>
             </div>
 
@@ -365,9 +367,9 @@ export default function Settings() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-lg">visibility</span>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">Live Preview — your admin dashboard</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600">{t('Live Preview — your admin dashboard')}</h4>
                 </div>
-                <span className="text-[9px] text-slate-400 font-semibold">Updates as you pick</span>
+                <span className="text-[9px] text-slate-400 font-semibold">{t('Updates as you pick')}</span>
               </div>
               <div className="rounded-2xl overflow-hidden border border-slate-200 flex h-56">
                 <div className="w-32 shrink-0 p-3 flex flex-col gap-2" style={{ backgroundColor: primaryColor }}>
@@ -387,18 +389,18 @@ export default function Settings() {
                           color: contrastTextOn(primaryColor),
                         }}
                       >
-                        {label}
+                        {t(label)}
                       </div>
                     ))}
                   </div>
-                  <div className="mt-auto text-[8px]" style={{ color: contrastTextOn(primaryColor), opacity: 0.5 }}>School Admin</div>
+                  <div className="mt-auto text-[8px]" style={{ color: contrastTextOn(primaryColor), opacity: 0.5 }}>{t('School Admin')}</div>
                 </div>
                 <div className="flex-1 bg-slate-50 flex flex-col min-w-0">
                   <div className="h-10 bg-white border-b border-slate-100 flex items-center justify-between px-3">
                     <span className="text-[10px] font-bold tracking-tighter truncate" style={{ color: primaryColor }}>School OS</span>
                     <div className="flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: secondaryColor }} />
-                      <span className="text-[8px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap" style={{ backgroundColor: primaryColor, color: contrastTextOn(primaryColor) }}>Confirm</span>
+                      <span className="text-[8px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap" style={{ backgroundColor: primaryColor, color: contrastTextOn(primaryColor) }}>{t('Confirm')}</span>
                       <span className="h-5 w-5 rounded-full border flex items-center justify-center text-[7px] font-bold shrink-0" style={{ color: primaryColor, borderColor: primaryColor, backgroundColor: 'rgba(0,0,0,0.04)' }}>AD</span>
                     </div>
                   </div>
@@ -412,7 +414,7 @@ export default function Settings() {
                       <span className="block h-1 w-12 rounded-full bg-slate-200" />
                     </div>
                     <div className="col-span-2 rounded-lg px-2 py-1.5 text-[8px] font-bold flex items-center justify-between" style={{ backgroundColor: secondaryColor, color: '#ffffff' }}>
-                      <span>Secondary accent strip</span>
+                      <span>{t('Secondary accent strip')}</span>
                       <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
                     </div>
                   </div>
@@ -422,7 +424,7 @@ export default function Settings() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Primary Brand Color</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Primary Brand Color')}</label>
                 <div className="flex items-center gap-4">
                   <label
                     className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg ring-4 ring-white cursor-pointer shrink-0"
@@ -432,7 +434,7 @@ export default function Settings() {
                       type="color"
                       value={hexToRgb(primaryColor) ? primaryColor : DEFAULT_THEME.primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      aria-label="Primary brand color"
+                      aria-label={t('Primary brand color')}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                   </label>
@@ -446,7 +448,7 @@ export default function Settings() {
                 </div>
               </div>
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Secondary Accent</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Secondary Accent')}</label>
                 <div className="flex items-center gap-4">
                   <label
                     className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg ring-4 ring-white cursor-pointer shrink-0"
@@ -456,7 +458,7 @@ export default function Settings() {
                       type="color"
                       value={hexToRgb(secondaryColor) ? secondaryColor : DEFAULT_THEME.secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
-                      aria-label="Secondary accent color"
+                      aria-label={t('Secondary accent color')}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                   </label>
@@ -473,8 +475,8 @@ export default function Settings() {
 
             <div className="mt-10 space-y-4">
               <div className="flex items-center gap-2">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Typography</h4>
-                <span className="text-[9px] text-slate-400/60 font-medium">Choose the font used across your portal</span>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Typography')}</h4>
+                <span className="text-[9px] text-slate-400/60 font-medium">{t('Choose the font used across your portal')}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {FONT_OPTIONS.map(f => {
@@ -503,33 +505,33 @@ export default function Settings() {
 
             <div className="mt-10 space-y-4">
               <div className="flex items-center gap-2">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Brand Templates</h4>
-                <span className="text-[9px] text-slate-400/60 font-medium">Tap a template to preview it instantly</span>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Brand Templates')}</h4>
+                <span className="text-[9px] text-slate-400/60 font-medium">{t('Tap a template to preview it instantly')}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {PRESET_TEMPLATES.map(t => {
-                  const isCurrent = t.colors.primaryColor === primaryColor && t.colors.secondaryColor === secondaryColor;
+                {PRESET_TEMPLATES.map(tpl => {
+                  const isCurrent = tpl.colors.primaryColor === primaryColor && tpl.colors.secondaryColor === secondaryColor;
                   return (
                     <button
-                      key={t.name}
-                      onClick={() => handleApplyTemplate(t)}
+                      key={tpl.name}
+                      onClick={() => handleApplyTemplate(tpl)}
                       disabled={savingBranding}
                       className={`relative rounded-2xl p-3 border bg-white text-left transition-all hover:shadow-md active:scale-95 disabled:opacity-60 ${
                         isCurrent ? 'border-primary ring-2 ring-primary/20' : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      {t.premium && (
+                      {tpl.premium && (
                         <span className="absolute top-2 right-2 flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full shadow">
                           <span className="material-symbols-outlined text-[10px]">workspace_premium</span>
-                          Pro
+                          {t('Pro')}
                         </span>
                       )}
                       <div className="flex gap-1.5 mb-2">
-                        <span className="w-6 h-6 rounded-lg shadow-sm" style={{ backgroundColor: t.colors.primaryColor }} />
-                        <span className="w-6 h-6 rounded-lg shadow-sm" style={{ backgroundColor: shadeHex(t.colors.primaryColor, 0.78) }} />
-                        <span className="w-6 h-6 rounded-lg shadow-sm" style={{ backgroundColor: t.colors.secondaryColor }} />
+                        <span className="w-6 h-6 rounded-lg shadow-sm" style={{ backgroundColor: tpl.colors.primaryColor }} />
+                        <span className="w-6 h-6 rounded-lg shadow-sm" style={{ backgroundColor: shadeHex(tpl.colors.primaryColor, 0.78) }} />
+                        <span className="w-6 h-6 rounded-lg shadow-sm" style={{ backgroundColor: tpl.colors.secondaryColor }} />
                       </div>
-                      <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-tight">{t.name}</p>
+                      <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-tight">{tpl.name}</p>
                     </button>
                   );
                 })}
@@ -540,7 +542,7 @@ export default function Settings() {
               {hasBrandingChanges && (
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  Previewing — not yet saved
+                  {t('Previewing — not yet saved')}
                 </span>
               )}
               <button
@@ -553,7 +555,7 @@ export default function Settings() {
                 }`}
               >
                 {savingBranding ? <span className="material-symbols-outlined animate-spin text-base">sync</span> : <span className="material-symbols-outlined text-base">check_circle</span>}
-                {savingBranding ? 'Saving...' : hasBrandingChanges ? 'Confirm Branding' : 'Save Branding'}
+                {savingBranding ? t('Saving...') : hasBrandingChanges ? t('Confirm Branding') : t('Save Branding')}
               </button>
               {hasBrandingChanges && (
                 <button
@@ -562,7 +564,7 @@ export default function Settings() {
                   className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-base">undo</span>
-                  Discard Preview
+                  {t('Discard Preview')}
                 </button>
               )}
               <button
@@ -571,23 +573,23 @@ export default function Settings() {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-base">restart_alt</span>
-                Reset to Default
+                {t('Reset to Default')}
               </button>
               <p className="text-xs text-slate-400 font-medium">
                 {hasBrandingChanges
-                  ? 'Only you see this preview. Confirm to apply it to everyone.'
-                  : 'Pick colors or tap a template to preview instantly — confirm to apply to everyone.'}
+                  ? t('Only you see this preview. Confirm to apply it to everyone.')
+                  : t('Pick colors or tap a template to preview instantly — confirm to apply to everyone.')}
               </p>
             </div>
           </div>
 
           <div id="settings-security" className="space-y-8 pt-12 border-t border-slate-100">
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Security & Privacy</h3>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">{t('Security & Privacy')}</h3>
             <div className="space-y-4">
               <div onClick={() => setTwoFactor(!twoFactor)} className="flex justify-between items-center p-6 bg-slate-50 rounded-2xl group hover:bg-slate-100 transition-colors cursor-pointer">
                 <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">Two-Factor Authentication</h4>
-                  <p className="text-xs font-medium text-slate-400">Mandatory for all administrative accounts.</p>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">{t('Two-Factor Authentication')}</h4>
+                  <p className="text-xs font-medium text-slate-400">{t('Mandatory for all administrative accounts.')}</p>
                 </div>
                 <div className={`w-12 h-6 rounded-full relative p-1 shadow-inner transition-colors ${twoFactor ? 'bg-secondary' : 'bg-slate-300'}`}>
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${twoFactor ? 'right-1' : 'left-1'}`}></div>
@@ -595,8 +597,8 @@ export default function Settings() {
               </div>
               <div onClick={() => setSessionTimeout(!sessionTimeout)} className="flex justify-between items-center p-6 bg-slate-50 rounded-2xl group hover:bg-slate-100 transition-colors cursor-pointer">
                 <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">Session Auto-Timeout</h4>
-                  <p className="text-xs font-medium text-slate-400">Security purge after 30 minutes of inactivity.</p>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">{t('Session Auto-Timeout')}</h4>
+                  <p className="text-xs font-medium text-slate-400">{t('Security purge after 30 minutes of inactivity.')}</p>
                 </div>
                 <div className={`w-12 h-6 rounded-full relative p-1 shadow-inner transition-colors ${sessionTimeout ? 'bg-secondary' : 'bg-slate-300'}`}>
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${sessionTimeout ? 'right-1' : 'left-1'}`}></div>
@@ -607,9 +609,9 @@ export default function Settings() {
 
           <div id="settings-pin" className="space-y-8 pt-12 border-t border-slate-100">
             <div>
-              <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Quick Unlock PIN</h3>
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">{t('Quick Unlock PIN')}</h3>
               <p className="text-xs text-slate-400 mt-1 font-medium">
-                Set a 6-digit PIN for quick re-entry after inactivity or for sensitive actions.
+                {t('Set a 6-digit PIN for quick re-entry after inactivity or for sensitive actions.')}
               </p>
             </div>
 
@@ -621,9 +623,9 @@ export default function Settings() {
                       <span className="material-symbols-outlined text-secondary">lock</span>
                     </div>
                     <div>
-                      <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">PIN is active</h4>
+                      <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('PIN is active')}</h4>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Set {pinInfo.pin_set_at ? new Date(pinInfo.pin_set_at).toLocaleDateString() : 'previously'}
+                        {t('Set {{date}}', { date: pinInfo.pin_set_at ? new Date(pinInfo.pin_set_at).toLocaleDateString() : t('previously') })}
                       </p>
                     </div>
                   </div>
@@ -632,13 +634,13 @@ export default function Settings() {
                       onClick={() => setShowChangePin(true)}
                       className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-100 transition-all"
                     >
-                      Change PIN
+                      {t('Change PIN')}
                     </button>
                     <button
                       onClick={() => setShowRemovePinModal(true)}
                       className="px-4 py-2 bg-white border border-error/30 text-error rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-error hover:text-white transition-all"
                     >
-                      Remove PIN
+                      {t('Remove PIN')}
                     </button>
                   </div>
                 </div>
@@ -650,30 +652,30 @@ export default function Settings() {
                     <span className="material-symbols-outlined text-primary">pin</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">No PIN set</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Add a PIN for quick re-entry after inactivity.</p>
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('No PIN set')}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{t('Add a PIN for quick re-entry after inactivity.')}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowChangePin(true)}
                   className="px-6 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95"
                 >
-                  Set Up PIN
+                  {t('Set Up PIN')}
                 </button>
               </div>
             )}
           </div>
 
           <div id="settings-billing" className="space-y-8 pt-12 border-t border-slate-100">
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Billing & Finance</h3>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">{t('Billing & Finance')}</h3>
             <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200/60">
               <div className="flex justify-between items-center gap-8">
                 <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">Finance Recording Role</h4>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1">{t('Finance Recording Role')}</h4>
                   <p className="text-xs font-medium text-slate-500 leading-relaxed max-w-md">
                     {financeRecording === 'bursar_only'
-                      ? 'Only the bursar can record payments, expenses, and generate fees. Admins keep read-only access to the treasury.'
-                      : 'Admins and the bursar can both record payments, expenses, and generate fees.'}
+                      ? t('Only the bursar can record payments, expenses, and generate fees. Admins keep read-only access to the treasury.')
+                      : t('Admins and the bursar can both record payments, expenses, and generate fees.')}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -683,7 +685,7 @@ export default function Settings() {
                     disabled={savingFinance}
                     className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${financeRecording === 'admin_and_bursar' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-400 hover:bg-slate-100'}`}
                   >
-                    Admin + Bursar
+                    {t('Admin + Bursar')}
                   </button>
                   <button
                     type="button"
@@ -691,32 +693,32 @@ export default function Settings() {
                     disabled={savingFinance}
                     className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${financeRecording === 'bursar_only' ? 'bg-error text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-400 hover:bg-slate-100'}`}
                   >
-                    Bursar Only
+                    {t('Bursar Only')}
                   </button>
                 </div>
               </div>
               {isAdminRole && financeRecording === 'bursar_only' && (
                 <p className="mt-4 text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                  You are an admin — when this mode is active you can view the treasury but cannot record transactions. Add a bursar under Administration → Add Bursar to record finance.
+                  {t('You are an admin — when this mode is active you can view the treasury but cannot record transactions. Add a bursar under Administration → Add Bursar to record finance.')}
                 </p>
               )}
             </div>
           </div>
 
           <div className="space-y-8 pt-12 border-t border-slate-100">
-            <h3 className="text-xl font-black text-error uppercase tracking-widest">Danger Zone</h3>
+            <h3 className="text-xl font-black text-error uppercase tracking-widest">{t('Danger Zone')}</h3>
             <div className="p-8 bg-error-container/10 border border-error/20 rounded-3xl flex justify-between items-center group">
               <div>
-                <h4 className="text-base font-black text-slate-900 tracking-tight">Purge System Cache</h4>
+                <h4 className="text-base font-black text-slate-900 tracking-tight">{t('Purge System Cache')}</h4>
                 <p className="text-xs text-slate-500 font-medium mt-1 pr-4 max-w-sm">
-                  Forces an immediate resync of all interconnected service nodes. Will temporarily disrupt active sessions.
+                  {t('Forces an immediate resync of all interconnected service nodes. Will temporarily disrupt active sessions.')}
                 </p>
               </div>
               <button
                 onClick={() => setIsPurgeModalOpen(true)}
                 className="px-6 py-3 bg-white border border-error/30 text-error rounded-xl font-black uppercase text-[10px] tracking-widest shadow-sm hover:bg-error hover:text-white hover:border-error transition-all active:scale-95"
               >
-                Initiate Purge
+                {t('Initiate Purge')}
               </button>
             </div>
           </div>
@@ -728,10 +730,10 @@ export default function Settings() {
           <span className="material-symbols-outlined text-white text-3xl">settings</span>
         </div>
         <p className="text-slate-400 italic font-serif text-xl max-w-2xl leading-relaxed opacity-40">
-          "Stability is found in the meticulous calibration of our boundaries."
+          "{t('Stability is found in the meticulous calibration of our boundaries.')}"
         </p>
         <div className="flex flex-col items-center gap-2 pb-20">
-          <p className="text-[0.6rem] font-black uppercase tracking-[0.6em] text-primary/30">- Monolith Config Charter v2.0</p>
+          <p className="text-[0.6rem] font-black uppercase tracking-[0.6em] text-primary/30">{t('- Monolith Config Charter v2.0')}</p>
         </div>
       </footer>
 
@@ -754,20 +756,20 @@ export default function Settings() {
           onClose={() => setShowRemovePinModal(false)}
           onVerified={async () => {
             try {
-              const password = prompt('Enter your password to remove PIN:');
+              const password = prompt(t('Enter your password to remove PIN:'));
               if (password) {
                 await api.post('/auth/pin/remove/', { password });
                 setPinInfo({ pin_is_set: false, pin_set_at: null });
                 useAuthStore.getState().setPinIsSet(false);
-                addToast('PIN removed.', 'success');
+                addToast(t('PIN removed.'), 'success');
               }
             } catch {
-              addToast('Failed to remove PIN.', 'error');
+              addToast(t('Failed to remove PIN.'), 'error');
             }
             setShowRemovePinModal(false);
           }}
-          title="Verify to Remove PIN"
-          subtitle="Enter your PIN to confirm removal"
+          title={t('Verify to Remove PIN')}
+          subtitle={t('Enter your PIN to confirm removal')}
         />
       )}
 
@@ -775,9 +777,9 @@ export default function Settings() {
         isOpen={isPurgeModalOpen}
         onClose={() => setIsPurgeModalOpen(false)}
         onConfirm={handlePurge}
-        title="Override Operations Check"
-        message="You are about to purge the global system cache. This action will enforce a hard reset on active peripheral sessions and cannot be interrupted once initiated. Do you confirm this directive?"
-        confirmText="Acknowledge Purge"
+        title={t('Override Operations Check')}
+        message={t('You are about to purge the global system cache. This action will enforce a hard reset on active peripheral sessions and cannot be interrupted once initiated. Do you confirm this directive?')}
+        confirmText={t('Acknowledge Purge')}
         isDestructive={true}
       />
     </div>

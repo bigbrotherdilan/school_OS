@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { analyticsApi } from '../../../services/analyticsApi';
 import { api } from '../../../services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function AcademicAnalytics() {
+  const { t } = useTranslation('adminAcademicMgmt');
   const [years, setYears] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -137,9 +139,9 @@ export default function AcademicAnalytics() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Analytics</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">Exam & Term Analytics</h2>
-          <p className="text-on-surface-variant text-lg mt-2">School-wide performance analysis across subjects, classes, and streams.</p>
+          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Analytics')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Exam & Term Analytics')}</h2>
+          <p className="text-on-surface-variant text-lg mt-2">{t('School-wide performance analysis across subjects, classes, and streams.')}</p>
         </div>
       </div>
 
@@ -147,43 +149,43 @@ export default function AcademicAnalytics() {
       <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/15 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Academic Year</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Academic Year')}</label>
             <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}
               className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm">
-              <option value="">Select Year</option>
+              <option value="">{t('Select Year')}</option>
               {years.map((y: any) => (
-                <option key={y.id} value={y.id}>{y.name}{y.is_active ? ' (Active)' : ''}</option>
+                <option key={y.id} value={y.id}>{y.name}{y.is_active ? t(' (Active)') : ''}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Term</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Term')}</label>
             <select value={selectedTerm} onChange={(e) => setSelectedTerm(e.target.value)}
               disabled={!selectedYear}
               className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm disabled:opacity-50">
-              <option value="">Select Term</option>
-              {terms.filter((t: any) => t.academic_year === selectedYear || t.academic_year === parseInt(selectedYear)).map((t: any) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+              <option value="">{t('Select Term')}</option>
+              {terms.filter((term: any) => term.academic_year === selectedYear || term.academic_year === parseInt(selectedYear)).map((term: any) => (
+                <option key={term.id} value={term.id}>{term.name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Subject (Detail)</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Subject (Detail)')}</label>
             <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}
               className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm">
-              <option value="">All Subjects</option>
+              <option value="">{t('All Subjects')}</option>
               {subjects.map((s: any) => (
                 <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Class (Detail)</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Class (Detail)')}</label>
             <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}
               className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm">
-              <option value="">All Classes</option>
+              <option value="">{t('All Classes')}</option>
               {classes.map((c: any) => (
-                <option key={c.id} value={c.id}>{c.name} ({c.cycle_name || c.section_display || 'N/A'})</option>
+                <option key={c.id} value={c.id}>{c.name} ({c.cycle_name || c.section_display || t('N/A')})</option>
               ))}
             </select>
           </div>
@@ -208,7 +210,7 @@ export default function AcademicAnalytics() {
             }`}
           >
             <span className="material-symbols-outlined text-lg">{tab.icon}</span>
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </div>
@@ -217,7 +219,7 @@ export default function AcademicAnalytics() {
       {loading && (
         <div className="flex items-center justify-center py-12">
           <span className="material-symbols-outlined animate-spin text-3xl text-primary">sync</span>
-          <span className="ml-3 text-on-surface-variant font-medium">Loading analytics...</span>
+          <span className="ml-3 text-on-surface-variant font-medium">{t('Loading analytics...')}</span>
         </div>
       )}
 
@@ -226,15 +228,15 @@ export default function AcademicAnalytics() {
         <div className="space-y-8">
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <MetricCard label="Overall Average" value={examData.overall?.average ? `${examData.overall.average}/${examData.max_scale}` : 'N/A'} sub={`${examData.overall?.average_percentage || 0}%`} color={examData.overall?.average_percentage >= 70 ? 'text-secondary' : examData.overall?.average_percentage >= 50 ? 'text-primary' : 'text-error'} />
-            <MetricCard label="Pass Rate" value={examData.overall?.pass_rate != null ? `${examData.overall.pass_rate}%` : 'N/A'} sub={`${examData.overall?.pass_count || 0} of ${examData.overall?.count || 0} students`} color={examData.overall?.pass_rate >= 70 ? 'text-secondary' : examData.overall?.pass_rate >= 50 ? 'text-primary' : 'text-error'} />
-            <MetricCard label="Students Assessed" value={examData.total_students_assessed} sub={`${examData.total_exam_results} total results`} color="text-primary" />
-            <MetricCard label="Subjects" value={examData.subjects_with_data} sub={`in ${examData.term}`} color="text-primary" />
+            <MetricCard label={t('Overall Average')} value={examData.overall?.average ? `${examData.overall.average}/${examData.max_scale}` : t('N/A')} sub={`${examData.overall?.average_percentage || 0}%`} color={examData.overall?.average_percentage >= 70 ? 'text-secondary' : examData.overall?.average_percentage >= 50 ? 'text-primary' : 'text-error'} />
+            <MetricCard label={t('Pass Rate')} value={examData.overall?.pass_rate != null ? `${examData.overall.pass_rate}%` : t('N/A')} sub={t('{{count}} of {{total}} students', { count: examData.overall?.pass_count || 0, total: examData.overall?.count || 0 })} color={examData.overall?.pass_rate >= 70 ? 'text-secondary' : examData.overall?.pass_rate >= 50 ? 'text-primary' : 'text-error'} />
+            <MetricCard label={t('Students Assessed')} value={examData.total_students_assessed} sub={t('{{count}} total results', { count: examData.total_exam_results })} color="text-primary" />
+            <MetricCard label={t('Subjects')} value={examData.subjects_with_data} sub={t('in {{term}}', { term: examData.term })} color="text-primary" />
           </div>
 
           {/* Grade Distribution */}
           <div className="bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/15 shadow-sm">
-            <h3 className="text-lg font-bold text-on-surface mb-6">Grade Distribution</h3>
+            <h3 className="text-lg font-bold text-on-surface mb-6">{t('Grade Distribution')}</h3>
             <div className="space-y-3">
               {Object.entries(examData.grade_distribution || {}).map(([bucket, count]: any) => {
                 const total = examData.overall?.count || 1;
@@ -262,18 +264,18 @@ export default function AcademicAnalytics() {
           {/* Subject Breakdown */}
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
-              <h3 className="text-lg font-bold text-on-surface">Subject Performance Breakdown</h3>
+              <h3 className="text-lg font-bold text-on-surface">{t('Subject Performance Breakdown')}</h3>
             </div>
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Subject</th>
-                  <th className="p-4">Coeff.</th>
-                  <th className="p-4">Average</th>
-                  <th className="p-4">Pass Rate</th>
-                  <th className="p-4">Highest</th>
-                  <th className="p-4">Lowest</th>
-                  <th className="p-4 pr-6">Count</th>
+                  <th className="p-4 pl-6">{t('Subject')}</th>
+                  <th className="p-4">{t('Coeff.')}</th>
+                  <th className="p-4">{t('Average')}</th>
+                  <th className="p-4">{t('Pass Rate')}</th>
+                  <th className="p-4">{t('Highest')}</th>
+                  <th className="p-4">{t('Lowest')}</th>
+                  <th className="p-4 pr-6">{t('Count')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -310,33 +312,33 @@ export default function AcademicAnalytics() {
               </div>
               <div className="text-right">
                 <span className={`text-3xl font-black ${subjectData.overall?.average_percentage >= 70 ? 'text-secondary' : subjectData.overall?.average_percentage >= 50 ? 'text-primary' : 'text-error'}`}>
-                  {subjectData.overall?.average || 'N/A'}
+                  {subjectData.overall?.average || t('N/A')}
                 </span>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">School Avg</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{t('School Avg')}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatBox label="Pass Rate" value={`${subjectData.overall?.pass_rate || 0}%`} />
-              <StatBox label="Students" value={subjectData.overall?.count || 0} />
-              <StatBox label="Highest" value={subjectData.overall?.highest || '-'} color="text-secondary" />
-              <StatBox label="Lowest" value={subjectData.overall?.lowest || '-'} color="text-error" />
+              <StatBox label={t('Pass Rate')} value={`${subjectData.overall?.pass_rate || 0}%`} />
+              <StatBox label={t('Students')} value={subjectData.overall?.count || 0} />
+              <StatBox label={t('Highest')} value={subjectData.overall?.highest || '-'} color="text-secondary" />
+              <StatBox label={t('Lowest')} value={subjectData.overall?.lowest || '-'} color="text-error" />
             </div>
           </div>
 
           {/* Class breakdown */}
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
-              <h3 className="text-lg font-bold text-on-surface">Per-Class Performance</h3>
+              <h3 className="text-lg font-bold text-on-surface">{t('Per-Class Performance')}</h3>
             </div>
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Class</th>
-                  <th className="p-4">Average</th>
-                  <th className="p-4">Pass Rate</th>
-                  <th className="p-4">Highest</th>
-                  <th className="p-4">Lowest</th>
-                  <th className="p-4 pr-6">Students</th>
+                  <th className="p-4 pl-6">{t('Class')}</th>
+                  <th className="p-4">{t('Average')}</th>
+                  <th className="p-4">{t('Pass Rate')}</th>
+                  <th className="p-4">{t('Highest')}</th>
+                  <th className="p-4">{t('Lowest')}</th>
+                  <th className="p-4 pr-6">{t('Students')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -358,16 +360,16 @@ export default function AcademicAnalytics() {
           {subjectData.top_students?.length > 0 && (
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
-                <h3 className="text-lg font-bold text-on-surface">Top Performers</h3>
+                <h3 className="text-lg font-bold text-on-surface">{t('Top Performers')}</h3>
               </div>
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
                     <th className="p-4 pl-6">#</th>
-                    <th className="p-4">Student</th>
-                    <th className="p-4">Class</th>
-                    <th className="p-4">Score</th>
-                    <th className="p-4 pr-6">Grade</th>
+                    <th className="p-4">{t('Student')}</th>
+                    <th className="p-4">{t('Class')}</th>
+                    <th className="p-4">{t('Score')}</th>
+                    <th className="p-4 pr-6">{t('Grade')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/10">
@@ -400,33 +402,33 @@ export default function AcademicAnalytics() {
               </div>
               <div className="text-right">
                 <span className={`text-3xl font-black ${classData.overall?.average_percentage >= 70 ? 'text-secondary' : classData.overall?.average_percentage >= 50 ? 'text-primary' : 'text-error'}`}>
-                  {classData.overall?.average || 'N/A'}
+                  {classData.overall?.average || t('N/A')}
                 </span>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Class Avg</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{t('Class Avg')}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatBox label="Pass Rate" value={`${classData.overall?.pass_rate || 0}%`} />
-              <StatBox label="Students" value={classData.student_count} />
-              <StatBox label="Subjects" value={(classData.subject_breakdown || []).length} />
-                    <StatBox label="Section" value={classData.section || 'N/A'} />
+              <StatBox label={t('Pass Rate')} value={`${classData.overall?.pass_rate || 0}%`} />
+              <StatBox label={t('Students')} value={classData.student_count} />
+              <StatBox label={t('Subjects')} value={(classData.subject_breakdown || []).length} />
+                    <StatBox label={t('Section')} value={classData.section || t('N/A')} />
             </div>
           </div>
 
           {/* Subject breakdown */}
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
-              <h3 className="text-lg font-bold text-on-surface">Subject Breakdown</h3>
+              <h3 className="text-lg font-bold text-on-surface">{t('Subject Breakdown')}</h3>
             </div>
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Subject</th>
-                  <th className="p-4">Coeff.</th>
-                  <th className="p-4">Average</th>
-                  <th className="p-4">Pass Rate</th>
-                  <th className="p-4">Highest</th>
-                  <th className="p-4 pr-6">Lowest</th>
+                  <th className="p-4 pl-6">{t('Subject')}</th>
+                  <th className="p-4">{t('Coeff.')}</th>
+                  <th className="p-4">{t('Average')}</th>
+                  <th className="p-4">{t('Pass Rate')}</th>
+                  <th className="p-4">{t('Highest')}</th>
+                  <th className="p-4 pr-6">{t('Lowest')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -448,17 +450,17 @@ export default function AcademicAnalytics() {
           {(classData.student_rankings || []).length > 0 && (
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-outline-variant/15 bg-surface-container-low/30">
-                <h3 className="text-lg font-bold text-on-surface">Student Rankings</h3>
+                <h3 className="text-lg font-bold text-on-surface">{t('Student Rankings')}</h3>
               </div>
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                    <th className="p-4 pl-6">Rank</th>
-                    <th className="p-4">Student</th>
-                    <th className="p-4">Admission No.</th>
-                    <th className="p-4">Average</th>
-                    <th className="p-4">Percentage</th>
-                    <th className="p-4 pr-6">Grade</th>
+                    <th className="p-4 pl-6">{t('Rank')}</th>
+                    <th className="p-4">{t('Student')}</th>
+                    <th className="p-4">{t('Admission No.')}</th>
+                    <th className="p-4">{t('Average')}</th>
+                    <th className="p-4">{t('Percentage')}</th>
+                    <th className="p-4 pr-6">{t('Grade')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/10">
@@ -495,16 +497,16 @@ export default function AcademicAnalytics() {
           {markStatsLoading ? (
             <div className="flex items-center justify-center py-12">
               <span className="material-symbols-outlined animate-spin text-3xl text-primary">sync</span>
-              <span className="ml-3 text-on-surface-variant font-medium">Loading mark filling data...</span>
+              <span className="ml-3 text-on-surface-variant font-medium">{t('Loading mark filling data...')}</span>
             </div>
           ) : markStats.length === 0 ? (
             <div className="text-center py-16 text-on-surface-variant">
               <span className="material-symbols-outlined text-6xl text-on-surface-variant/20 mb-4 block">lock_clock</span>
-              <p className="text-lg font-semibold text-on-surface mb-1">No Open Sequences Found</p>
+              <p className="text-lg font-semibold text-on-surface mb-1">{t('No Open Sequences Found')}</p>
               <p className="text-sm max-w-sm mx-auto leading-relaxed">
                 {selectedTerm || selectedSubject || selectedClass
-                  ? 'No currently open mark entry windows match your selected filters. Try adjusting the Term, Subject, or Class above.'
-                  : 'There are no mark entry windows currently open. Open a sequence from the Exam Workflow page to see filling statistics here.'}
+                  ? t('No currently open mark entry windows match your selected filters. Try adjusting the Term, Subject, or Class above.')
+                  : t('There are no mark entry windows currently open. Open a sequence from the Exam Workflow page to see filling statistics here.')}
               </p>
             </div>
           ) : (
@@ -517,40 +519,40 @@ export default function AcademicAnalytics() {
                       <div className="flex items-center gap-3">
                         <h4 className="text-lg font-bold text-on-surface">{seq.sequence_name}</h4>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${seq.is_open ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-highest text-on-surface-variant'}`}>
-                          {seq.is_open ? 'Open' : 'Closed'}
+                          {seq.is_open ? t('Open') : t('Closed')}
                         </span>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-black text-primary">{seq.filled_count}/{seq.total_teachers}</p>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Teachers Filled</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{t('Teachers Filled')}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-0 border-b border-outline-variant/15">
                       <div className="p-4 text-center border-r border-outline-variant/10">
                         <p className="text-2xl font-black text-on-surface">{seq.total_teachers}</p>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Total Teachers</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{t('Total Teachers')}</p>
                       </div>
                       <div className="p-4 text-center border-r border-outline-variant/10">
                         <p className="text-2xl font-black text-secondary">{seq.filled_count}</p>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Filled</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{t('Filled')}</p>
                       </div>
                       <div className="p-4 text-center">
                         <p className="text-2xl font-black text-error">{seq.not_filled_count}</p>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Pending</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{t('Pending')}</p>
                       </div>
                     </div>
 
                     {seq.avg_score !== null && (
                       <div className="px-6 py-3 bg-surface-container-low/50 flex items-center justify-between text-sm">
-                        <span className="text-on-surface-variant font-medium">Average Score</span>
-                        <span className="font-bold text-primary">{seq.avg_score} ({seq.total_results} results)</span>
+                        <span className="text-on-surface-variant font-medium">{t('Average Score')}</span>
+                        <span className="font-bold text-primary">{t('{{score}} ({{count}} results)', { score: seq.avg_score, count: seq.total_results })}</span>
                       </div>
                     )}
 
                     {seq.not_filled_teachers.length > 0 && (
                       <div className="p-6">
-                        <h5 className="text-xs font-bold uppercase tracking-widest text-error mb-3">Teachers Who Haven't Filled Marks</h5>
+                        <h5 className="text-xs font-bold uppercase tracking-widest text-error mb-3">{t("Teachers Who Haven't Filled Marks")}</h5>
                         <div className="space-y-2">
                           {seq.not_filled_teachers.map((t: any) => (
                             <div key={t.id} className="flex items-center justify-between bg-error/5 rounded-xl px-4 py-3 border border-error/10">
@@ -567,7 +569,7 @@ export default function AcademicAnalytics() {
 
                     {seq.filled_teachers.length > 0 && (
                       <div className="p-6 border-t border-outline-variant/10">
-                        <h5 className="text-xs font-bold uppercase tracking-widest text-secondary mb-3">Teachers Who Filled Marks</h5>
+                        <h5 className="text-xs font-bold uppercase tracking-widest text-secondary mb-3">{t('Teachers Who Filled Marks')}</h5>
                         <div className="space-y-2">
                           {seq.filled_teachers.map((t: any) => (
                             <div key={t.id} className="flex items-center justify-between bg-secondary/5 rounded-xl px-4 py-3 border border-secondary/10">
@@ -591,7 +593,7 @@ export default function AcademicAnalytics() {
 
       {activeTab === 'overview' && !loading && !examData && selectedTerm && (
         <div className="text-center py-12 text-on-surface-variant">
-          No exam data available for the selected term.
+          {t('No exam data available for the selected term.')}
         </div>
       )}
     </div>

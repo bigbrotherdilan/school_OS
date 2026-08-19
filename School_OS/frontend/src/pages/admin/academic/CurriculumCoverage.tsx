@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
+import { useTranslation } from 'react-i18next';
 
 interface SchoolSubject {
   id: string;
@@ -58,6 +59,7 @@ type Tab = 'coverage' | 'editor';
 
 export default function CurriculumCoverage() {
   const { addToast } = useToastStore();
+  const { t } = useTranslation('adminAcademicMgmt');
   const [tab, setTab] = useState<Tab>('coverage');
 
   const [subjects, setSubjects] = useState<SchoolSubject[]>([]);
@@ -101,7 +103,7 @@ export default function CurriculumCoverage() {
       setEdSubject((prev) => prev || s[0]?.id || '');
     } catch (e) {
       console.error('Failed to fetch metadata', e);
-      addToast('Could not load subjects or classes.', 'error');
+      addToast(t('Could not load subjects or classes.'), 'error');
     }
   }, [addToast]);
 
@@ -114,7 +116,7 @@ export default function CurriculumCoverage() {
       setCoverage(res.data);
     } catch (e) {
       console.error('Failed to fetch coverage', e);
-      addToast('Could not load work coverage.', 'error');
+      addToast(t('Could not load work coverage.'), 'error');
     } finally {
       setLoadingCoverage(false);
     }
@@ -135,7 +137,7 @@ export default function CurriculumCoverage() {
       setNewLessonTitle('');
     } catch (e) {
       console.error('Failed to fetch modules', e);
-      addToast('Could not load the scheme for this class and subject.', 'error');
+      addToast(t('Could not load the scheme for this class and subject.'), 'error');
     } finally {
       setLoadingEd(false);
     }
@@ -152,7 +154,7 @@ export default function CurriculumCoverage() {
       setDrillModules(res.data.results || res.data);
     } catch (e) {
       console.error('Failed to fetch drilldown', e);
-      addToast('Could not load module breakdown.', 'error');
+      addToast(t('Could not load module breakdown.'), 'error');
     } finally {
       setLoadingDrill(false);
     }
@@ -170,11 +172,11 @@ export default function CurriculumCoverage() {
         order: (modules.length ? Math.max(...modules.map((m) => m.order)) : 0) + 1,
       });
       setNewModuleName('');
-      addToast('Module added. Add lessons to build it up gradually.', 'success');
+      addToast(t('Module added. Add lessons to build it up gradually.'), 'success');
       fetchEditorModules();
       fetchCoverage();
     } catch (e: any) {
-      addToast(e.response?.data?.detail || 'Could not add the module.', 'error');
+      addToast(e.response?.data?.detail || t('Could not add the module.'), 'error');
     } finally {
       setAddingModule(false);
     }
@@ -187,22 +189,22 @@ export default function CurriculumCoverage() {
       const res = await api.patch(`/logbook/modules/${module.id}/`, { name: name.trim() });
       setModules((prev) => prev.map((m) => (m.id === module.id ? res.data : m)));
     } catch (e: any) {
-      addToast(e.response?.data?.detail || 'Could not rename the module.', 'error');
+      addToast(e.response?.data?.detail || t('Could not rename the module.'), 'error');
     } finally {
       setSavingId(null);
     }
   };
 
   const handleDeleteModule = async (module: Module) => {
-    if (!window.confirm(`Delete module "${module.name}" and its ${module.lessons.length} lesson(s)?`)) return;
+    if (!window.confirm(t('Delete module "{{name}}" and its {{count}} lesson(s)?', { name: module.name, count: module.lessons.length }))) return;
     setSavingId(module.id);
     try {
       await api.delete(`/logbook/modules/${module.id}/`);
       setModules((prev) => prev.filter((m) => m.id !== module.id));
-      addToast('Module deleted.', 'success');
+      addToast(t('Module deleted.'), 'success');
       fetchCoverage();
     } catch (e) {
-      addToast('Could not delete the module.', 'error');
+      addToast(t('Could not delete the module.'), 'error');
     } finally {
       setSavingId(null);
     }
@@ -219,17 +221,17 @@ export default function CurriculumCoverage() {
         order: (module.lessons.length ? Math.max(...module.lessons.map((l) => l.order)) : 0) + 1,
       });
       setNewLessonTitle('');
-      addToast('Lesson added.', 'success');
+      addToast(t('Lesson added.'), 'success');
       fetchEditorModules();
       fetchCoverage();
     } catch (e: any) {
-      addToast(e.response?.data?.detail || 'Could not add the lesson.', 'error');
+      addToast(e.response?.data?.detail || t('Could not add the lesson.'), 'error');
     }
   };
 
   const handleSaveLesson = async (lesson: Lesson, field: 'title' | 'content_brief', value: string) => {
     if (field === 'title' && !value.trim()) {
-      addToast('Lesson title is required.', 'error');
+      addToast(t('Lesson title is required.'), 'error');
       return;
     }
     if (value === lesson[field]) return;
@@ -241,14 +243,14 @@ export default function CurriculumCoverage() {
         lessons: m.lessons.map((l) => (l.id === lesson.id ? { ...l, ...res.data } : l)),
       })));
     } catch (e: any) {
-      addToast(e.response?.data?.detail || 'Could not save the lesson.', 'error');
+      addToast(e.response?.data?.detail || t('Could not save the lesson.'), 'error');
     } finally {
       setSavingId(null);
     }
   };
 
   const handleDeleteLesson = async (lesson: Lesson) => {
-    if (!window.confirm(`Delete lesson "${lesson.title}"?`)) return;
+    if (!window.confirm(t('Delete lesson "{{title}}"?', { title: lesson.title }))) return;
     setSavingId(lesson.id);
     try {
       await api.delete(`/logbook/lessons/${lesson.id}/`);
@@ -256,10 +258,10 @@ export default function CurriculumCoverage() {
         ...m,
         lessons: m.lessons.filter((l) => l.id !== lesson.id),
       })));
-      addToast('Lesson deleted.', 'success');
+      addToast(t('Lesson deleted.'), 'success');
       fetchCoverage();
     } catch (e) {
-      addToast('Could not delete the lesson.', 'error');
+      addToast(t('Could not delete the lesson.'), 'error');
     } finally {
       setSavingId(null);
     }
@@ -303,7 +305,7 @@ export default function CurriculumCoverage() {
       setAssignSources(rows.sort((a, b) => a.class_name.localeCompare(b.class_name)));
     } catch (e) {
       console.error('Failed to fetch assign sources', e);
-      addToast('Could not find classes with a scheme for this subject.', 'error');
+      addToast(t('Could not find classes with a scheme for this subject.'), 'error');
     } finally {
       setLoadingAssign(false);
     }
@@ -313,7 +315,7 @@ export default function CurriculumCoverage() {
     if (!edClass || !edSubject) return;
     const hasExisting = modules.length > 0;
     if (hasExisting && !window.confirm(
-      `${selectedClassName} already has a scheme for this subject.\nAssigning will REPLACE it with the source scheme. Continue?`
+      t('{{className}} already has a scheme for this subject.', { className: selectedClassName }) + '\n' + t('Assigning will REPLACE it with the source scheme. Continue?')
     )) return;
     setAssigningId(sourceClassId);
     try {
@@ -323,12 +325,12 @@ export default function CurriculumCoverage() {
         target_class: edClass,
         overwrite: hasExisting,
       });
-      addToast(res.data?.detail || 'Scheme assigned.', 'success');
+      addToast(res.data?.detail || t('Scheme assigned.'), 'success');
       setShowAssign(false);
       fetchEditorModules();
       fetchCoverage();
     } catch (e: any) {
-      addToast(e.response?.data?.detail || 'Could not assign the scheme.', 'error');
+      addToast(e.response?.data?.detail || t('Could not assign the scheme.'), 'error');
     } finally {
       setAssigningId(null);
     }
@@ -338,22 +340,22 @@ export default function CurriculumCoverage() {
     <div className="p-4 lg:p-12 space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block">Instructional Delivery</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">Scheme of Work</h2>
-          <p className="text-on-surface-variant text-lg mt-2">One yearly scheme per class and subject — build it module by module, lesson by lesson.</p>
+          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Instructional Delivery')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Scheme of Work')}</h2>
+          <p className="text-on-surface-variant text-lg mt-2">{t('One yearly scheme per class and subject — build it module by module, lesson by lesson.')}</p>
         </div>
         <div className="flex bg-surface-container-high rounded-lg p-1 w-fit">
           <button
             onClick={() => setTab('coverage')}
             className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${tab === 'coverage' ? 'bg-white text-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
           >
-            Work Coverage
+            {t('Work Coverage')}
           </button>
           <button
             onClick={() => setTab('editor')}
             className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${tab === 'editor' ? 'bg-white text-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
           >
-            Scheme Editor
+            {t('Scheme Editor')}
           </button>
         </div>
       </div>
@@ -380,13 +382,13 @@ export default function CurriculumCoverage() {
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm p-6 flex flex-col md:flex-row gap-4 items-end justify-between">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-outline block mb-1">Class</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-outline block mb-1">{t('Class')}</label>
                 <select value={edClass} onChange={(e) => setEdClass(e.target.value)} className="w-full bg-white border border-outline-variant/30 rounded-lg px-3 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/30">
                   {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-outline block mb-1">Subject</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-outline block mb-1">{t('Subject')}</label>
                 <select value={edSubject} onChange={(e) => setEdSubject(e.target.value)} className="w-full bg-white border border-outline-variant/30 rounded-lg px-3 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/30">
                   {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}{s.code ? ` (${s.code})` : ''}</option>)}
                 </select>
@@ -399,18 +401,18 @@ export default function CurriculumCoverage() {
                   disabled={!editorEnabled}
                   className="bg-surface-container-high text-on-surface px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-surface-container-highest disabled:opacity-40 flex items-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-lg">content_copy</span> Assign from another class
+                  <span className="material-symbols-outlined text-lg">content_copy</span> {t('Assign from another class')}
                 </button>
                 <button
                   onClick={() => setAddingModule(true)}
                   disabled={!editorEnabled}
                   className="bg-primary text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-primary/20 hover:opacity-90 disabled:opacity-40 flex items-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-lg">add_box</span> Add Module
+                  <span className="material-symbols-outlined text-lg">add_box</span> {t('Add Module')}
                 </button>
               </div>
               <p className="text-[11px] text-on-surface-variant">
-                {selectedClassName} has its own scheme — Form 1 Maths differs from Form 2 Maths. Same-level classes can reuse one scheme.
+                {t('{{className}} has its own scheme — Form 1 Maths differs from Form 2 Maths. Same-level classes can reuse one scheme.', { className: selectedClassName })}
               </p>
             </div>
           </div>
@@ -419,38 +421,38 @@ export default function CurriculumCoverage() {
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/30">
               <h3 className="text-xl font-bold text-on-surface">
-                {selectedClassName} — {subjects.find((s) => s.id === edSubject)?.name || 'Subject'} — Yearly Scheme
+                {t('{{className}} — {{subjectName}} — Yearly Scheme', { className: selectedClassName, subjectName: subjects.find((s) => s.id === edSubject)?.name || t('Subject') })}
               </h3>
-              <span className="text-xs font-bold text-on-surface-variant">{modules.length} module(s)</span>
+              <span className="text-xs font-bold text-on-surface-variant">{t('{{count}} module(s)', { count: modules.length })}</span>
             </div>
 
             {loadingEd ? (
               <div className="flex items-center justify-center p-12 text-on-surface-variant">
                 <span className="material-symbols-outlined animate-spin text-3xl text-primary mr-3">sync</span>
-                Loading...
+                {t('Loading...')}
               </div>
             ) : !editorEnabled ? (
-              <div className="p-16 text-center text-on-surface-variant">Select a class and subject to begin.</div>
+              <div className="p-16 text-center text-on-surface-variant">{t('Select a class and subject to begin.')}</div>
             ) : modules.length === 0 ? (
               <div className="p-16 flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
                   <span className="material-symbols-outlined text-3xl text-outline">account_tree</span>
                 </div>
-                <h4 className="text-lg font-bold text-on-surface mb-2">No scheme yet for {selectedClassName} — {subjects.find((s) => s.id === edSubject)?.name}</h4>
+                <h4 className="text-lg font-bold text-on-surface mb-2">{t('No scheme yet for {{className}} — {{subjectName}}', { className: selectedClassName, subjectName: subjects.find((s) => s.id === edSubject)?.name })}</h4>
                 <p className="text-sm text-on-surface-variant mb-6 max-w-md">
-                  Build it slowly: add a module (a major unit, e.g. "Algebra"), then fill it with lessons over time.
-                  Or reuse the scheme from another {selectedClassName}-level class if one already exists.
-                  The plan is yearly and can be reused for many years.
+                  {t('Build it slowly: add a module (a major unit, e.g. "Algebra"), then fill it with lessons over time.')}
+                  {t('Or reuse the scheme from another {{className}}-level class if one already exists.', { className: selectedClassName })}
+                  {t('The plan is yearly and can be reused for many years.')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => { setShowAssign(true); loadAssignSources(); }}
                     className="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-surface-container-highest flex items-center justify-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-lg">content_copy</span> Assign from another class
+<span className="material-symbols-outlined text-lg">content_copy</span> {t('Assign from another class')}
                   </button>
                   <button onClick={() => setAddingModule(true)} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90">
-                    Create from scratch
+                    {t('Create from scratch')}
                   </button>
                 </div>
               </div>
@@ -464,11 +466,11 @@ export default function CurriculumCoverage() {
                       value={newModuleName}
                       onChange={(e) => setNewModuleName(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddModule()}
-                      placeholder="Module name, e.g. Algebra, Cell Biology…"
+                      placeholder={t('Module name, e.g. Algebra, Cell Biology…')}
                       className="flex-1 bg-white border border-outline-variant/30 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary/30"
                     />
                     <button onClick={handleAddModule} disabled={addingModule || !newModuleName.trim()} className="bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold disabled:opacity-40">
-                      {addingModule ? 'Adding…' : 'Save'}
+                      {addingModule ? t('Adding…') : t('Save')}
                     </button>
                     <button onClick={() => { setAddingModule(false); setNewModuleName(''); }} className="text-on-surface-variant hover:text-on-surface px-2">
                       <span className="material-symbols-outlined">close</span>
@@ -504,27 +506,27 @@ export default function CurriculumCoverage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-lg animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-lg font-bold text-on-surface">Assign an existing scheme</h3>
+              <h3 className="text-lg font-bold text-on-surface">{t('Assign an existing scheme')}</h3>
               <button onClick={() => setShowAssign(false)} className="text-on-surface-variant hover:text-on-surface">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             <p className="text-sm text-on-surface-variant mb-4">
-              Copy the scheme for <b>{subjects.find((s) => s.id === edSubject)?.name}</b> from another class
-              into <b>{selectedClassName || 'this class'}</b>. Copies are independent — each class keeps its own progress.
+              {t('Copy the scheme for')} <b>{subjects.find((s) => s.id === edSubject)?.name}</b> {t('from another class')}
+              {t('into')} <b>{selectedClassName || t('this class')}</b>. {t('Copies are independent — each class keeps its own progress.')}
               {modules.length > 0 && (
-                <span className="block mt-1 text-error">⚠ {selectedClassName} already has modules — assigning will replace them.</span>
+                <span className="block mt-1 text-error">⚠ {t('{{className}} already has modules — assigning will replace them.', { className: selectedClassName })}</span>
               )}
             </p>
             {loadingAssign ? (
               <div className="flex items-center justify-center py-10 text-on-surface-variant">
                 <span className="material-symbols-outlined animate-spin text-3xl text-primary mr-3">sync</span>
-                Looking for classes with a scheme…
+                {t('Looking for classes with a scheme…')}
               </div>
             ) : assignSources.length === 0 ? (
               <div className="py-10 text-center text-sm text-on-surface-variant">
-                No other class has a scheme for this subject yet.
-                <br />Build one first, then assign it to the rest.
+                {t('No other class has a scheme for this subject yet.')}
+                <br />{t('Build one first, then assign it to the rest.')}
               </div>
             ) : (
               <div className="divide-y divide-outline-variant/10 max-h-72 overflow-y-auto rounded-xl border border-outline-variant/15">
@@ -533,7 +535,7 @@ export default function CurriculumCoverage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-on-surface">{s.class_name}</p>
                       <p className="text-xs text-on-surface-variant">
-                        {s.source_modules} module(s) • {s.completed_lessons}/{s.total_lessons} lessons • {s.progress}%
+                        {t('{{modules}} module(s) • {{completed}}/{{total}} lessons • {{progress}}%', { modules: s.source_modules, completed: s.completed_lessons, total: s.total_lessons, progress: s.progress })}
                       </p>
                     </div>
                     <button
@@ -542,7 +544,7 @@ export default function CurriculumCoverage() {
                       className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shrink-0"
                     >
                       {assigningId === s.class_id && <span className="material-symbols-outlined text-sm animate-spin">sync</span>}
-                      Assign
+                      {t('Assign')}
                     </button>
                   </div>
                 ))}
@@ -566,6 +568,7 @@ function CoverageView({ coverage, loading, drill, drillModules, loadingDrill, on
   onCloseDrill: () => void;
   onGoEdit: (class_id?: string, subject_id?: string) => void;
 }) {
+  const { t } = useTranslation('adminAcademicMgmt');
   const rows = coverage?.results || [];
   const withPlans = rows.filter((r) => r.total_modules > 0);
 
@@ -573,43 +576,43 @@ function CoverageView({ coverage, loading, drill, drillModules, loadingDrill, on
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi label="Class × Subject" value={coverage?.total_class_subjects ?? 0} icon="menu_book" tone="primary" />
-        <Kpi label="Modules" value={coverage?.total_modules ?? 0} icon="account_tree" tone="secondary" />
-        <Kpi label="Lessons" value={`${coverage?.total_completed ?? 0}/${coverage?.total_lessons ?? 0}`} icon="play_lesson" tone="amber" />
-        <Kpi label="Coverage" value={`${coverage?.overall_progress ?? 0}%`} icon="trending_up" tone={(coverage?.overall_progress ?? 0) >= 70 ? 'secondary' : (coverage?.overall_progress ?? 0) >= 40 ? 'amber' : 'error'} />
+        <Kpi label={t('Class × Subject')} value={coverage?.total_class_subjects ?? 0} icon="menu_book" tone="primary" />
+        <Kpi label={t('Modules')} value={coverage?.total_modules ?? 0} icon="account_tree" tone="secondary" />
+        <Kpi label={t('Lessons')} value={`${coverage?.total_completed ?? 0}/${coverage?.total_lessons ?? 0}`} icon="play_lesson" tone="amber" />
+        <Kpi label={t('Coverage')} value={`${coverage?.overall_progress ?? 0}%`} icon="trending_up" tone={(coverage?.overall_progress ?? 0) >= 70 ? 'secondary' : (coverage?.overall_progress ?? 0) >= 40 ? 'amber' : 'error'} />
       </div>
 
       {/* Coverage table */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/30">
-          <h3 className="text-xl font-bold text-on-surface">Yearly coverage by class &amp; subject</h3>
-          <button onClick={onRefresh} className="text-xs font-bold text-primary hover:underline">Refresh</button>
+          <h3 className="text-xl font-bold text-on-surface">{t('Yearly coverage by class & subject')}</h3>
+          <button onClick={onRefresh} className="text-xs font-bold text-primary hover:underline">{t('Refresh')}</button>
         </div>
         {loading ? (
           <div className="flex items-center justify-center p-12 text-on-surface-variant">
             <span className="material-symbols-outlined animate-spin text-3xl text-primary mr-3">sync</span>
-            Loading coverage...
+            {t('Loading coverage...')}
           </div>
         ) : rows.length === 0 ? (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
               <span className="material-symbols-outlined text-3xl text-outline">menu_book</span>
             </div>
-            <h4 className="text-lg font-bold text-on-surface mb-2">No subjects added to the school yet</h4>
+            <h4 className="text-lg font-bold text-on-surface mb-2">{t('No subjects added to the school yet')}</h4>
             <p className="text-sm text-on-surface-variant mb-6 max-w-sm">
-              Add subjects in School Setup, then build their yearly scheme here.
+              {t('Add subjects in School Setup, then build their yearly scheme here.')}
             </p>
           </div>
         ) : (
           <table className="w-full text-left">
             <thead>
               <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                <th className="p-4 pl-6">Class</th>
-                <th className="p-4">Subject</th>
-                <th className="p-4">Modules</th>
-                <th className="p-4">Lessons</th>
-                <th className="p-4">Progress</th>
-                <th className="p-4 text-right pr-6">Detail</th>
+                <th className="p-4 pl-6">{t('Class')}</th>
+                <th className="p-4">{t('Subject')}</th>
+                <th className="p-4">{t('Modules')}</th>
+                <th className="p-4">{t('Lessons')}</th>
+                <th className="p-4">{t('Progress')}</th>
+                <th className="p-4 text-right pr-6">{t('Detail')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
@@ -633,11 +636,11 @@ function CoverageView({ coverage, loading, drill, drillModules, loadingDrill, on
                   <td className="p-4 pr-6 text-right">
                     {r.total_modules === 0 ? (
                       <button onClick={() => onGoEdit(r.class_id, r.subject_id)} className="text-primary text-xs font-bold hover:underline">
-                        Build scheme
+                        {t('Build scheme')}
                       </button>
                     ) : (
                       <button onClick={() => onDrill(r)} className="text-primary text-xs font-bold hover:underline">
-                        View modules
+                        {t('View modules')}
                       </button>
                     )}
                   </td>
@@ -648,7 +651,7 @@ function CoverageView({ coverage, loading, drill, drillModules, loadingDrill, on
         )}
         {withPlans.length === 0 && rows.length > 0 && (
           <div className="p-6 text-center text-sm text-on-surface-variant">
-            Nothing planned yet — open the <button onClick={() => onGoEdit()} className="text-primary font-bold hover:underline">Scheme Editor</button> and add the first module for a class and subject.
+            {t('Nothing planned yet — open the')} <button onClick={() => onGoEdit()} className="text-primary font-bold hover:underline">{t('Scheme Editor')}</button> {t('and add the first module for a class and subject.')}
           </div>
         )}
       </div>
@@ -657,13 +660,13 @@ function CoverageView({ coverage, loading, drill, drillModules, loadingDrill, on
       {drill && (
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/30">
-            <h3 className="text-lg font-bold text-on-surface">{drill.class_name} — {drill.subject_name} modules &amp; lessons</h3>
-            <button onClick={onCloseDrill} className="text-xs font-bold text-on-surface-variant hover:text-on-surface">Close</button>
+            <h3 className="text-lg font-bold text-on-surface">{t('{{className}} — {{subjectName}} modules & lessons', { className: drill.class_name, subjectName: drill.subject_name })}</h3>
+            <button onClick={onCloseDrill} className="text-xs font-bold text-on-surface-variant hover:text-on-surface">{t('Close')}</button>
           </div>
           {loadingDrill ? (
-            <div className="p-10 text-center text-on-surface-variant">Loading modules...</div>
+            <div className="p-10 text-center text-on-surface-variant">{t('Loading modules...')}</div>
           ) : drillModules.length === 0 ? (
-            <div className="p-10 text-center text-on-surface-variant">No modules planned.</div>
+            <div className="p-10 text-center text-on-surface-variant">{t('No modules planned.')}</div>
           ) : (
             <div className="p-4 sm:p-6 space-y-4">
               {drillModules.map((m) => {
@@ -675,7 +678,7 @@ function CoverageView({ coverage, loading, drill, drillModules, loadingDrill, on
                       <p className="font-bold text-on-surface">
                         <span className="text-outline mr-2">{m.order}.</span>{m.name}
                       </p>
-                      <span className="text-[11px] font-bold text-on-surface-variant">{done}/{m.lessons.length} lessons • {pct}%</span>
+                      <span className="text-[11px] font-bold text-on-surface-variant">{t('{{done}}/{{total}} lessons • {{pct}}%', { done, total: m.lessons.length, pct })}</span>
                     </div>
                     {m.lessons.length > 0 && (
                       <ul className="divide-y divide-outline-variant/10">
@@ -713,6 +716,7 @@ function ModuleCard({ module, savingId, addingLesson, newLessonTitle, onNewLesso
   onSaveLessonField: (l: Lesson, field: 'title' | 'content_brief', value: string) => void;
   onDeleteLesson: (l: Lesson) => void;
 }) {
+  const { t } = useTranslation('adminAcademicMgmt');
   const [name, setName] = useState(module.name);
   const [dirty, setDirty] = useState(false);
   const done = module.lessons.filter((l) => l.is_completed).length;
@@ -735,12 +739,12 @@ function ModuleCard({ module, savingId, addingLesson, newLessonTitle, onNewLesso
           className="flex-1 bg-transparent border-b border-transparent focus:border-primary/40 text-base font-bold text-on-surface focus:bg-white focus:ring-2 focus:ring-primary/20 px-1 py-1 rounded disabled:opacity-60"
         />
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] font-bold text-on-surface-variant">{done}/{module.lessons.length} lessons</span>
+          <span className="text-[11px] font-bold text-on-surface-variant">{t('{{done}}/{{total}} lessons', { done, total: module.lessons.length })}</span>
           {saving && <span className="material-symbols-outlined text-xs animate-spin text-primary">sync</span>}
           <button onClick={onStartAddLesson} disabled={saving} className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-primary hover:text-white transition-all flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">add</span> Lesson
+            <span className="material-symbols-outlined text-sm">add</span> {t('Lesson')}
           </button>
-          <button onClick={() => onDelete(module)} disabled={saving} className="text-error/70 hover:text-error text-xs font-bold px-2">Delete</button>
+          <button onClick={() => onDelete(module)} disabled={saving} className="text-error/70 hover:text-error text-xs font-bold px-2">{t('Delete')}</button>
         </div>
       </div>
 
@@ -760,10 +764,10 @@ function ModuleCard({ module, savingId, addingLesson, newLessonTitle, onNewLesso
             value={newLessonTitle}
             onChange={(e) => onNewLessonTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSaveLesson()}
-            placeholder="Lesson title, e.g. Solving linear equations…"
+            placeholder={t('Lesson title, e.g. Solving linear equations…')}
             className="flex-1 bg-white border border-outline-variant/30 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary/30"
           />
-          <button onClick={onSaveLesson} disabled={!newLessonTitle.trim()} className="bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold disabled:opacity-40">Add</button>
+          <button onClick={onSaveLesson} disabled={!newLessonTitle.trim()} className="bg-primary text-white px-3 py-2 rounded-lg text-sm font-bold disabled:opacity-40">{t('Add')}</button>
           <button onClick={onCancelAddLesson} className="text-on-surface-variant hover:text-on-surface px-1"><span className="material-symbols-outlined">close</span></button>
         </div>
       ) : null}
@@ -777,6 +781,7 @@ function LessonRow({ lesson, saving, onSaveField, onDelete }: {
   onSaveField: (l: Lesson, field: 'title' | 'content_brief', value: string) => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation('adminAcademicMgmt');
   const [title, setTitle] = useState(lesson.title);
   const [brief, setBrief] = useState(lesson.content_brief || '');
   const [tDirty, setTDirty] = useState(false);
@@ -799,13 +804,13 @@ function LessonRow({ lesson, saving, onSaveField, onDelete }: {
           onChange={(e) => { setBrief(e.target.value); setBDirty(true); }}
           onBlur={() => { if (bDirty) { onSaveField(lesson, 'content_brief', brief); setBDirty(false); } }}
           rows={1}
-          placeholder="Brief description (optional)"
+          placeholder={t('Brief description (optional)')}
           disabled={saving}
           className="w-full bg-transparent text-xs text-on-surface-variant px-1 py-0.5 rounded border border-transparent focus:bg-white focus:border-primary/40 focus:ring-2 focus:ring-primary/20 resize-y disabled:opacity-60"
         />
       </div>
       {saving && <span className="material-symbols-outlined text-xs animate-spin text-primary mt-1.5">sync</span>}
-      <button onClick={onDelete} disabled={saving} className="text-error/60 hover:text-error text-xs font-bold mt-1.5">Delete</button>
+      <button onClick={onDelete} disabled={saving} className="text-error/60 hover:text-error text-xs font-bold mt-1.5">{t('Delete')}</button>
     </li>
   );
 }

@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 
 export default function FacultyPerformance() {
+  const { t } = useTranslation('adminStaffOps');
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,12 +43,12 @@ export default function FacultyPerformance() {
     try {
       const status = modal.type === 'approve' ? 'approved' : 'rejected';
       await api.patch(`/staff/leave-requests/${modal.item.id}/`, { status });
-      addToast(`Leave request ${status} successfully.`, 'success');
+      addToast(t('Leave request {{status}} successfully.', { status }), 'success');
       setModal(null);
       setReason('');
       fetchData();
     } catch {
-      addToast('Failed to update leave request.', 'error');
+      addToast(t('Failed to update leave request.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -54,7 +56,7 @@ export default function FacultyPerformance() {
 
   const handleCreateEvaluation = async () => {
     if (!evalForm.teacherId || !evalForm.score) {
-      addToast('Please select a teacher and provide a score.', 'error');
+      addToast(t('Please select a teacher and provide a score.'), 'error');
       return;
     }
     setSaving(true);
@@ -64,12 +66,12 @@ export default function FacultyPerformance() {
         score: parseInt(evalForm.score),
         comments: evalForm.comments,
       });
-      addToast('Faculty evaluation recorded.', 'success');
+      addToast(t('Faculty evaluation recorded.'), 'success');
       setEvalModal(false);
       setEvalForm({ teacherId: '', score: '', comments: '' });
       fetchData();
     } catch {
-      addToast('Failed to create evaluation.', 'error');
+      addToast(t('Failed to create evaluation.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -90,9 +92,9 @@ export default function FacultyPerformance() {
       link.download = `faculty_evaluations_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
       window.URL.revokeObjectURL(url);
-      addToast('Performance report ready for review.', 'success');
+      addToast(t('Performance report ready for review.'), 'success');
     } catch {
-      addToast('Failed to export report.', 'error');
+      addToast(t('Failed to export report.'), 'error');
     }
   };
 
@@ -100,18 +102,18 @@ export default function FacultyPerformance() {
     <div className="p-4 lg:p-12 space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       <div className="flex justify-between items-end">
         <div>
-          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block">Staff Management</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">Teacher Appraisal & Leave</h2>
-          <p className="text-on-surface-variant text-lg mt-2">Monitor teaching effectiveness, approve leave requests, and review staff workload.</p>
+          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Staff Management')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Teacher Appraisal & Leave')}</h2>
+          <p className="text-on-surface-variant text-lg mt-2">{t('Monitor teaching effectiveness, approve leave requests, and review staff workload.')}</p>
         </div>
         <div className="flex gap-4">
           <button onClick={handleExport} className="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all hover:bg-surface-container-highest active:scale-95">
             <span className="material-symbols-outlined text-lg">download</span>
-            Export Report
+            {t('Export Report')}
           </button>
           <button onClick={() => setEvalModal(true)} className="bg-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>rate_review</span>
-            New Evaluation
+            {t('New Evaluation')}
           </button>
         </div>
       </div>
@@ -120,25 +122,25 @@ export default function FacultyPerformance() {
         {/* Leave Requests */}
         <div className="col-span-12 xl:col-span-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/30">
-            <h3 className="text-xl font-bold text-on-surface">Leave Requests</h3>
+            <h3 className="text-xl font-bold text-on-surface">{t('Leave Requests')}</h3>
             <div className="flex bg-surface-container-high rounded-lg p-1">
-              <button className="px-4 py-1.5 text-sm font-bold bg-white text-on-surface rounded shadow-sm">Pending</button>
-              <button className="px-4 py-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface">All</button>
+              <button className="px-4 py-1.5 text-sm font-bold bg-white text-on-surface rounded shadow-sm">{t('Pending')}</button>
+              <button className="px-4 py-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface">{t('All')}</button>
             </div>
           </div>
 
           {loading ? (
             <div className="flex-1 flex items-center justify-center p-12 text-on-surface-variant">
               <span className="material-symbols-outlined animate-spin text-3xl text-primary mr-3">sync</span>
-              Loading leave requests...
+              {t('Loading leave requests...')}
             </div>
           ) : leaveRequests.length === 0 ? (
             <div className="flex-1 p-16 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-3xl text-outline">beach_access</span>
               </div>
-              <h4 className="text-lg font-bold text-on-surface mb-2">No Leave Requests</h4>
-              <p className="text-sm text-on-surface-variant max-w-sm">All faculty members are currently active with no pending leave applications.</p>
+              <h4 className="text-lg font-bold text-on-surface mb-2">{t('No Leave Requests')}</h4>
+              <p className="text-sm text-on-surface-variant max-w-sm">{t('All faculty members are currently active with no pending leave applications.')}</p>
             </div>
           ) : (
             <div className="divide-y divide-outline-variant/10">
@@ -147,7 +149,7 @@ export default function FacultyPerformance() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <div className="font-bold text-on-surface">{lr.teacher_name}</div>
-                      <div className="text-[10px] text-outline uppercase font-bold mt-1">{lr.leave_type || 'General'} Leave</div>
+                      <div className="text-[10px] text-outline uppercase font-bold mt-1">{lr.leave_type || t('General')} {t('Leave')}</div>
                     </div>
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${lr.status === 'pending' ? 'bg-secondary-container text-on-secondary-container' : lr.status === 'approved' ? 'bg-primary/10 text-primary' : 'bg-error/10 text-error'}`}>
                       {lr.status}
@@ -160,8 +162,8 @@ export default function FacultyPerformance() {
                   {lr.reason && <p className="text-xs text-on-surface-variant mb-4 italic">"{lr.reason}"</p>}
                   {lr.status === 'pending' && (
                     <div className="flex gap-2">
-                      <button onClick={() => setModal({ type: 'approve', item: lr })} className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-semibold hover:opacity-90">Approve</button>
-                      <button onClick={() => setModal({ type: 'reject', item: lr })} className="flex-1 bg-surface-container-high text-on-surface py-2 rounded-lg text-sm font-semibold hover:bg-surface-container-highest">Reject</button>
+                      <button onClick={() => setModal({ type: 'approve', item: lr })} className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-semibold hover:opacity-90">{t('Approve')}</button>
+                      <button onClick={() => setModal({ type: 'reject', item: lr })} className="flex-1 bg-surface-container-high text-on-surface py-2 rounded-lg text-sm font-semibold hover:bg-surface-container-highest">{t('Reject')}</button>
                     </div>
                   )}
                 </div>
@@ -173,36 +175,36 @@ export default function FacultyPerformance() {
         {/* Performance Reviews */}
         <div className="col-span-12 xl:col-span-7 bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/30">
-            <h3 className="text-xl font-bold text-on-surface">Performance Evaluations</h3>
+            <h3 className="text-xl font-bold text-on-surface">{t('Performance Evaluations')}</h3>
             <select className="bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-2 focus:ring-primary shadow-sm">
-              <option>Current Year</option>
-              <option>Previous Year</option>
+              <option>{t('Current Year')}</option>
+              <option>{t('Previous Year')}</option>
             </select>
           </div>
 
           {loading ? (
             <div className="flex-1 flex items-center justify-center p-12 text-on-surface-variant">
               <span className="material-symbols-outlined animate-spin text-3xl text-primary mr-3">sync</span>
-              Loading evaluations...
+              {t('Loading evaluations...')}
             </div>
           ) : reviews.length === 0 ? (
             <div className="flex-1 p-16 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-3xl text-outline">star_rate</span>
               </div>
-              <h4 className="text-lg font-bold text-on-surface mb-2">No Evaluations Yet</h4>
-              <p className="text-sm text-on-surface-variant max-w-sm mb-6">Start the faculty appraisal cycle by initiating a new performance evaluation.</p>
-              <button className="text-primary font-semibold hover:underline border border-primary/20 px-6 py-2 rounded-lg">Begin Evaluation Cycle</button>
+              <h4 className="text-lg font-bold text-on-surface mb-2">{t('No Evaluations Yet')}</h4>
+              <p className="text-sm text-on-surface-variant max-w-sm mb-6">{t('Start the faculty appraisal cycle by initiating a new performance evaluation.')}</p>
+              <button className="text-primary font-semibold hover:underline border border-primary/20 px-6 py-2 rounded-lg">{t('Begin Evaluation Cycle')}</button>
             </div>
           ) : (
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-surface-container text-outline text-[11px] font-bold uppercase tracking-wider">
-                  <th className="p-4 pl-6">Teacher</th>
-                  <th className="p-4">Academic Year</th>
-                  <th className="p-4">Score</th>
-                  <th className="p-4">Evaluator</th>
-                  <th className="p-4 text-right pr-6">Actions</th>
+                  <th className="p-4 pl-6">{t('Teacher')}</th>
+                  <th className="p-4">{t('Academic Year')}</th>
+                  <th className="p-4">{t('Score')}</th>
+                  <th className="p-4">{t('Evaluator')}</th>
+                  <th className="p-4 text-right pr-6">{t('Actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -218,9 +220,9 @@ export default function FacultyPerformance() {
                         <span className="text-sm font-bold text-primary">{r.score}%</span>
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-on-surface-variant">{r.evaluator_name || 'Admin'}</td>
+                    <td className="p-4 text-sm text-on-surface-variant">{r.evaluator_name || t('Admin')}</td>
                     <td className="p-4 pr-6 text-right">
-                      <button className="text-primary hover:underline text-sm font-semibold">View</button>
+                      <button className="text-primary hover:underline text-sm font-semibold">{t('View')}</button>
                     </td>
                   </tr>
                 ))}
@@ -236,7 +238,7 @@ export default function FacultyPerformance() {
           <div className="bg-surface-container-lowest w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className={`p-8 border-b border-outline-variant/10 flex justify-between items-center ${modal.type === 'approve' ? 'bg-primary' : 'bg-error'}`}>
               <div>
-                <h3 className="text-2xl font-bold text-white">{modal.type === 'approve' ? 'Approve' : 'Reject'} Leave Request</h3>
+                <h3 className="text-2xl font-bold text-white">{t('{{action}} Leave Request', { action: modal.type === 'approve' ? t('Approve') : t('Reject') })}</h3>
                 <p className="text-blue-100 text-sm">{modal.item.teacher_name}</p>
               </div>
               <button onClick={() => { setModal(null); setReason(''); }} className="text-white hover:rotate-90 transition-transform p-2">
@@ -246,32 +248,32 @@ export default function FacultyPerformance() {
             <div className="p-8 space-y-4">
               <div className="bg-surface-container-low rounded-xl p-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-on-surface-variant">Period:</span>
+                  <span className="text-on-surface-variant">{t('Period:')}</span>
                   <span className="font-medium">{modal.item.start_date} → {modal.item.end_date}</span>
                 </div>
                 {modal.item.reason && (
                   <div className="text-sm">
-                    <span className="text-on-surface-variant">Reason:</span>
+                    <span className="text-on-surface-variant">{t('Reason:')}</span>
                     <p className="mt-1 italic">{modal.item.reason}</p>
                   </div>
                 )}
               </div>
               {modal.type === 'reject' && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Rejection Reason (optional)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Rejection Reason (optional)')}</label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="Provide a reason for rejection..."
+                    placeholder={t('Provide a reason for rejection...')}
                     rows={3}
                     className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-error/20 text-sm"
                   />
                 </div>
               )}
               <div className="flex gap-4 pt-4">
-                <button onClick={() => { setModal(null); setReason(''); }} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95">Cancel</button>
+                <button onClick={() => { setModal(null); setReason(''); }} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95">{t('Cancel')}</button>
                 <button onClick={handleAction} disabled={saving} className={`flex-1 py-3 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg transition-all active:scale-95 disabled:opacity-50 ${modal.type === 'approve' ? 'bg-primary' : 'bg-error'}`}>
-                  {saving ? 'Processing...' : modal.type === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+                  {saving ? t('Processing...') : modal.type === 'approve' ? t('Confirm Approval') : t('Confirm Rejection')}
                 </button>
               </div>
             </div>
@@ -285,8 +287,8 @@ export default function FacultyPerformance() {
           <div className="bg-surface-container-lowest w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-primary">
               <div>
-                <h3 className="text-2xl font-bold text-white">New Evaluation</h3>
-                <p className="text-blue-100 text-sm">Create a performance evaluation for a faculty member</p>
+                <h3 className="text-2xl font-bold text-white">{t('New Evaluation')}</h3>
+                <p className="text-blue-100 text-sm">{t('Create a performance evaluation for a faculty member')}</p>
               </div>
               <button onClick={() => setEvalModal(false)} className="text-white hover:rotate-90 transition-transform p-2">
                 <span className="material-symbols-outlined text-3xl">close</span>
@@ -294,44 +296,44 @@ export default function FacultyPerformance() {
             </div>
             <div className="p-8 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Teacher *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Teacher *')}</label>
                 <select
                   value={evalForm.teacherId}
                   onChange={(e) => setEvalForm({ ...evalForm, teacherId: e.target.value })}
                   className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                 >
-                  <option value="">Select teacher...</option>
+                  <option value="">{t('Select teacher...')}</option>
                   {teachers.map((t: any) => (
                     <option key={t.id} value={t.id}>{t.full_name || `${t.user?.first_name} ${t.user?.last_name}`}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Score (0-100) *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Score (0-100) *')}</label>
                 <input
                   type="number"
                   min={0}
                   max={100}
                   value={evalForm.score}
                   onChange={(e) => setEvalForm({ ...evalForm, score: e.target.value })}
-                  placeholder="Performance score"
+                  placeholder={t('Performance score')}
                   className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Comments</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Comments')}</label>
                 <textarea
                   value={evalForm.comments}
                   onChange={(e) => setEvalForm({ ...evalForm, comments: e.target.value })}
                   rows={4}
-                  placeholder="Evaluator comments..."
+                  placeholder={t('Evaluator comments...')}
                   className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
                 />
               </div>
               <div className="flex gap-4 pt-4">
-                <button onClick={() => setEvalModal(false)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95">Cancel</button>
+                <button onClick={() => setEvalModal(false)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95">{t('Cancel')}</button>
                 <button onClick={handleCreateEvaluation} disabled={saving} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg transition-all active:scale-95 disabled:opacity-50">
-                  {saving ? 'Creating...' : 'Create Evaluation'}
+                  {saving ? t('Creating...') : t('Create Evaluation')}
                 </button>
               </div>
             </div>

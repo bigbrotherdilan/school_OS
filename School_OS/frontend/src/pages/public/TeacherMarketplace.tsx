@@ -4,6 +4,7 @@ import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 import { fetchPublicTeachers, type PublicTeacher } from '../../services/publicApi';
 import { publicApi } from '../../services/publicApi';
+import { useTranslation } from 'react-i18next';
 
 const AVAILABILITY_LABELS: Record<string, string> = {
   full_time: 'Full Time',
@@ -15,6 +16,7 @@ const AVAILABILITY_LABELS: Record<string, string> = {
 const DEPARTMENTS = ['', 'Science', 'Mathematics', 'Arts', 'Languages', 'Physical Education', 'Technology'];
 
 export default function TeacherMarketplace() {
+  const { t } = useTranslation('publicSite');
   const [teachers, setTeachers] = useState<PublicTeacher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -33,8 +35,8 @@ export default function TeacherMarketplace() {
   useEffect(() => {
     fetchPublicTeachers().then((all) => {
       const counts = new Map<string, number>();
-      for (const t of all) {
-        const name = t.school?.region;
+      for (const tp of all) {
+        const name = tp.school?.region;
         if (!name) continue;
         counts.set(name, (counts.get(name) || 0) + 1);
       }
@@ -45,14 +47,14 @@ export default function TeacherMarketplace() {
   const fetchTeachers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const teachers = await fetchPublicTeachers({
+      const result = await fetchPublicTeachers({
         q: search || undefined,
         subject: subject || undefined,
         region: region || undefined,
         availability: availability || undefined,
         min_rating: minRating || undefined,
       });
-      setTeachers(teachers);
+      setTeachers(result);
     } catch (err) {
       console.error('Failed to fetch teachers:', err);
       setTeachers([]);
@@ -81,7 +83,7 @@ export default function TeacherMarketplace() {
       });
       setContactSent(true);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to send message. Please try again.');
+      alert(err.response?.data?.detail || t('Failed to send message. Please try again.'));
     } finally {
       setIsSending(false);
     }
@@ -101,10 +103,10 @@ export default function TeacherMarketplace() {
       {/* Hero */}
       <section className="pt-32 pb-16 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-primary/90">
         <div className="max-w-6xl mx-auto text-center">
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 block mb-4">National Teacher Marketplace</span>
-          <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4">Find Great Teachers</h1>
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 block mb-4">{t('National Teacher Marketplace')}</span>
+          <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4">{t('Find Great Teachers')}</h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto mb-10 font-medium">
-            Discover qualified educators across Cameroon. Search by subject, region, rating, and availability.
+            {t('Discover qualified educators across Cameroon. Search by subject, region, rating, and availability.')}
           </p>
 
           {/* Search bar */}
@@ -115,17 +117,17 @@ export default function TeacherMarketplace() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, subject, or school..."
+                placeholder={t('Search by name, subject, or school...')}
                 className="w-full pl-14 pr-6 py-5 bg-white rounded-2xl text-sm font-bold shadow-2xl focus:outline-none focus:ring-4 focus:ring-primary/30"
               />
             </div>
             <button type="submit" className="px-8 py-5 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all">
-              Search
+              {t('Search')}
             </button>
           </form>
 
           <button onClick={() => setShowFilters(!showFilters)} className="mt-6 flex items-center gap-2 mx-auto text-white/50 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">
-            <Filter className="w-4 h-4" /> Advanced Filters <ChevronDown className={`w-3 h-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            <Filter className="w-4 h-4" /> {t('Advanced Filters')} <ChevronDown className={`w-3 h-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </section>
@@ -135,35 +137,35 @@ export default function TeacherMarketplace() {
         <section className="bg-white border-b border-outline-variant/10 py-8 px-4 animate-in fade-in duration-300">
           <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Subject</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Subject')}</label>
               <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer">
-                <option value="">All Subjects</option>
+                <option value="">{t('All Subjects')}</option>
                 {DEPARTMENTS.filter(Boolean).map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Region</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Region')}</label>
               <select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer">
-                <option value="">All Regions</option>
+                <option value="">{t('All Regions')}</option>
                 {regions.map((r) => (
                   <option key={r.name} value={r.name}>{r.name} ({r.count})</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Availability</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Availability')}</label>
               <select value={availability} onChange={(e) => setAvailability(e.target.value)} className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer">
-                <option value="">Any</option>
-                <option value="full_time">Full Time</option>
-                <option value="part_time">Part Time</option>
-                <option value="contract">Contract</option>
-                <option value="available">Available for Hire</option>
+                <option value="">{t('Any')}</option>
+                <option value="full_time">{t('Full Time')}</option>
+                <option value="part_time">{t('Part Time')}</option>
+                <option value="contract">{t('Contract')}</option>
+                <option value="available">{t('Available for Hire')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Min Rating</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Min Rating')}</label>
               <select value={minRating} onChange={(e) => setMinRating(e.target.value)} className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer">
-                <option value="">Any Rating</option>
+                <option value="">{t('Any Rating')}</option>
                 <option value="4">4+ Stars</option>
                 <option value="3">3+ Stars</option>
                 <option value="2">2+ Stars</option>
@@ -176,19 +178,19 @@ export default function TeacherMarketplace() {
       {/* Results */}
       <section className="max-w-6xl mx-auto py-16 px-4">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-black text-on-surface">{teachers.length} Teacher{teachers.length !== 1 ? 's' : ''} Found</h2>
+          <h2 className="text-2xl font-black text-on-surface">{teachers.length} {t('Teacher')}{teachers.length !== 1 ? t('s') : ''} {t('Found')}</h2>
         </div>
 
         {isLoading ? (
           <div className="py-32 flex flex-col items-center gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary/30" />
-            <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant/40">Searching...</p>
+            <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant/40">{t('Searching...')}</p>
           </div>
         ) : teachers.length === 0 ? (
           <div className="py-32 text-center space-y-4">
             <GraduationCap className="w-16 h-16 mx-auto text-on-surface-variant/20" />
-            <h3 className="text-xl font-bold text-on-surface/60">No teachers found</h3>
-            <p className="text-sm text-on-surface-variant">Try adjusting your search or filters</p>
+            <h3 className="text-xl font-bold text-on-surface/60">{t('No teachers found')}</h3>
+            <p className="text-sm text-on-surface-variant">{t('Try adjusting your search or filters')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -209,11 +211,11 @@ export default function TeacherMarketplace() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-black text-on-surface group-hover:text-primary transition-colors truncate">{teacher.name}</h3>
-                      <p className="text-xs text-on-surface-variant font-medium truncate">{teacher.qualification || 'Educator'}</p>
+                      <p className="text-xs text-on-surface-variant font-medium truncate">{teacher.qualification || t('Educator')}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                        <span className="text-xs font-bold">{teacher.average_rating > 0 ? teacher.average_rating.toFixed(1) : 'New'}</span>
-                        {teacher.total_reviews > 0 && <span className="text-[10px] text-on-surface-variant">({teacher.total_reviews} reviews)</span>}
+                        <span className="text-xs font-bold">{teacher.average_rating > 0 ? teacher.average_rating.toFixed(1) : t('New')}</span>
+                        {teacher.total_reviews > 0 && <span className="text-[10px] text-on-surface-variant">({teacher.total_reviews} {t('reviews')})</span>}
                       </div>
                     </div>
                   </div>
@@ -225,12 +227,12 @@ export default function TeacherMarketplace() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                       <BookOpen className="w-3 h-3" />
-                      <span className="font-medium">{teacher.subjects_taught?.join(', ') || teacher.department || 'General'}</span>
+                      <span className="font-medium">{teacher.subjects_taught?.join(', ') || teacher.department || t('General')}</span>
                     </div>
                     {teacher.years_of_experience && (
                       <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                         <Clock className="w-3 h-3" />
-                        <span className="font-medium">{teacher.years_of_experience} years experience</span>
+                        <span className="font-medium">{teacher.years_of_experience} {t('years experience')}</span>
                       </div>
                     )}
                   </div>
@@ -240,7 +242,7 @@ export default function TeacherMarketplace() {
                       teacher.availability === 'available' ? 'bg-secondary/10 text-secondary border-secondary/20' :
                       'bg-surface-container-high text-on-surface-variant border-outline-variant/10'
                     }`}>
-                      {AVAILABILITY_LABELS[teacher.availability] || teacher.availability}
+                      {t(AVAILABILITY_LABELS[teacher.availability] || teacher.availability)}
                     </span>
                     {teacher.languages_spoken?.map((lang) => (
                       <span key={lang} className="px-3 py-1 bg-primary/5 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/10 flex items-center gap-1">
@@ -263,7 +265,7 @@ export default function TeacherMarketplace() {
 
                 {teacher.hourly_rate && (
                   <div className="px-8 py-4 bg-surface-container-low/50 border-t border-outline-variant/5 flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Hourly Rate</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">{t('Hourly Rate')}</span>
                     <span className="text-sm font-black text-primary">{Number(teacher.hourly_rate).toLocaleString()} XAF</span>
                   </div>
                 )}
@@ -288,7 +290,7 @@ export default function TeacherMarketplace() {
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      <span className="text-sm font-bold">{selectedTeacher.average_rating > 0 ? selectedTeacher.average_rating.toFixed(1) : 'New'}</span>
+                      <span className="text-sm font-bold">{selectedTeacher.average_rating > 0 ? selectedTeacher.average_rating.toFixed(1) : t('New')}</span>
                     </div>
                     <span className="text-white/30">|</span>
                     <span className="text-sm text-white/60">{selectedTeacher.school?.name}</span>
@@ -299,31 +301,31 @@ export default function TeacherMarketplace() {
             <div className="p-10 overflow-y-auto space-y-8">
               {selectedTeacher.teaching_philosophy && (
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Teaching Philosophy</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">{t('Teaching Philosophy')}</h4>
                   <p className="text-sm text-on-surface leading-relaxed">{selectedTeacher.teaching_philosophy}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Subjects</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">{t('Subjects')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {(selectedTeacher.subjects_taught || []).map(s => (
                       <span key={s} className="px-3 py-1.5 bg-primary/5 text-primary rounded-xl text-xs font-bold border border-primary/10">{s}</span>
                     ))}
                     {(!selectedTeacher.subjects_taught || selectedTeacher.subjects_taught.length === 0) && (
-                      <span className="text-xs text-on-surface-variant italic">{selectedTeacher.department || 'General'}</span>
+                      <span className="text-xs text-on-surface-variant italic">{selectedTeacher.department || t('General')}</span>
                     )}
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Languages</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">{t('Languages')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {(selectedTeacher.languages_spoken || []).map(l => (
                       <span key={l} className="px-3 py-1.5 bg-surface-container rounded-xl text-xs font-bold">{l}</span>
                     ))}
                     {(!selectedTeacher.languages_spoken || selectedTeacher.languages_spoken.length === 0) && (
-                      <span className="text-xs text-on-surface-variant italic">Not specified</span>
+                      <span className="text-xs text-on-surface-variant italic">{t('Not specified')}</span>
                     )}
                   </div>
                 </div>
@@ -332,7 +334,7 @@ export default function TeacherMarketplace() {
               {selectedTeacher.certifications && selectedTeacher.certifications.length > 0 && (
                 <div>
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3 flex items-center gap-2">
-                    <Award className="w-3 h-3" /> Certifications
+                    <Award className="w-3 h-3" /> {t('Certifications')}
                   </h4>
                   <ul className="space-y-2">
                     {selectedTeacher.certifications.map((c, i) => (
@@ -346,7 +348,7 @@ export default function TeacherMarketplace() {
 
               {selectedTeacher.achievements && selectedTeacher.achievements.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Achievements</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">{t('Achievements')}</h4>
                   <ul className="space-y-2">
                     {selectedTeacher.achievements.map((a, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-on-surface">
@@ -359,12 +361,12 @@ export default function TeacherMarketplace() {
 
               <div className="flex items-center justify-between p-6 bg-surface-container-low rounded-2xl">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Availability</p>
-                  <p className="text-sm font-bold">{AVAILABILITY_LABELS[selectedTeacher.availability] || selectedTeacher.availability}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">{t('Availability')}</p>
+                  <p className="text-sm font-bold">{t(AVAILABILITY_LABELS[selectedTeacher.availability] || selectedTeacher.availability)}</p>
                 </div>
                 {selectedTeacher.hourly_rate && (
                   <div className="text-right">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Hourly Rate</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">{t('Hourly Rate')}</p>
                     <p className="text-lg font-black text-primary">{Number(selectedTeacher.hourly_rate).toLocaleString()} XAF</p>
                   </div>
                 )}
@@ -372,10 +374,10 @@ export default function TeacherMarketplace() {
             </div>
             <div className="p-6 border-t border-outline-variant/10 flex justify-between">
               <button onClick={() => openContact(selectedTeacher)} className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all">
-                <Mail className="w-4 h-4" /> Contact Teacher
+                <Mail className="w-4 h-4" /> {t('Contact Teacher')}
               </button>
               <button onClick={() => setSelectedTeacher(null)} className="px-8 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
-                Close
+                {t('Close')}
               </button>
             </div>
           </div>
@@ -388,7 +390,7 @@ export default function TeacherMarketplace() {
           <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl border border-outline-variant/10 overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-black text-on-surface">Contact {contactTeacher.name}</h3>
+                <h3 className="text-lg font-black text-on-surface">{t('Contact')} {contactTeacher.name}</h3>
                 <p className="text-xs text-on-surface-variant mt-1">{contactTeacher.school?.name}</p>
               </div>
               <button onClick={() => setContactTeacher(null)} className="p-2 hover:bg-surface-container-high rounded-xl transition-colors">
@@ -401,62 +403,62 @@ export default function TeacherMarketplace() {
                   <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
                     <Mail className="w-8 h-8 text-secondary" />
                   </div>
-                  <h4 className="text-lg font-bold text-on-surface">Message Sent!</h4>
-                  <p className="text-sm text-on-surface-variant">Your message has been emailed to {contactTeacher.name}. They will receive it shortly.</p>
+                  <h4 className="text-lg font-bold text-on-surface">{t('Message Sent!')}</h4>
+                  <p className="text-sm text-on-surface-variant">{t('Your message has been emailed to')} {contactTeacher.name}. {t('They will receive it shortly.')}</p>
                   <button onClick={() => setContactTeacher(null)} className="mt-4 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest">
-                    Done
+                    {t('Done')}
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Your Name</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Your Name')}</label>
                     <input
                       type="text"
                       required
                       value={contactForm.sender_name}
                       onChange={(e) => setContactForm({ ...contactForm, sender_name: e.target.value })}
                       className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all"
-                      placeholder="e.g. School Admin"
+                      placeholder={t('e.g. School Admin')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Your Email</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Your Email')}</label>
                     <input
                       type="email"
                       required
                       value={contactForm.sender_email}
                       onChange={(e) => setContactForm({ ...contactForm, sender_email: e.target.value })}
                       className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all"
-                      placeholder="admin@yourschool.com"
+                      placeholder={t('admin@yourschool.com')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Subject</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Subject')}</label>
                     <input
                       type="text"
                       required
                       value={contactForm.subject}
                       onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
                       className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all"
-                      placeholder="Teaching Opportunity Inquiry"
+                      placeholder={t('Teaching Opportunity Inquiry')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Message</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Message')}</label>
                     <textarea
                       required
                       rows={5}
                       value={contactForm.body}
                       onChange={(e) => setContactForm({ ...contactForm, body: e.target.value })}
                       className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all resize-none"
-                      placeholder="Tell the teacher about the opportunity..."
+                      placeholder={t('Tell the teacher about the opportunity...')}
                     />
                   </div>
                   <div className="flex justify-end pt-2">
                     <button type="submit" disabled={isSending} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
                       {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                      {isSending ? 'Sending...' : 'Send Message'}
+                      {isSending ? t('Sending...') : t('Send Message')}
                     </button>
                   </div>
                 </form>

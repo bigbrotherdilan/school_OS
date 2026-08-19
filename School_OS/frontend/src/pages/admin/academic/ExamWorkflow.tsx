@@ -4,6 +4,7 @@ import { api } from '../../../services/api';
 import { reportsApi } from '../../../services/reportsApi';
 import { useToastStore } from '../../../stores/toastStore';
 import { useSectionStore } from '../../../stores/sectionStore';
+import { useTranslation } from 'react-i18next';
 
 interface Sequence {
   id: number;
@@ -48,6 +49,7 @@ function downloadBlob(blob: Blob, filename: string) {
 export default function ExamWorkflow() {
   const navigate = useNavigate();
   const { addToast } = useToastStore();
+  const { t } = useTranslation('adminAcademicMgmt');
 
   const [terms, setTerms] = useState<Term[]>([]);
   const [windows, setWindows] = useState<MarkWindow[]>([]);
@@ -88,7 +90,7 @@ export default function ExamWorkflow() {
       if (activeYear) setSelectedYear(activeYear.id);
     } catch (err) {
       console.error('Failed to load workflow data:', err);
-      addToast('Failed to load workflow data.', 'error');
+      addToast(t('Failed to load workflow data.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -105,7 +107,7 @@ export default function ExamWorkflow() {
       if (!currentState) {
         const win = windows.find(w => w.id === windowId);
         if (win) {
-          const seq = terms.flatMap(t => t.sequences || []).find((s: any) => Number(s.id) === Number(win.sequence));
+          const seq = terms.flatMap((term: any) => term.sequences || []).find((s: any) => Number(s.id) === Number(win.sequence));
           if (seq && seq.term && selectedYear) {
             await api.post('/assessments/exams/ensure-for-term/', {
               term_id: seq.term,
@@ -115,11 +117,11 @@ export default function ExamWorkflow() {
         }
       }
 
-      addToast(`Window ${!currentState ? 'OPENED' : 'CLOSED'} successfully.`, 'success');
+      addToast(t('Window {{action}} successfully.', { action: !currentState ? 'OPENED' : 'CLOSED' }), 'success');
       fetchData();
     } catch (err: any) {
       console.error('Toggle error:', err.response?.data || err.message);
-      addToast(err.response?.data?.detail || 'Toggle failed.', 'error');
+      addToast(err.response?.data?.detail || t('Toggle failed.'), 'error');
     } finally {
       setTogglingWindow(null);
     }
@@ -130,12 +132,12 @@ export default function ExamWorkflow() {
     try {
       await api.post(`/assessments/mark-windows/${windowId}/toggle-share/`);
       addToast(
-        currentShare ? 'Results hidden from parents.' : 'Results now visible to parents.',
+        currentShare ? t('Results hidden from parents.') : t('Results now visible to parents.'),
         'success'
       );
       fetchData();
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to toggle sharing.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to toggle sharing.'), 'error');
     } finally {
       setTogglingShare(null);
     }
@@ -147,11 +149,11 @@ export default function ExamWorkflow() {
         api.post('/academic/sequences/', { term: termId })
       );
       await Promise.all(promises);
-      addToast(`${count} sequence(s) created for this term.`, 'success');
+      addToast(t('{{count}} sequence(s) created for this term.', { count }), 'success');
       fetchData();
     } catch (err: any) {
       console.error('Create sequences error:', err.response?.data || err.message);
-      const msg = err.response?.data?.detail || err.response?.data?.name?.[0] || 'Failed to create sequences.';
+      const msg = err.response?.data?.detail || err.response?.data?.name?.[0] || t('Failed to create sequences.');
       addToast(msg, 'error');
     }
   };
@@ -165,7 +167,7 @@ export default function ExamWorkflow() {
         end_date: null,
       });
 
-      const seq = terms.flatMap(t => t.sequences || []).find((s: any) => Number(s.id) === Number(sequenceId));
+      const seq = terms.flatMap((term: any) => term.sequences || []).find((s: any) => Number(s.id) === Number(sequenceId));
       if (seq && seq.term) {
         await api.post('/assessments/exams/ensure-for-term/', {
           term_id: seq.term,
@@ -173,21 +175,21 @@ export default function ExamWorkflow() {
         }).catch(() => {});
       }
 
-      addToast('Mark entry window created. Toggle Open to activate.', 'success');
+      addToast(t('Mark entry window created. Toggle Open to activate.'), 'success');
       fetchData();
     } catch (err: any) {
       console.error('Create window error:', err.response?.data || err.message);
       const detail = err.response?.data;
       const msg = typeof detail === 'string' ? detail
         : detail?.detail || detail?.sequence?.[0] || detail?.academic_year?.[0]
-        || JSON.stringify(detail) || 'Failed to create window.';
+        || JSON.stringify(detail) || t('Failed to create window.');
       addToast(msg, 'error');
     }
   };
 
   const handleGenerateTermReportCards = async (termId: number) => {
     if (!selectedClass) {
-      addToast('Please select a class first.', 'error');
+      addToast(t('Please select a class first.'), 'error');
       return;
     }
     setGeneratingTerm(termId);
@@ -202,11 +204,11 @@ export default function ExamWorkflow() {
         ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') || 'report_cards.zip'
         : 'report_cards.zip';
       downloadBlob(new Blob([response.data], { type: 'application/zip' }), filename);
-      addToast('Report cards generated successfully!', 'success');
+      addToast(t('Report cards generated successfully!'), 'success');
       setShowGenerateModal(null);
       fetchData();
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to generate report cards.';
+      const msg = err.response?.data?.detail || t('Failed to generate report cards.');
       addToast(msg, 'error');
     } finally {
       setGeneratingTerm(null);
@@ -251,7 +253,7 @@ export default function ExamWorkflow() {
       <div className="p-4 lg:p-12 max-w-[1400px] mx-auto flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
           <span className="material-symbols-outlined text-5xl text-primary animate-pulse">sync</span>
-          <p className="text-on-surface-variant font-medium">Loading exam workflow...</p>
+          <p className="text-on-surface-variant font-medium">{t('Loading exam workflow...')}</p>
         </div>
       </div>
     );
@@ -262,10 +264,10 @@ export default function ExamWorkflow() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Assessment Pipeline</span>
-          <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Exam Workflow</h1>
+          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Assessment Pipeline')}</span>
+          <h1 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Exam Workflow')}</h1>
           <p className="text-on-surface-variant text-lg mt-2">
-            Each term has two sequences (50% each). Open a sequence, teachers fill marks, close it, then move to the next.
+            {t('Each term has two sequences (50% each). Open a sequence, teachers fill marks, close it, then move to the next.')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -274,14 +276,14 @@ export default function ExamWorkflow() {
             className="bg-primary/10 border border-primary/20 text-primary px-5 py-3 rounded-xl font-medium flex items-center gap-2 hover:bg-primary/20 transition-all"
           >
             <span className="material-symbols-outlined text-lg">edit_square</span>
-            Mark Fill Status
+            {t('Mark Fill Status')}
           </button>
           <button
             onClick={() => navigate('/admin/academic')}
             className="bg-surface-container-lowest border border-outline-variant/20 text-on-surface px-5 py-3 rounded-xl font-medium flex items-center gap-2 hover:bg-surface-container transition-all"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
-            Academic Registry
+            {t('Academic Registry')}
           </button>
         </div>
       </div>
@@ -289,26 +291,26 @@ export default function ExamWorkflow() {
       {/* Quick Selectors */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 p-6 flex flex-col md:flex-row gap-4 items-end">
         <div className="flex-1 min-w-0">
-          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">Academic Year</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">{t('Academic Year')}</label>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
             className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            <option value="">Select Year</option>
+            <option value="">{t('Select Year')}</option>
             {academicYears.map((y: any) => (
               <option key={y.id} value={y.id}>{y.name}</option>
             ))}
           </select>
         </div>
         <div className="flex-1 min-w-0">
-          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">Class (for report cards)</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">{t('Class (for report cards)')}</label>
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
             className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            <option value="">Select Class</option>
+            <option value="">{t('Select Class')}</option>
             {classes.map((c: any) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -347,10 +349,10 @@ export default function ExamWorkflow() {
                       <h2 className="text-xl font-bold text-on-surface">{term.name}</h2>
                       <p className="text-sm text-on-surface-variant">
                         {hasTwoSequences
-                          ? `${sorted[0]?.name || 'Seq 1'} (50%) + ${sorted[1]?.name || 'Seq 2'} (50%)`
+                          ? t('{{seq1}} (50%) + {{seq2}} (50%)', { seq1: sorted[0]?.name || t('Seq 1'), seq2: sorted[1]?.name || t('Seq 2') })
                           : sorted.length === 1
-                            ? `${sorted[0]?.name || 'Sequence'} (100%)`
-                            : 'No sequences'}
+                            ? t('{{sequence}} (100%)', { sequence: sorted[0]?.name || t('Sequence') })
+                            : t('No sequences')}
                       </p>
                     </div>
                   </div>
@@ -364,7 +366,7 @@ export default function ExamWorkflow() {
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm mr-1 align-middle">description</span>
-                    {progress.canGenerate ? 'Generate Report Cards' : 'Report Cards Locked'}
+                    {progress.canGenerate ? t('Generate Report Cards') : t('Report Cards Locked')}
                   </button>
                 </div>
               </div>
@@ -374,21 +376,21 @@ export default function ExamWorkflow() {
                 {progress.totalSequences === 0 ? (
                   <div className="text-center py-8">
                     <span className="material-symbols-outlined text-4xl text-outline mb-3">queue</span>
-                    <p className="text-sm text-on-surface-variant mb-4">No sequences configured for this term yet.</p>
+                    <p className="text-sm text-on-surface-variant mb-4">{t('No sequences configured for this term yet.')}</p>
                     <div className="flex gap-3 justify-center">
                       <button
                         onClick={() => handleCreateSequences(term.id, 1)}
                         className="px-5 py-2.5 bg-primary/80 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
                       >
                         <span className="material-symbols-outlined text-sm mr-1 align-middle">add</span>
-                        Add 1 Sequence
+                        {t('Add 1 Sequence')}
                       </button>
                       <button
                         onClick={() => handleCreateSequences(term.id, 2)}
                         className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
                       >
                         <span className="material-symbols-outlined text-sm mr-1 align-middle">add</span>
-                        Add 2 Sequences
+                        {t('Add 2 Sequences')}
                       </button>
                     </div>
                   </div>
@@ -396,8 +398,8 @@ export default function ExamWorkflow() {
                   <>
                     <div className={`grid gap-6 ${hasTwoSequences ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 max-w-md'}`}>
                       <SequenceStep
-                        label={seq1?.name || 'Sequence 1'}
-                        weight={hasTwoSequences ? '50% of term' : '100% of term'}
+                        label={seq1?.name || t('Sequence 1')}
+                        weight={hasTwoSequences ? t('50% of term') : t('100% of term')}
                         status={step1Status}
                         window={progress.win1}
                         onToggle={() => progress.win1 && handleToggleWindow(progress.win1.id, progress.win1.is_open)}
@@ -416,7 +418,7 @@ export default function ExamWorkflow() {
                       {hasTwoSequences && step2Status && seq2 && (
                         <SequenceStep
                           label={seq2.name}
-                          weight="50% of term"
+                          weight={t('50% of term')}
                           status={step2Status}
                           window={progress.win2}
                           onToggle={() => progress.win2 && handleToggleWindow(progress.win2.id, progress.win2.is_open)}
@@ -440,10 +442,10 @@ export default function ExamWorkflow() {
                     </span>
                     <span className="text-sm font-medium text-on-surface-variant">
                       {progress.canGenerate
-                        ? 'All sequences closed - Ready to generate report cards'
+                        ? t('All sequences closed - Ready to generate report cards')
                         : progress.seq1Open || progress.seq2Open
-                          ? 'Close the open sequence first'
-                          : 'Open and close all sequences first'}
+                          ? t('Close the open sequence first')
+                          : t('Open and close all sequences first')}
                     </span>
                   </div>
                   {progress.canGenerate && (
@@ -455,12 +457,12 @@ export default function ExamWorkflow() {
                       {generatingTerm === term.id ? (
                         <span className="flex items-center gap-2">
                           <span className="material-symbols-outlined animate-spin text-sm">sync</span>
-                          Generating...
+                          {t('Generating...')}
                         </span>
                       ) : (
                         <span className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-sm">download</span>
-                          Download ZIP
+                          {t('Download ZIP')}
                         </span>
                       )}
                     </button>
@@ -479,9 +481,9 @@ export default function ExamWorkflow() {
             <div className="p-8 border-b border-outline-variant/10 bg-secondary">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-2xl font-bold text-white">Generate Report Cards</h3>
+                  <h3 className="text-2xl font-bold text-white">{t('Generate Report Cards')}</h3>
                   <p className="text-blue-100 text-sm mt-1">
-                    {terms.find(t => t.id === showGenerateModal)?.name}
+                    {terms.find((term: any) => term.id === showGenerateModal)?.name}
                   </p>
                 </div>
                 <button
@@ -494,18 +496,18 @@ export default function ExamWorkflow() {
             </div>
             <div className="p-8 space-y-6">
               <p className="text-on-surface-variant text-sm">
-                This will generate PDF report cards for all students in the selected class for this term.
-                The ZIP file will download automatically.
+                {t('This will generate PDF report cards for all students in the selected class for this term.')}
+                {t('The ZIP file will download automatically.')}
               </p>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">Select Class</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">{t('Select Class')}</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <option value="">Choose a class...</option>
+                  <option value="">{t('Choose a class...')}</option>
                   {classes.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -517,7 +519,7 @@ export default function ExamWorkflow() {
                   <span className="material-symbols-outlined text-primary">school</span>
                   <div>
                     <p className="text-sm font-bold text-on-surface">
-                      {terms.find(t => t.id === showGenerateModal)?.name}
+                      {terms.find((term: any) => term.id === showGenerateModal)?.name}
                     </p>
                     <p className="text-xs text-on-surface-variant">
                       {academicYears.find(y => y.id === selectedYear)?.name || ''}
@@ -529,7 +531,7 @@ export default function ExamWorkflow() {
               {!selectedClass && (
                 <div className="bg-amber-500/10 text-amber-700 p-4 rounded-xl flex items-center gap-2 text-sm">
                   <span className="material-symbols-outlined">info</span>
-                  Select a class above to proceed.
+                  {t('Select a class above to proceed.')}
                 </div>
               )}
 
@@ -538,14 +540,14 @@ export default function ExamWorkflow() {
                   onClick={() => setShowGenerateModal(null)}
                   className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button
                   onClick={() => showGenerateModal && handleGenerateTermReportCards(showGenerateModal)}
                   disabled={!selectedClass || generatingTerm === showGenerateModal}
                   className="flex-1 py-3 bg-secondary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {generatingTerm === showGenerateModal ? 'Generating...' : 'Generate & Download'}
+                  {generatingTerm === showGenerateModal ? t('Generating...') : t('Generate & Download')}
                 </button>
               </div>
             </div>
@@ -578,10 +580,11 @@ function SequenceStep({
   toggling: boolean;
   togglingShare: boolean;
 }) {
+  const { t } = useTranslation('adminAcademicMgmt');
   const statusConfig = {
-    pending: { icon: 'radio_button_unchecked', iconColor: 'text-outline', label: 'Not Started' },
-    active: { icon: 'edit_note', iconColor: 'text-primary', label: 'Open - Teachers entering marks' },
-    done: { icon: 'check_circle', iconColor: 'text-secondary', label: 'Completed' },
+    pending: { icon: 'radio_button_unchecked', iconColor: 'text-outline', label: t('Not Started') },
+    active: { icon: 'edit_note', iconColor: 'text-primary', label: t('Open - Teachers entering marks') },
+    done: { icon: 'check_circle', iconColor: 'text-secondary', label: t('Completed') },
   };
 
   const cfg = statusConfig[status];
@@ -616,7 +619,7 @@ function SequenceStep({
           className="w-full py-2.5 bg-primary/10 text-primary rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <span className="material-symbols-outlined text-sm">add</span>
-          Create Window
+          {t('Create Window')}
         </button>
       )}
 
@@ -626,13 +629,13 @@ function SequenceStep({
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
               window.is_open ? 'bg-secondary/10 text-secondary' : 'bg-surface-container-highest text-on-surface-variant'
             }`}>
-              {window.is_open ? 'OPEN' : 'CLOSED'}
+              {window.is_open ? t('OPEN') : t('CLOSED')}
             </span>
           </div>
 
           {window.start_date && (
             <p className="text-[10px] text-outline font-mono">
-              {window.start_date} → {window.end_date || 'open-ended'}
+              {window.start_date} → {window.end_date || t('open-ended')}
             </p>
           )}
 
@@ -648,14 +651,14 @@ function SequenceStep({
             {toggling ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined animate-spin text-sm">sync</span>
-                Processing...
+                {t('Processing...')}
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-sm">
                   {window.is_open ? 'lock' : 'lock_open'}
                 </span>
-                {window.is_open ? 'Close Sequence' : 'Open for Marks'}
+                {window.is_open ? t('Close Sequence') : t('Open for Marks')}
               </span>
             )}
           </button>
@@ -673,14 +676,14 @@ function SequenceStep({
               {togglingShare ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="material-symbols-outlined animate-spin text-sm">sync</span>
-                  Updating...
+                  {t('Updating...')}
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <span className="material-symbols-outlined text-sm">
                     {window.share_results ? 'visibility' : 'visibility_off'}
                   </span>
-                  {window.share_results ? 'Visible to Parents' : 'Share with Parents'}
+                  {window.share_results ? t('Visible to Parents') : t('Share with Parents')}
                 </span>
               )}
             </button>
@@ -691,7 +694,7 @@ function SequenceStep({
       {status === 'done' && (
         <div className="flex items-center gap-2 text-secondary text-xs font-bold">
           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-          Sequence completed
+          {t('Sequence completed')}
         </div>
       )}
     </div>

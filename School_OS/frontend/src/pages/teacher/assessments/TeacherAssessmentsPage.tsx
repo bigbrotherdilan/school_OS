@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToastStore } from '../../../stores/toastStore';
 import { useTeacherData } from '../../../hooks/useTeacherData';
 import { useAuthStore } from '../../../stores/authStore';
@@ -66,6 +67,7 @@ interface StudentRow {
 
 // ─── Component ───────────────────────────────────────────────────
 export default function TeacherAssessmentsPage() {
+  const { t } = useTranslation('teacher');
   const { addToast } = useToastStore();
   const {
     fetchMyAssignments,
@@ -406,7 +408,7 @@ export default function TeacherAssessmentsPage() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-4">
           <span className="material-symbols-outlined text-5xl text-primary animate-pulse">fact_check</span>
-          <p className="text-sm text-on-surface-variant font-medium">Loading assessments...</p>
+          <p className="text-sm text-on-surface-variant font-medium">{t('Loading assessments...')}</p>
         </div>
       </div>
     );
@@ -419,9 +421,9 @@ export default function TeacherAssessmentsPage() {
           <div className="w-20 h-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-4xl text-on-surface-variant">school</span>
           </div>
-          <h3 className="text-xl font-bold text-slate-800">No Assignments Found</h3>
+          <h3 className="text-xl font-bold text-slate-800">{t('No Assignments Found')}</h3>
           <p className="text-sm text-on-surface-variant leading-relaxed">
-            You don't have any teaching assignments yet. Please contact your school administrator to be assigned to classes and subjects.
+            {t("You don't have any teaching assignments yet. Please contact your school administrator to be assigned to classes and subjects.")}
           </p>
         </div>
       </div>
@@ -436,9 +438,9 @@ export default function TeacherAssessmentsPage() {
       {/* Header */}
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Assessments & Marks</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{t('Assessments & Marks')}</h2>
           <p className="text-on-surface-variant text-sm mt-1">
-            {currentAssignment ? `${currentAssignment.class_name} - ${currentAssignment.subject_name}` : 'Select an assignment'}
+            {currentAssignment ? `${currentAssignment.class_name} - ${currentAssignment.subject_name}` : t('Select an assignment')}
           </p>
         </div>
 
@@ -482,8 +484,8 @@ export default function TeacherAssessmentsPage() {
             <span className="material-symbols-outlined text-error text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
           </div>
           <div>
-            <h4 className="font-bold text-error text-sm">Marks Entry Closed</h4>
-            <p className="text-xs text-error/70 mt-0.5">{windowMessage || 'This sequence is not open for marks entry. Contact your administrator to activate it.'}</p>
+            <h4 className="font-bold text-error text-sm">{t('Marks Entry Closed')}</h4>
+            <p className="text-xs text-error/70 mt-0.5">{windowMessage || t('This sequence is not open for marks entry. Contact your administrator to activate it.')}</p>
           </div>
         </div>
       )}
@@ -492,7 +494,7 @@ export default function TeacherAssessmentsPage() {
         <div className="bg-secondary/5 border border-secondary/20 rounded-2xl p-4 flex items-center gap-3">
           <span className="material-symbols-outlined text-secondary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>lock_open</span>
           <p className="text-xs font-semibold text-secondary">
-            {windowMessage || `Marks entry is open for ${currentSeq?.name || 'this sequence'}.`}
+            {windowMessage || t('Marks entry is open for {{name}}.', { name: currentSeq?.name || 'this sequence' })}
           </p>
         </div>
       )}
@@ -501,7 +503,7 @@ export default function TeacherAssessmentsPage() {
         <section className="lg:col-span-9 space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
-              Class Gradebook <span className="text-primary ml-2">({currentSeq?.name || 'Sequence Marks'})</span>
+              {t('Class Gradebook')} <span className="text-primary ml-2">({currentSeq?.name || t('Sequence Marks')})</span>
             </h3>
 
             <div className={`flex items-center gap-2 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all duration-300 ${
@@ -509,9 +511,9 @@ export default function TeacherAssessmentsPage() {
               saveState === 'saving' ? 'bg-primary/10 text-primary' :
               'bg-slate-100 text-slate-400'
             }`}>
-              {saveState === 'saved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">cloud_done</span> <span className="hidden sm:inline">Saved to Cloud</span><span className="sm:hidden">Saved</span></>}
-              {saveState === 'saving' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px] animate-spin">sync</span> Saving...</>}
-              {saveState === 'unsaved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">edit</span> <span className="hidden sm:inline">Unsaved changes</span><span className="sm:hidden">Unsaved</span></>}
+              {saveState === 'saved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">cloud_done</span> <span className="hidden sm:inline">{t('Saved to Cloud')}</span><span className="sm:hidden">{t('Saved')}</span></>}
+              {saveState === 'saving' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px] animate-spin">sync</span> {t('Saving...')}</>}
+              {saveState === 'unsaved' && <><span className="material-symbols-outlined text-[12px] sm:text-[14px]">edit</span> <span className="hidden sm:inline">{t('Unsaved changes')}</span><span className="sm:hidden">{t('Unsaved')}</span></>}
             </div>
           </div>
 
@@ -520,7 +522,7 @@ export default function TeacherAssessmentsPage() {
               <div className="flex items-center justify-center h-64">
                 <div className="text-center space-y-3">
                   <span className="material-symbols-outlined text-3xl text-primary animate-spin">sync</span>
-                  <p className="text-xs text-on-surface-variant font-medium">Loading gradebook...</p>
+                  <p className="text-xs text-on-surface-variant font-medium">{t('Loading gradebook...')}</p>
                 </div>
               </div>
             ) : students.length === 0 ? (
@@ -528,7 +530,7 @@ export default function TeacherAssessmentsPage() {
                 <div className="text-center space-y-3">
                   <span className="material-symbols-outlined text-3xl text-on-surface-variant">group_off</span>
                   <p className="text-xs text-on-surface-variant font-medium">
-                    No students found in this class.
+                    {t('No students found in this class.')}
                   </p>
                 </div>
               </div>
@@ -539,7 +541,7 @@ export default function TeacherAssessmentsPage() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/50 z-10 min-w-[200px]">Student</th>
+                        <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/50 z-10 min-w-[200px]">{t('Student')}</th>
                         {exams.map((exam, i) => (
                           <th
                             key={exam.id}
@@ -589,7 +591,7 @@ export default function TeacherAssessmentsPage() {
                     {students.length > 0 && (
                       <tfoot className="bg-slate-50 border-t-2 border-slate-100 font-bold text-slate-600">
                         <tr>
-                          <td className="p-4 text-right uppercase text-xs tracking-wider sticky left-0 bg-slate-50 z-10">Class Average</td>
+                          <td className="p-4 text-right uppercase text-xs tracking-wider sticky left-0 bg-slate-50 z-10">{t('Class Average')}</td>
                           {exams.map((exam, i) => (
                             <td key={exam.id} className={`p-4 text-center ${i === exams.length - 1 ? 'text-primary' : ''}`}>
                               {calculateAverage(exam.id)} /{maxScore}
@@ -632,17 +634,17 @@ export default function TeacherAssessmentsPage() {
                       </div>
                     </div>
                   ))}
-                  {/* Mobile Class Average */}
-                  <div className="p-4 bg-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Class Average</span>
-                    <div className="flex gap-4">
-                      {exams.map((exam, i) => (
-                        <span key={exam.id} className={`text-sm font-bold ${i === exams.length - 1 ? 'text-primary' : ''}`}>
-                          {calculateAverage(exam.id)}/{maxScore}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+{/* Mobile Class Average */}
+                   <div className="p-4 bg-slate-50 flex items-center justify-between">
+                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('Class Average')}</span>
+                     <div className="flex gap-4">
+                       {exams.map((exam, i) => (
+                         <span key={exam.id} className={`text-sm font-bold ${i === exams.length - 1 ? 'text-primary' : ''}`}>
+                           {calculateAverage(exam.id)}/{maxScore}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
                 </div>
               </>
             )}
@@ -654,23 +656,23 @@ export default function TeacherAssessmentsPage() {
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-premium rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/20 mb-4">
               <span className="material-symbols-outlined text-2xl sm:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>fact_check</span>
             </div>
-            <h4 className="font-bold text-slate-900 mb-2">Finalize Marks</h4>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">Ensure all cells are filled. Submitting will lock the gradebook for administrative review.</p>
+            <h4 className="font-bold text-slate-900 mb-2">{t('Finalize Marks')}</h4>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">{t('Ensure all cells are filled. Submitting will lock the gradebook for administrative review.')}</p>
             <button
               onClick={handleSubmit}
               disabled={!isWindowOpen || saveState === 'saving' || students.length === 0}
               className="w-full py-3.5 bg-primary text-white rounded-xl font-bold shadow-md hover:-translate-y-0.5 active:translate-y-0 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2 min-h-[48px]"
             >
-              <span className="material-symbols-outlined text-sm">send</span> Submit to Admin
+              <span className="material-symbols-outlined text-sm">send</span> {t('Submit to Admin')}
             </button>
             {!isWindowOpen && (
               <p className="text-[10px] text-error mt-2 flex items-center gap-1 font-semibold">
-                <span className="material-symbols-outlined text-[10px]">lock</span> Sequence closed
+                <span className="material-symbols-outlined text-[10px]">lock</span> {t('Sequence closed')}
               </p>
             )}
             {saveState === 'saving' && (
               <p className="text-[10px] text-primary mt-2 flex items-center gap-1 font-semibold">
-                <span className="material-symbols-outlined text-[10px] animate-spin">sync</span> Waiting for sync...
+                <span className="material-symbols-outlined text-[10px] animate-spin">sync</span> {t('Waiting for sync...')}
               </p>
             )}
           </div>

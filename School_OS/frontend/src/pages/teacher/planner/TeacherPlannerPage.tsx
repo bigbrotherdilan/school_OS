@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTeacherStore } from '../../../stores/teacherStore';
 import { useTeacherData } from '../../../hooks/useTeacherData';
 import { useToastStore } from '../../../stores/toastStore';
@@ -30,6 +31,7 @@ interface Term {
 }
 
 export default function TeacherPlannerPage() {
+  const { t } = useTranslation('teacher');
   const { activeAssignment } = useTeacherStore();
   const { fetchSchemes, updateScheme, markTaught, markPlanned, fetchTerms } = useTeacherData();
   const { addToast } = useToastStore();
@@ -107,10 +109,10 @@ export default function TeacherPlannerPage() {
       const updated = toTaught ? await markTaught(week.id) : await markPlanned(week.id);
       setWeeks((prev) => prev.map((w) => (w.id === updated.id ? updated : w)));
       notesRef.current[updated.id] = updated.notes || '';
-      if (toTaught) addToast(`Week ${week.week_number} marked as taught.`, 'success');
-      else addToast(`Week ${week.week_number} returned to planned.`, 'info');
+      if (toTaught) addToast(t('Week {{week}} marked as taught.', { week: week.week_number }), 'success');
+      else addToast(t('Week {{week}} returned to planned.', { week: week.week_number }), 'info');
     } catch (e: any) {
-      addToast(e.response?.data?.detail || 'Could not update this week.', 'error');
+      addToast(e.response?.data?.detail || t('Could not update this week.'), 'error');
     } finally {
       setBusyId(null);
     }

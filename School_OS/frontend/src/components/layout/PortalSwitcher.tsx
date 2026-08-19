@@ -1,8 +1,10 @@
-﻿import { useLocation, useNavigate } from 'react-router-dom';
+﻿import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { LayoutGrid, GraduationCap, ArrowLeftRight } from 'lucide-react';
 
 export default function PortalSwitcher() {
+  const { t } = useTranslation('layout');
   const { roles } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,12 +45,12 @@ export default function PortalSwitcher() {
         {isCurrentlyTeacher ? (
           <>
             <LayoutGrid className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-            <span className="hidden sm:inline">To Admin Portal</span>
+            <span className="hidden sm:inline">{t('To Admin Portal')}</span>
           </>
         ) : (
           <>
             <GraduationCap className="w-3.5 h-3.5 group-hover:-rotate-12 transition-transform" />
-            <span className="hidden sm:inline">To Teacher Portal</span>
+            <span className="hidden sm:inline">{t('To Teacher Portal')}</span>
           </>
         )}
         <ArrowLeftRight className="w-3 h-3 opacity-40 group-hover:translate-x-1 transition-transform" />

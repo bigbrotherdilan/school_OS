@@ -10,6 +10,7 @@ from apps.authentication.serializers import UserSerializer
 class TeachingAssignmentSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source='teacher.user.full_name', read_only=True)
     subject_name = serializers.CharField(source='subject.name', read_only=True)
+    subject_cycle_name = serializers.CharField(source='subject.cycle.name', read_only=True, default=None)
     class_name = serializers.CharField(source='academic_class.name', read_only=True)
     series_code = serializers.CharField(source='series.code', read_only=True, default=None)
     academic_year_name = serializers.CharField(source='academic_year.name', read_only=True)
@@ -22,6 +23,7 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
         model = TeachingAssignment
         fields = [
             'id', 'teacher', 'teacher_name', 'subject', 'subject_name',
+            'subject_cycle_name',
             'academic_class', 'class_name', 'series', 'series_code',
             'student_group', 'group_name',
             'academic_year', 'academic_year_name',
@@ -33,6 +35,20 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
             'academic_class': {'required': True, 'allow_null': False},
             'academic_year': {'required': True, 'allow_null': False},
         }
+
+    def validate(self, attrs):
+        subject = attrs.get('subject')
+        academic_class = attrs.get('academic_class')
+        if subject and academic_class and subject.cycle_id and academic_class.cycle_id \
+                and subject.cycle_id != academic_class.cycle_id:
+            raise serializers.ValidationError({
+                'subject': (
+                    f'"{subject.name}" belongs to the {subject.cycle.name} while '
+                    f'{academic_class.name} is in the {academic_class.cycle.name}. '
+                    'Pick the subject from the class\u2019s own cycle.'
+                )
+            })
+        return attrs
 
 
 class TeacherSerializer(serializers.ModelSerializer):

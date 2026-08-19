@@ -1,9 +1,11 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTeacherStore } from '../../../stores/teacherStore';
 import PortalSwitcher from '../PortalSwitcher';
 import NotificationsDropdown from '../NotificationsDropdown';
+import LanguageSwitcher from '../../ui/LanguageSwitcher';
 
 interface TeacherTopBarProps {
   onMenuClick: () => void;
@@ -12,6 +14,7 @@ interface TeacherTopBarProps {
 }
 
 export default function TeacherTopBar({ onMenuClick, title = "Dashboard" }: TeacherTopBarProps) {
+  const { t } = useTranslation('layout');
   const { user, logout } = useAuthStore();
   const { assignments, activeAssignment, setActiveAssignment, loading } = useTeacherStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -31,13 +34,13 @@ export default function TeacherTopBar({ onMenuClick, title = "Dashboard" }: Teac
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-black tracking-tighter text-blue-900 shrink-0">{title}</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-black tracking-tighter text-blue-900 shrink-0">{t(title)}</h2>
         <div className="hidden sm:block h-6 w-px bg-slate-200 mx-1 sm:mx-2 shrink-0"></div>
         {!loading && assignments.length > 0 ? (
           <div className="relative hidden sm:block">
             <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-2 text-blue-900 font-medium bg-blue-50 px-3 py-1.5 rounded-full text-xs lg:text-sm animate-in fade-in transition-all hover:bg-blue-100 cursor-pointer max-w-[200px] lg:max-w-none">
               <span className="w-2 h-2 bg-secondary rounded-full animate-pulse shrink-0"></span>
-              <span className="hidden sm:inline">Active Context:</span>
+              <span className="hidden sm:inline">{t('Active Context:')}</span>
               <span className="truncate">{activeAssignment?.subject_name} &bull; {activeAssignment?.class_name}</span>
               <span className="material-symbols-outlined text-sm">expand_more</span>
             </button>
@@ -46,7 +49,7 @@ export default function TeacherTopBar({ onMenuClick, title = "Dashboard" }: Teac
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)}></div>
                 <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                  <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Switch Context</div>
+                  <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">{t('Switch Context')}</div>
                   <div className="max-h-60 overflow-y-auto">
                     {assignments.map(a => (
                       <button 
@@ -65,30 +68,31 @@ export default function TeacherTopBar({ onMenuClick, title = "Dashboard" }: Teac
           </div>
         ) : (
           <div className="hidden sm:flex items-center gap-2 text-slate-400 font-medium bg-slate-50 px-3 py-1 rounded-full text-sm italic">
-            No assignments loaded
+            {t('No assignments loaded')}
           </div>
         )}
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2 lg:gap-6 shrink-0">
+        <LanguageSwitcher />
         <PortalSwitcher />
         <NotificationsDropdown />
         <button 
             onClick={handleLogout}
             className="p-2 text-error hover:bg-error-container/20 rounded-full transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
-            title="Logout"
+            title={t('Logout')}
           >
             <span className="material-symbols-outlined">logout</span>
           </button>
         
         <div className="flex items-center gap-2 sm:gap-3 lg:pl-4 lg:border-l border-slate-100">
           <div className="hidden sm:block text-right">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Teacher</p>
-            <p className="text-sm font-bold text-blue-900">{user?.full_name || 'Teacher'}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('Teacher')}</p>
+            <p className="text-sm font-bold text-blue-900">{user?.full_name || t('Teacher')}</p>
           </div>
           <div className="relative group cursor-pointer">
             <img 
-              alt="Teacher Profile" 
+              alt={t('Teacher Profile')} 
               className="w-8 h-8 lg:w-10 lg:h-10 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-105"
               src={user?.profile_photo || "https://lh3.googleusercontent.com/aida-public/AB6AXuBDVOARZ5zm99lDik1UPx3YgBKmhr5kJ0hyEwUC3rBqZ_q_z1f0bDUsVZ9dAMrjpk8cs0VXXlI9SXmJSjRLMqbaINXhFMRhAEy7pRXr0To3rO_FgZmaL5t8yGb-gl-J3F3rbQxp-3a1TPpBU3CtLLYPVcLBXErfKBtN8vl6_Fv9p_KSm8zDjC4sdlpoiUkzwkhV94uJkuApCAC-BrheC2I7XoKeskKyaTCA8s5muMOG_lI5DHRcUiAONaCMjW3ILJvh12U5oozzgQ"} 
             />

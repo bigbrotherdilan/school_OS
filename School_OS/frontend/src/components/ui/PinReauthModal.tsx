@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface PinReauthModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export default function PinReauthModal({
   title = 'Verify Your PIN',
   subtitle = 'Enter your 6-digit PIN to continue',
 }: PinReauthModalProps) {
+  const { t } = useTranslation('ui');
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -57,7 +59,7 @@ export default function PinReauthModal({
       onVerified();
       onClose();
     } catch (err: any) {
-      const detail = err.response?.data?.detail || 'Incorrect PIN. Please try again.';
+      const detail = err.response?.data?.detail || t('Incorrect PIN. Please try again.');
       setError(detail);
       setDigits(['', '', '', '', '', '']);
       setTimeout(() => inputRefs.current[0]?.focus(), 50);
@@ -150,12 +152,12 @@ export default function PinReauthModal({
 
           {/* Title */}
           <h2 className="text-2xl font-black text-on-surface tracking-tight mb-2">
-            {title}
+            {t(title)}
           </h2>
 
           {/* Subtitle */}
           <p className="text-on-surface-variant text-sm font-medium leading-relaxed px-2 mb-8">
-            {subtitle}
+            {t(subtitle)}
           </p>
 
           {/* PIN Input */}
@@ -200,7 +202,7 @@ export default function PinReauthModal({
               disabled={isVerifying}
               className="flex-1 py-3 px-6 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface-variant font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-50"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               onClick={() => verifyPin(pin)}
@@ -210,7 +212,7 @@ export default function PinReauthModal({
               {isVerifying ? (
                 <span className="material-symbols-outlined animate-spin text-lg">sync</span>
               ) : (
-                'Verify'
+                t('Verify')
               )}
             </button>
           </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 import { fetchSchoolProfile, submitEnrollmentInquiry, type PublicSchoolProfile } from '../../services/publicApi';
+import { useTranslation } from 'react-i18next';
 
 function formatFee(amount: number): string {
   return new Intl.NumberFormat('en-US').format(amount) + ' FCFA';
@@ -19,6 +20,7 @@ function groupFeesByClass(fees: PublicSchoolProfile['fee_structures']) {
 }
 
 export default function SchoolProfile() {
+  const { t } = useTranslation('publicSite');
   const { schoolId } = useParams();
   const [school, setSchool] = useState<PublicSchoolProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function SchoolProfile() {
         <PublicNavbar />
         <div className="pt-32 pb-20 text-center px-6">
           <div className="inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-          <p className="text-on-surface-variant">Loading school profile...</p>
+          <p className="text-on-surface-variant">{t('Loading school profile...')}</p>
         </div>
         <PublicFooter />
       </div>
@@ -61,10 +63,10 @@ export default function SchoolProfile() {
         <PublicNavbar />
         <div className="pt-32 pb-20 text-center px-6">
           <span className="material-symbols-outlined text-on-surface-variant/30 text-[100px] block mb-4">school_off</span>
-          <h1 className="text-4xl font-bold text-primary mb-4">School Not Found</h1>
-          <p className="text-on-surface-variant mb-8">The school you're looking for doesn't exist or has been removed.</p>
+          <h1 className="text-4xl font-bold text-primary mb-4">{t('School Not Found')}</h1>
+          <p className="text-on-surface-variant mb-8">{t("The school you're looking for doesn't exist or has been removed.")}</p>
           <Link to="/schools" className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all inline-block">
-            Browse All Schools
+            {t('Browse All Schools')}
           </Link>
         </div>
         <PublicFooter />
@@ -73,10 +75,10 @@ export default function SchoolProfile() {
   }
 
   const tabs = [
-    { id: 'about' as const, label: 'About', icon: 'info' },
-    { id: 'programs' as const, label: 'Classes', icon: 'menu_book' },
-    { id: 'fees' as const, label: 'Fees', icon: 'payments' },
-    { id: 'enroll' as const, label: 'Enroll Online', icon: 'how_to_reg' },
+    { id: 'about' as const, label: t('About'), icon: 'info' },
+    { id: 'programs' as const, label: t('Classes'), icon: 'menu_book' },
+    { id: 'fees' as const, label: t('Fees'), icon: 'payments' },
+    { id: 'enroll' as const, label: t('Enroll Online'), icon: 'how_to_reg' },
   ];
 
   const feeGroups = groupFeesByClass(school.fee_structures);
@@ -105,7 +107,7 @@ export default function SchoolProfile() {
       });
       setEnrollSubmitted(true);
     } catch {
-      setEnrollError('Something went wrong. Please try again.');
+      setEnrollError(t('Something went wrong. Please try again.'));
     } finally {
       setEnrollSubmitting(false);
     }
@@ -118,9 +120,9 @@ export default function SchoolProfile() {
       <div className="pt-20 bg-gradient-to-b from-primary-container/5 to-transparent">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+            <Link to="/" className="hover:text-primary transition-colors">{t('Home')}</Link>
             <span className="material-symbols-outlined text-sm">chevron_right</span>
-            <Link to="/schools" className="hover:text-primary transition-colors">Schools</Link>
+            <Link to="/schools" className="hover:text-primary transition-colors">{t('Schools')}</Link>
             <span className="material-symbols-outlined text-sm">chevron_right</span>
             <span className="text-primary font-semibold">{school.school_name}</span>
           </div>
@@ -169,7 +171,7 @@ export default function SchoolProfile() {
                 onClick={() => setActiveTab('enroll')}
                 className="bg-secondary text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all text-sm"
               >
-                Enroll Now
+                {t('Enroll Now')}
               </button>
             </div>
           </div>
@@ -180,10 +182,10 @@ export default function SchoolProfile() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Students', value: school.student_count?.toLocaleString() ?? '-', icon: 'groups' },
-              { label: 'Teachers', value: school.teacher_count?.toLocaleString() ?? '-', icon: 'person' },
-              { label: 'Classes', value: String(school.classes.length || '-'), icon: 'menu_book' },
-              { label: 'Type', value: school.school_type_display || '-', icon: 'category' },
+              { label: t('Students'), value: school.student_count?.toLocaleString() ?? '-', icon: 'groups' },
+              { label: t('Teachers'), value: school.teacher_count?.toLocaleString() ?? '-', icon: 'person' },
+              { label: t('Classes'), value: String(school.classes.length || '-'), icon: 'menu_book' },
+              { label: t('Type'), value: school.school_type_display || '-', icon: 'category' },
             ].map((stat, i) => (
               <div key={i} className="bg-white rounded-2xl p-4 text-center border border-outline-variant/10 shadow-sm">
                 <span className="material-symbols-outlined text-primary text-xl mb-1 block">{stat.icon}</span>
@@ -227,7 +229,7 @@ export default function SchoolProfile() {
                 </div>
               )}
               <div className="bg-white rounded-3xl p-8 md:p-10 border border-outline-variant/10 shadow-sm">
-                <h3 className="text-xl font-bold text-primary mb-6">Contact Information</h3>
+                <h3 className="text-xl font-bold text-primary mb-6">{t('Contact Information')}</h3>
                 <div className="grid md:grid-cols-2 gap-5">
                   {school.address && (
                     <div className="flex items-center gap-4">
@@ -235,7 +237,7 @@ export default function SchoolProfile() {
                         <span className="material-symbols-outlined text-white text-lg">location_on</span>
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Address</div>
+                        <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t('Address')}</div>
                         <div className="text-on-surface font-medium text-sm">{school.address}</div>
                       </div>
                     </div>
@@ -248,7 +250,7 @@ export default function SchoolProfile() {
           {activeTab === 'programs' && (
             <div>
               {school.classes.length === 0 ? (
-                <div className="text-center py-12 text-on-surface-variant">Class information not available yet.</div>
+                <div className="text-center py-12 text-on-surface-variant">{t('Class information not available yet.')}</div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {school.classes.map((cls) => (
@@ -270,20 +272,20 @@ export default function SchoolProfile() {
           {activeTab === 'fees' && (
             <div>
               {school.fee_structures.length === 0 ? (
-                <div className="text-center py-12 text-on-surface-variant">Fee information not available yet.</div>
+                <div className="text-center py-12 text-on-surface-variant">{t('Fee information not available yet.')}</div>
               ) : (
                 <div className="space-y-6">
                   {hasClassSpecificFees ? (
                     Object.entries(feeGroups).map(([className, fees]) => (
                       <div key={className}>
                         <h3 className="text-lg font-bold text-primary mb-3">
-                          {className === '_all' ? 'All Classes (Unified Fee)' : className}
+                          {className === '_all' ? t('All Classes (Unified Fee)') : className}
                         </h3>
                         <div className="grid md:grid-cols-2 gap-3">
                           {fees.map((fee, i) => (
                             <div key={i} className="bg-white rounded-xl p-5 border border-outline-variant/10 shadow-sm flex justify-between items-center">
                               <span className="text-on-surface font-medium">{fee.category}</span>
-                              <span className="text-primary font-extrabold">{formatFee(fee.amount)} <span className="text-xs font-normal text-on-surface-variant">/ year</span></span>
+                              <span className="text-primary font-extrabold">{formatFee(fee.amount)} <span className="text-xs font-normal text-on-surface-variant">/ {t('year')}</span></span>
                             </div>
                           ))}
                         </div>
@@ -294,7 +296,7 @@ export default function SchoolProfile() {
                       {feeGroups['_all']?.map((fee, i) => (
                         <div key={i} className="bg-white rounded-xl p-5 border border-outline-variant/10 shadow-sm flex justify-between items-center">
                           <span className="text-on-surface font-medium">{fee.category}</span>
-                          <span className="text-primary font-extrabold">{formatFee(fee.amount)} <span className="text-xs font-normal text-on-surface-variant">/ year</span></span>
+                          <span className="text-primary font-extrabold">{formatFee(fee.amount)} <span className="text-xs font-normal text-on-surface-variant">/ {t('year')}</span></span>
                         </div>
                       ))}
                     </div>
@@ -309,23 +311,23 @@ export default function SchoolProfile() {
               {enrollSubmitted ? (
                 <div className="bg-white rounded-3xl p-12 border border-outline-variant/10 shadow-sm text-center">
                   <span className="material-symbols-outlined text-secondary text-6xl mb-4 block">check_circle</span>
-                  <h2 className="text-2xl font-bold text-primary mb-3">Enrollment Inquiry Submitted!</h2>
+                  <h2 className="text-2xl font-bold text-primary mb-3">{t('Enrollment Inquiry Submitted!')}</h2>
                   <p className="text-on-surface-variant mb-6">
-                    Thank you for your interest in {school.school_name}. The school administration will contact you shortly.
+                    {t('Thank you for your interest in')} {school.school_name}. {t('The school administration will contact you shortly.')}
                   </p>
                   <button
                     onClick={() => { setEnrollSubmitted(false); }}
                     className="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg transition-all"
                   >
-                    Submit Another
+                    {t('Submit Another')}
                   </button>
                 </div>
               ) : (
                 <div className="bg-white rounded-3xl p-8 md:p-10 border border-outline-variant/10 shadow-sm">
                   <div className="text-center mb-8">
                     <span className="material-symbols-outlined text-primary text-4xl mb-3 block">how_to_reg</span>
-                    <h2 className="text-2xl font-bold text-primary mb-2">Enroll at {school.school_name}</h2>
-                    <p className="text-on-surface-variant text-sm">Fill out the form below and the school will contact you to finalize enrollment.</p>
+                    <h2 className="text-2xl font-bold text-primary mb-2">{t('Enroll at')} {school.school_name}</h2>
+                    <p className="text-on-surface-variant text-sm">{t('Fill out the form below and the school will contact you to finalize enrollment.')}</p>
                   </div>
                   {enrollError && (
                     <div className="bg-error-container/30 text-error rounded-xl p-4 mb-6 text-sm font-medium">{enrollError}</div>
@@ -334,83 +336,83 @@ export default function SchoolProfile() {
                     <input type="hidden" name="school_id" value={school.id} />
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Child's First Name *</label>
-                        <input name="child_first_name" type="text" required placeholder="First name"
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t("Child's First Name")} *</label>
+                        <input name="child_first_name" type="text" required placeholder={t('First name')}
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Child's Middle Name</label>
-                        <input name="child_middle_name" type="text" placeholder="Middle name"
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t("Child's Middle Name")}</label>
+                        <input name="child_middle_name" type="text" placeholder={t('Middle name')}
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Child's Last Name *</label>
-                        <input name="child_last_name" type="text" required placeholder="Last name"
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t("Child's Last Name")} *</label>
+                        <input name="child_last_name" type="text" required placeholder={t('Last name')}
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Date of Birth</label>
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Date of Birth')}</label>
                         <input name="date_of_birth" type="date"
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Gender</label>
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Gender')}</label>
                         <select name="gender"
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
-                          <option value="">Select</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
+                          <option value="">{t('Select')}</option>
+                          <option value="male">{t('Male')}</option>
+                          <option value="female">{t('Female')}</option>
                         </select>
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Grade / Class Applying For</label>
+                      <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Grade / Class Applying For')}</label>
                       <select name="grade"
                         className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
-                        <option value="">Select level</option>
+                        <option value="">{t('Select level')}</option>
                         {school.classes.map((cls) => (
                           <option key={cls.name} value={cls.name}>{cls.name}</option>
                         ))}
                       </select>
                     </div>
                     <div className="border-t border-outline-variant/20 pt-4 mt-4">
-                      <h3 className="font-bold text-primary mb-3">Parent / Guardian Information</h3>
+                      <h3 className="font-bold text-primary mb-3">{t('Parent / Guardian Information')}</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Parent Name *</label>
-                        <input name="parent_name" type="text" required placeholder="Full name"
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Parent Name')} *</label>
+                        <input name="parent_name" type="text" required placeholder={t('Full name')}
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Relationship</label>
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Relationship')}</label>
                         <select name="relationship"
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
-                          <option value="">Select</option>
-                          <option value="father">Father</option>
-                          <option value="mother">Mother</option>
-                          <option value="guardian">Guardian</option>
-                          <option value="other">Other</option>
+                          <option value="">{t('Select')}</option>
+                          <option value="father">{t('Father')}</option>
+                          <option value="mother">{t('Mother')}</option>
+                          <option value="guardian">{t('Guardian')}</option>
+                          <option value="other">{t('Other')}</option>
                         </select>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Phone Number *</label>
-                        <input name="parent_phone" type="tel" required placeholder="+237 6XX XXX XXX"
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Phone Number')} *</label>
+                        <input name="parent_phone" type="tel" required placeholder={t('+237 6XX XXX XXX')}
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Email</label>
-                        <input name="email" type="email" placeholder="parent@email.com"
+                        <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Email')}</label>
+                        <input name="email" type="email" placeholder={t('parent@email.com')}
                           className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">Additional Notes</label>
-                      <textarea name="notes" rows={3} placeholder="Any special requirements, previous school, medical conditions, etc."
+                      <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-1.5">{t('Additional Notes')}</label>
+                      <textarea name="notes" rows={3} placeholder={t('Any special requirements, previous school, medical conditions, etc.')}
                         className="w-full px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none" />
                     </div>
                     <button
@@ -418,10 +420,10 @@ export default function SchoolProfile() {
                       disabled={enrollSubmitting}
                       className="w-full bg-gradient-to-br from-primary to-primary-container text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                      {enrollSubmitting ? 'Submitting...' : 'Submit Enrollment Inquiry'}
+                      {enrollSubmitting ? t('Submitting...') : t('Submit Enrollment Inquiry')}
                     </button>
                     <p className="text-xs text-on-surface-variant text-center">
-                      By submitting, you agree to be contacted by {school.school_name} regarding this enrollment.
+                      {t('By submitting, you agree to be contacted by')} {school.school_name} {t('regarding this enrollment.')}
                     </p>
                   </form>
                 </div>

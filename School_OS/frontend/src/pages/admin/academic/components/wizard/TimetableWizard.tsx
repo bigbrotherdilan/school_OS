@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, BookOpen, User, Sparkles, CheckCircle2 } from 'lucide-react';
 import Step1SchoolWeek from './Step1SchoolWeek';
 import Step2SubjectHours from './Step2SubjectHours';
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function TimetableWizard({ sectionId, yearId, timetableSample, onDone, onCancel }: Props) {
+  const { t } = useTranslation('adminAcademic');
   const [step, setStep] = useState(0);  // 0-indexed
 
   const next = () => setStep(s => Math.min(s + 1, 3));
@@ -55,7 +57,7 @@ export default function TimetableWizard({ sectionId, yearId, timetableSample, on
                 <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${
                   active ? 'text-primary' : done ? 'text-on-surface' : 'text-outline'
                 }`}>
-                  {s.label}
+                  {t(s.label)}
                 </span>
               </div>
             );
@@ -68,7 +70,7 @@ export default function TimetableWizard({ sectionId, yearId, timetableSample, on
             onClick={onCancel}
             className="text-xs text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            ✕ Exit wizard
+            {t('✕ Exit wizard')}
           </button>
         </div>
       </div>

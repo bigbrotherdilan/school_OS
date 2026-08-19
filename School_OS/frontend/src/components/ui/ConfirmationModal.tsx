@@ -1,4 +1,5 @@
 ﻿import { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function ConfirmationModal({
   cancelText = 'Abort',
   isDestructive = false
 }: ConfirmationModalProps) {
+  const { t } = useTranslation('ui');
   if (!isOpen) return null;
 
   return (
@@ -54,7 +56,7 @@ export default function ConfirmationModal({
               onClick={onClose}
               className="flex-1 py-3 px-6 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface-variant font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-colors"
             >
-              {cancelText}
+              {t(cancelText)}
             </button>
             <button 
               onClick={() => {
@@ -67,7 +69,7 @@ export default function ConfirmationModal({
                   : 'bg-primary text-white hover:bg-primary/90 shadow-primary/20 hover:shadow-primary/30'
               }`}
             >
-              {confirmText}
+              {t(confirmText)}
             </button>
           </div>
         </div>

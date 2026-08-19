@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { reportsApi } from '../../services/reportsApi';
 
 interface YearReviewData {
@@ -34,6 +35,7 @@ function StatCard({ label, value, icon, color }: { label: string; value: string;
 }
 
 export default function SchoolYearReview() {
+  const { t } = useTranslation('adminStaffOps');
   const [data, setData] = useState<YearReviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,7 +43,7 @@ export default function SchoolYearReview() {
   useEffect(() => {
     reportsApi.getYearReview()
       .then(setData)
-      .catch((err) => setError(err.response?.data?.detail || 'Failed to load year review data.'))
+      .catch((err) => setError(err.response?.data?.detail || t('Failed to load year review data.')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -49,7 +51,7 @@ export default function SchoolYearReview() {
     return (
       <div className="p-12 flex items-center justify-center text-on-surface-variant">
         <span className="material-symbols-outlined animate-spin text-primary text-2xl mr-3">sync</span>
-        <span className="font-medium">Loading year review...</span>
+        <span className="font-medium">{t('Loading year review...')}</span>
       </div>
     );
   }
@@ -76,7 +78,7 @@ export default function SchoolYearReview() {
           className="bg-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-primary/20 transition-all hover:opacity-90 active:scale-95"
         >
           <span className="material-symbols-outlined text-lg">print</span>
-          Print / Save as PDF
+          {t('Print / Save as PDF')}
         </button>
       </div>
 
@@ -85,12 +87,12 @@ export default function SchoolYearReview() {
         {/* Cover Header */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-12 text-center">
           {data.school.logo_url && (
-            <img src={data.school.logo_url} alt="School Logo" className="h-16 mx-auto mb-4 object-contain" />
+            <img src={data.school.logo_url} alt={t('School Logo')} className="h-16 mx-auto mb-4 object-contain" />
           )}
           <h1 className="text-3xl font-bold mb-1">{data.school.name}</h1>
           {data.school.motto && <p className="text-gray-300 text-sm italic mb-4">"{data.school.motto}"</p>}
           <div className="inline-block bg-white/10 px-6 py-2 rounded-full mt-2">
-            <span className="text-lg font-semibold">School Year in Review {data.academic_year.name}</span>
+            <span className="text-lg font-semibold">{t('School Year in Review {{year}}', { year: data.academic_year.name })}</span>
           </div>
           <p className="text-gray-400 text-xs mt-4">
             {data.academic_year.start_date} - {data.academic_year.end_date}
@@ -100,25 +102,25 @@ export default function SchoolYearReview() {
         <div className="p-10 space-y-10">
           {/* Key Metrics */}
           <section>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">Key Metrics</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">{t('Key Metrics')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Students" value={data.students.total.toLocaleString()} icon="groups" color="bg-blue-500" />
-              <StatCard label="Teachers" value={data.teachers.total.toLocaleString()} icon="person" color="bg-violet-500" />
-              <StatCard label="Classes" value={data.classes.total.toLocaleString()} icon="class" color="bg-indigo-500" />
-              <StatCard label="Attendance" value={data.attendance.rate !== null ? `${data.attendance.rate}%` : '-'} icon="how_to_reg" color="bg-emerald-500" />
+              <StatCard label={t('Students')} value={data.students.total.toLocaleString()} icon="groups" color="bg-blue-500" />
+              <StatCard label={t('Teachers')} value={data.teachers.total.toLocaleString()} icon="person" color="bg-violet-500" />
+              <StatCard label={t('Classes')} value={data.classes.total.toLocaleString()} icon="class" color="bg-indigo-500" />
+              <StatCard label={t('Attendance')} value={data.attendance.rate !== null ? `${data.attendance.rate}%` : '-'} icon="how_to_reg" color="bg-emerald-500" />
             </div>
           </section>
 
           {/* Academic Performance */}
           <section>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">Academic Performance</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">{t('Academic Performance')}</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Average Score</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Average Score')}</span>
                 <p className="text-3xl font-bold text-gray-900">{data.academics.average_score !== null ? `${data.academics.average_score}%` : '-'}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Report Cards Generated</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Report Cards Generated')}</span>
                 <p className="text-3xl font-bold text-gray-900">{data.academics.report_cards_generated.toLocaleString()}</p>
               </div>
             </div>
@@ -126,30 +128,30 @@ export default function SchoolYearReview() {
 
           {/* Financial Summary */}
           <section>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">Financial Summary</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">{t('Financial Summary')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Total Fees</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Total Fees')}</span>
                 <p className="text-2xl font-bold text-gray-900">{formatCFA(data.finance.total_billed)} CFA</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Collected</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Collected')}</span>
                 <p className="text-2xl font-bold text-emerald-600">{formatCFA(data.finance.total_collected)} CFA</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Outstanding</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Outstanding')}</span>
                 <p className="text-2xl font-bold text-amber-600">{formatCFA(data.finance.outstanding)} CFA</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Collection Rate</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Collection Rate')}</span>
                 <p className="text-2xl font-bold text-gray-900">{data.finance.collection_rate !== null ? `${data.finance.collection_rate}%` : '-'}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Expenses</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Expenses')}</span>
                 <p className="text-2xl font-bold text-red-600">{formatCFA(data.finance.total_expenses)} CFA</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Net</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Net')}</span>
                 <p className={`text-2xl font-bold ${data.finance.net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                   {data.finance.net >= 0 ? '+' : ''}{formatCFA(data.finance.net)} CFA
                 </p>
@@ -159,15 +161,15 @@ export default function SchoolYearReview() {
 
           {/* Growth */}
           <section>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">Growth</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">{t('Growth')}</h2>
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">New Students This Year</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('New Students This Year')}</span>
                   <p className="text-3xl font-bold text-gray-900">{data.students.enrolled_this_year.toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Attendance Sessions Held</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">{t('Attendance Sessions Held')}</span>
                   <p className="text-3xl font-bold text-gray-900">{data.attendance.total_sessions.toLocaleString()}</p>
                 </div>
               </div>
@@ -178,9 +180,9 @@ export default function SchoolYearReview() {
         {/* Footer */}
         <div className="bg-gray-50 border-t border-gray-200 px-10 py-4 flex items-center justify-between">
           <span className="text-[9px] text-gray-400 font-medium tracking-wide">
-            Generated on {new Date(data.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {t('Generated on {{date}}', { date: new Date(data.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) })}
           </span>
-          <span className="text-[9px] text-gray-400 font-medium tracking-wide">Powered by School OS</span>
+          <span className="text-[9px] text-gray-400 font-medium tracking-wide">{t('Powered by School OS')}</span>
         </div>
       </div>
 

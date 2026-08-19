@@ -1,5 +1,6 @@
 ﻿import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToastStore } from '../../../stores/toastStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { useSectionStore } from '../../../stores/sectionStore';
@@ -39,15 +40,15 @@ function formatCFA(val: number): string {
   return `${val} CFA`;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t('Just now');
+  if (mins < 60) return t('{{mins}}m ago', { mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t('{{hrs}}h ago', { hrs });
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return t('{{days}}d ago', { days });
 }
 
 function formatMinutes(minutes: number): string {
@@ -119,12 +120,13 @@ function getMinutesForAction(action: string, description: string): number {
 
 export default function DashboardHome() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminGov');
   const { addToast } = useToastStore();
   const { user, tenants } = useAuthStore();
   const { activeSectionId } = useSectionStore();
 
-  const schoolName = tenants?.[0]?.school_name ?? 'Your School';
-  const userName = user?.first_name ?? user?.full_name?.split(' ')[0] ?? 'Admin';
+  const schoolName = tenants?.[0]?.school_name ?? t('Your School');
+  const userName = user?.first_name ?? user?.full_name?.split(' ')[0] ?? t('Admin');
 
   const [studentCount, setStudentCount] = useState<number | null>(null);
   const [teacherCount, setTeacherCount] = useState<number | null>(null);
@@ -253,7 +255,7 @@ export default function DashboardHome() {
 
   const handleExportAudit = async () => {
     try {
-      addToast('Preparing system audit export...', 'info');
+      addToast(t('Preparing system audit export...'), 'info');
       const response = await api.get('/audit/export/', { responseType: 'blob' });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -264,9 +266,9 @@ export default function DashboardHome() {
       link.click();
       link.remove();
 
-      addToast('Audit export downloaded successfully.', 'success');
+      addToast(t('Audit export downloaded successfully.'), 'success');
     } catch (err) {
-      addToast('Failed to generate audit export. Please check permissions.', 'error');
+      addToast(t('Failed to generate audit export. Please check permissions.'), 'error');
     }
   };
 
@@ -275,8 +277,8 @@ export default function DashboardHome() {
 
     if ((sectionCount ?? 0) === 0) {
       actions.push({
-        label: 'Create your first section',
-        detail: 'Required before classes, subjects, or students can be set up',
+        label: t('Create your first section'),
+        detail: t('Required before classes, subjects, or students can be set up'),
         icon: 'layers',
         path: '/admin/academic/setup',
         color: 'bg-purple-500',
@@ -286,8 +288,8 @@ export default function DashboardHome() {
 
     if (hasFinance && (outstanding ?? 0) > 0) {
       actions.push({
-        label: 'Send fee reminders',
-        detail: `${formatCFA(outstanding!)} outstanding`,
+        label: t('Send fee reminders'),
+        detail: t('{{amount}} outstanding', { amount: formatCFA(outstanding!) }),
         icon: 'request_quote',
         path: '/admin/finance/arrears',
         color: 'bg-amber-500',
@@ -297,8 +299,8 @@ export default function DashboardHome() {
 
     if ((studentCount ?? 0) > 0) {
       actions.push({
-        label: 'Generate report cards',
-        detail: 'For all enrolled students',
+        label: t('Generate report cards'),
+        detail: t('For all enrolled students'),
         icon: 'description',
         path: '/admin/academic/report-cards',
         color: 'bg-rose-500',
@@ -308,8 +310,8 @@ export default function DashboardHome() {
 
     if ((studentCount ?? 0) > 0 && attendanceRate !== null && attendanceRate < 85) {
       actions.push({
-        label: "Check today's attendance",
-        detail: `${attendanceRate.toFixed(1)}% average - below target`,
+        label: t("Check today's attendance"),
+        detail: t('{{rate}}% average - below target', { rate: attendanceRate.toFixed(1) }),
         icon: 'how_to_reg',
         path: '/admin/attendance',
         color: 'bg-orange-500',
@@ -319,8 +321,8 @@ export default function DashboardHome() {
 
     if ((studentCount ?? 0) === 0) {
       actions.push({
-        label: 'Enroll your first student',
-        detail: 'Get your school running',
+        label: t('Enroll your first student'),
+        detail: t('Get your school running'),
         icon: 'person_add',
         path: '/admin/academic/students/new',
         color: 'bg-blue-500',
@@ -330,8 +332,8 @@ export default function DashboardHome() {
 
     if ((classCount ?? 0) === 0) {
       actions.push({
-        label: 'Create your first class',
-        detail: 'Set up your class structure',
+        label: t('Create your first class'),
+        detail: t('Set up your class structure'),
         icon: 'class',
         path: '/admin/academic/setup',
         color: 'bg-indigo-500',
@@ -341,8 +343,8 @@ export default function DashboardHome() {
 
     if (!hasFinance) {
       actions.push({
-        label: 'Configure fee structure',
-        detail: 'Start tracking payments',
+        label: t('Configure fee structure'),
+        detail: t('Start tracking payments'),
         icon: 'payments',
         path: '/admin/finance/fee-setup',
         color: 'bg-emerald-500',
@@ -351,7 +353,7 @@ export default function DashboardHome() {
     }
 
     return actions;
-  }, [studentCount, classCount, sectionCount, hasFinance, outstanding, attendanceRate]);
+  }, [studentCount, classCount, sectionCount, hasFinance, outstanding, attendanceRate, t]);
 
   const urgentActions = useMemo(() => quickActions.filter(a => a.urgent), [quickActions]);
   const nonUrgentActions = useMemo(() => quickActions.filter(a => !a.urgent), [quickActions]);
@@ -387,7 +389,7 @@ export default function DashboardHome() {
               {getGreetingIcon()}
             </span>
             <span className="text-on-surface-variant text-sm font-medium">
-              {getGreeting()}, <span className="text-on-surface font-bold">{userName}</span>
+              {t(getGreeting())}, <span className="text-on-surface font-bold">{userName}</span>
             </span>
           </div>
           <h1 className="text-2xl sm:text-[2.5rem] font-semibold leading-tight tracking-tight text-on-surface">
@@ -395,7 +397,7 @@ export default function DashboardHome() {
               {schoolName}
             </span>
           </h1>
-          <p className="text-on-surface-variant mt-2 text-base">Your school at a glance</p>
+          <p className="text-on-surface-variant mt-2 text-base">{t('Your school at a glance')}</p>
         </div>
         <div className="flex gap-3 flex-shrink-0">
           <button
@@ -403,8 +405,8 @@ export default function DashboardHome() {
             className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg shadow-primary/20 transition-all hover:opacity-90 active:scale-95 bg-gradient-to-br from-primary to-primary-container"
           >
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
-            <span className="hidden sm:inline">New Registration</span>
-            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">{t('New Registration')}</span>
+            <span className="sm:hidden">{t('New')}</span>
           </button>
         </div>
       </div>
@@ -413,7 +415,7 @@ export default function DashboardHome() {
       {kpiLoading ? (
         <div className="flex items-center justify-center py-10 text-on-surface-variant">
           <span className="material-symbols-outlined animate-spin text-primary text-2xl mr-3">sync</span>
-          <span className="font-medium text-sm">Loading metrics...</span>
+          <span className="font-medium text-sm">{t('Loading metrics...')}</span>
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
@@ -424,7 +426,7 @@ export default function DashboardHome() {
           >
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Students</span>
+                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('Students')}</span>
                 {(studentCount ?? 0) > 0 && (
                   <span className="w-2 h-2 rounded-full bg-secondary flex-shrink-0" />
                 )}
@@ -434,7 +436,7 @@ export default function DashboardHome() {
               </div>
             </div>
             <p className="text-xl sm:text-[2.25rem] font-bold leading-none text-on-surface">{studentCount?.toLocaleString() ?? '-'}</p>
-            <span className="text-[11px] text-on-surface-variant mt-2 block">Enrolled</span>
+            <span className="text-[11px] text-on-surface-variant mt-2 block">{t('Enrolled')}</span>
           </button>
 
           {/* Teachers */}
@@ -444,7 +446,7 @@ export default function DashboardHome() {
           >
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Teachers</span>
+                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('Teachers')}</span>
                 {(teacherCount ?? 0) > 0 && (
                   <span className="w-2 h-2 rounded-full bg-secondary flex-shrink-0" />
                 )}
@@ -454,7 +456,7 @@ export default function DashboardHome() {
               </div>
             </div>
             <p className="text-xl sm:text-[2.25rem] font-bold leading-none text-on-surface">{teacherCount?.toLocaleString() ?? '-'}</p>
-            <span className="text-[11px] text-on-surface-variant mt-2 block">Active staff</span>
+            <span className="text-[11px] text-on-surface-variant mt-2 block">{t('Active staff')}</span>
           </button>
 
           {/* Attendance Rate */}
@@ -464,7 +466,7 @@ export default function DashboardHome() {
           >
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Attendance</span>
+                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('Attendance')}</span>
                 {attendanceRate !== null && (
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                     attendanceRate > 85 ? 'bg-secondary' : attendanceRate >= 70 ? 'bg-amber-500' : 'bg-error'
@@ -478,7 +480,7 @@ export default function DashboardHome() {
             <p className={`text-xl sm:text-[2.25rem] font-bold leading-none ${attendanceColor}`}>
               {attendanceRate !== null ? `${attendanceRate.toFixed(1)}%` : '-'}
             </p>
-            <span className="text-[11px] text-on-surface-variant mt-2 block">Average</span>
+            <span className="text-[11px] text-on-surface-variant mt-2 block">{t('Average')}</span>
           </button>
 
           {/* Fees */}
@@ -488,7 +490,7 @@ export default function DashboardHome() {
           >
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Fees</span>
+                <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('Fees')}</span>
                 {(outstanding ?? 0) > 0 && (
                   <span className="w-2 h-2 rounded-full bg-error flex-shrink-0 animate-pulse" />
                 )}
@@ -519,7 +521,7 @@ export default function DashboardHome() {
                 <span className={`text-[11px] font-medium ${
                   (outstanding ?? 0) > 0 ? 'text-error' : 'text-secondary'
                 }`}>
-                  {(outstanding ?? 0) > 0 ? outstandingFormatted + ' due' : 'All clear'}
+                  {(outstanding ?? 0) > 0 ? t('{{amount}} due', { amount: outstandingFormatted }) : t('All clear')}
                 </span>
               </div>
             )}
@@ -533,18 +535,18 @@ export default function DashboardHome() {
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>monitor_heart</span>
           </div>
-          <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">School Health</span>
+          <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{t('School Health')}</span>
           {timeSaved !== null && timeSaved > 0 && (
             <span className="ml-auto text-[11px] text-on-surface-variant">
               <span className="material-symbols-outlined text-xs align-middle mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
-              <span className="font-bold text-secondary">{formatMinutes(timeSaved)}</span> saved
+              <span className="font-bold text-secondary">{t('{{time}} saved', { time: formatMinutes(timeSaved) })}</span>
             </span>
           )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <div>
             <div className="flex justify-between items-baseline mb-1.5">
-              <span className="text-xs text-on-surface-variant font-medium">Attendance</span>
+              <span className="text-xs text-on-surface-variant font-medium">{t('Attendance')}</span>
               <span className="text-xs text-on-surface-variant">
                 {attendanceRate !== null ? `${attendanceRate.toFixed(1)}%` : '-'}
               </span>
@@ -562,7 +564,7 @@ export default function DashboardHome() {
 
           <div>
             <div className="flex justify-between items-baseline mb-1.5">
-              <span className="text-xs text-on-surface-variant font-medium">Fee Collection</span>
+              <span className="text-xs text-on-surface-variant font-medium">{t('Fee Collection')}</span>
               <span className="text-xs text-on-surface-variant">{feeCollectionRate !== null ? `${feeCollectionRate}%` : '-'}</span>
             </div>
             <div className="relative h-2 bg-surface-container-highest rounded-full overflow-hidden">
@@ -578,8 +580,8 @@ export default function DashboardHome() {
 
           <div>
             <div className="flex justify-between items-baseline mb-1.5">
-              <span className="text-xs text-on-surface-variant font-medium">Audit Trail</span>
-              <span className="text-xs text-on-surface-variant">{auditLogs.length} events</span>
+              <span className="text-xs text-on-surface-variant font-medium">{t('Audit Trail')}</span>
+              <span className="text-xs text-on-surface-variant">{t('{{count}} events', { count: auditLogs.length })}</span>
             </div>
             <div className="relative h-2 bg-surface-container-highest rounded-full overflow-hidden">
               <div
@@ -596,7 +598,7 @@ export default function DashboardHome() {
 
       {/* ─── C. Action Center ─── */}
       <section>
-        <h3 className="text-sm font-bold text-on-surface mb-4">What needs your attention today</h3>
+        <h3 className="text-sm font-bold text-on-surface mb-4">{t('What needs your attention today')}</h3>
         {quickActions.length > 0 ? (
           <div className="space-y-3">
             {urgentActions.length > 0 && (
@@ -607,7 +609,7 @@ export default function DashboardHome() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
-                      {urgentActions.length} urgent {urgentActions.length === 1 ? 'action' : 'actions'}
+                      {urgentActions.length} {t('urgent')} {urgentActions.length === 1 ? t('action') : t('actions')}
                     </p>
                   </div>
                 </div>
@@ -642,7 +644,7 @@ export default function DashboardHome() {
                     <span className="material-symbols-outlined text-sm transition-transform duration-200" style={{ transform: suggestionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                       expand_more
                     </span>
-                    {suggestionsExpanded ? 'Hide' : 'Show'} suggested actions ({nonUrgentActions.length})
+                    {suggestionsExpanded ? t('Hide') : t('Show')} {t('suggested actions')} ({nonUrgentActions.length})
                   </button>
                 )}
                 {(suggestionsExpanded || urgentActions.length === 0) && (
@@ -674,8 +676,8 @@ export default function DashboardHome() {
               <span className="material-symbols-outlined text-secondary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
             </div>
             <div>
-              <p className="text-sm font-bold text-on-surface">All clear!</p>
-              <p className="text-xs text-on-surface-variant">Your school is running smoothly.</p>
+              <p className="text-sm font-bold text-on-surface">{t('All clear!')}</p>
+              <p className="text-xs text-on-surface-variant">{t('Your school is running smoothly.')}</p>
             </div>
           </div>
         )}
@@ -683,7 +685,7 @@ export default function DashboardHome() {
 
       {/* ─── Quick Navigation ─── */}
       <section>
-        <h3 className="text-sm font-bold text-on-surface mb-4">Quick access</h3>
+        <h3 className="text-sm font-bold text-on-surface mb-4">{t('Quick access')}</h3>
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 lg:grid-cols-8 sm:flex-nowrap sm:overflow-x-visible">
           {[
             { label: 'Register Student', icon: 'person_add_alt', path: '/admin/academic/students/new', color: 'bg-blue-500' },
@@ -703,7 +705,7 @@ export default function DashboardHome() {
               <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${mod.color} flex items-center justify-center text-white mb-2 shadow-sm group-hover:scale-110 transition-transform`}>
                 <span className="material-symbols-outlined text-lg sm:text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{mod.icon}</span>
               </div>
-              <span className="text-[11px] font-bold text-on-surface block leading-tight">{mod.label}</span>
+              <span className="text-[11px] font-bold text-on-surface block leading-tight">{t(mod.label)}</span>
             </button>
           ))}
         </div>
@@ -712,10 +714,10 @@ export default function DashboardHome() {
       {/* ─── D. Activity & Audit (Merged) ─── */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-on-surface">Activity & Audit</h3>
+          <h3 className="text-sm font-bold text-on-surface">{t('Activity & Audit')}</h3>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/admin/audit')} className="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
-              View all
+              {t('View all')}
               <span className="material-symbols-outlined text-xs">open_in_new</span>
             </button>
           </div>
@@ -725,13 +727,13 @@ export default function DashboardHome() {
           {auditLoading && !auditFetched ? (
             <div className="p-10 flex items-center justify-center text-on-surface-variant">
               <span className="material-symbols-outlined animate-spin text-primary text-xl mr-3">sync</span>
-              <span className="text-sm font-medium">Loading activity...</span>
+              <span className="text-sm font-medium">{t('Loading activity...')}</span>
             </div>
           ) : recentActivity.length === 0 ? (
             <div className="p-10 text-center">
               <span className="material-symbols-outlined text-3xl text-on-surface-variant/40 mb-2 block">history</span>
-              <p className="text-on-surface-variant text-sm font-medium">No activity yet.</p>
-              <p className="text-on-surface-variant/60 text-xs mt-1">Actions will appear here as you use the platform.</p>
+              <p className="text-on-surface-variant text-sm font-medium">{t('No activity yet.')}</p>
+              <p className="text-on-surface-variant/60 text-xs mt-1">{t('Actions will appear here as you use the platform.')}</p>
             </div>
           ) : (
             <>
@@ -754,11 +756,11 @@ export default function DashboardHome() {
                         <span className="mx-1.5">·</span>
                         <span className="inline-flex items-center gap-1">
                           <span className="material-symbols-outlined text-[10px] align-middle">{MODULE_ICONS[log.module] || 'circle'}</span>
-                          {MODULE_LABELS[log.module] || log.module}
+                          {t(MODULE_LABELS[log.module] || log.module)}
                         </span>
                       </p>
                     </div>
-                    <span className="text-[11px] text-on-surface-variant/60 whitespace-nowrap flex-shrink-0">{timeAgo(log.created_at)}</span>
+                    <span className="text-[11px] text-on-surface-variant/60 whitespace-nowrap flex-shrink-0">{timeAgo(log.created_at, t)}</span>
                   </div>
                 ))}
               </div>
@@ -771,15 +773,15 @@ export default function DashboardHome() {
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary text-lg">table_chart</span>
                     <div className="text-left">
-                      <h4 className="text-sm font-bold text-on-surface">Full Audit Trail</h4>
-                      <p className="text-xs text-on-surface-variant">{auditLogs.length} events logged</p>
+                      <h4 className="text-sm font-bold text-on-surface">{t('Full Audit Trail')}</h4>
+                      <p className="text-xs text-on-surface-variant">{t('{{count}} events logged', { count: auditLogs.length })}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {showAudit && (
                       <button onClick={(e) => { e.stopPropagation(); handleExportAudit(); }} className="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
                         <span className="material-symbols-outlined text-xs">file_download</span>
-                        Export
+                        {t('Export')}
                       </button>
                     )}
                     <span className="material-symbols-outlined text-on-surface-variant transition-transform duration-200" style={{ transform: showAudit ? 'rotate(180deg)' : 'rotate(0deg)' }}>
@@ -793,18 +795,18 @@ export default function DashboardHome() {
                     {auditLoading ? (
                       <div className="p-10 flex items-center justify-center text-on-surface-variant">
                         <span className="material-symbols-outlined animate-spin text-primary text-xl mr-3">sync</span>
-                        <span className="text-sm font-medium">Loading audit trail...</span>
+                        <span className="text-sm font-medium">{t('Loading audit trail...')}</span>
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left">
                           <thead>
                             <tr className="bg-surface-container-low">
-                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Action</th>
-                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hidden sm:table-cell">Module</th>
-                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hidden lg:table-cell">User</th>
-                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hidden xl:table-cell">Timestamp</th>
-                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
+                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Action')}</th>
+                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hidden sm:table-cell">{t('Module')}</th>
+                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hidden lg:table-cell">{t('User')}</th>
+                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hidden xl:table-cell">{t('Timestamp')}</th>
+                              <th className="px-4 sm:px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('Status')}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-outline-variant/5">

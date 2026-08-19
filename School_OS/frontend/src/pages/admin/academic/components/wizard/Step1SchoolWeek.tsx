@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Trash2, Clock, CalendarDays, Plus } from 'lucide-react';
 import { api } from '../../../../../services/api';
 import { useToastStore } from '../../../../../stores/toastStore';
@@ -87,6 +88,7 @@ export default function Step1SchoolWeek({
     days: ['1', '2', '3', '4', '5'],
   });
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation('adminAcademic');
   const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
@@ -106,10 +108,10 @@ export default function Step1SchoolWeek({
         periods,
         working_days: days,
       });
-      addToast('School week settings saved successfully!', 'success');
+      addToast(t('School week settings saved successfully!'), 'success');
       onNext();
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to save week settings.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to save week settings.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -122,15 +124,15 @@ export default function Step1SchoolWeek({
     <div className="space-y-6">
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 p-6 shadow-sm">
         <h3 className="text-lg font-bold flex items-center gap-2">
-          <Clock className="w-5 h-5 text-primary" /> Step 1: School Week Settings
+          <Clock className="w-5 h-5 text-primary" /> {t('Step 1: School Week Settings')}
         </h3>
         <p className="text-sm text-on-surface-variant mt-1">
-          Configure working hours, days, periods per day, and break times for all classes in this section.
+          {t('Configure working hours, days, periods per day, and break times for all classes in this section.')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">First Period Starts</label>
+            <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">{t('First Period Starts')}</label>
             <input
               type="time"
               value={form.start}
@@ -139,19 +141,19 @@ export default function Step1SchoolWeek({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Period Length (mins)</label>
+            <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">{t('Period Length (mins)')}</label>
             <select
               value={form.periodLen}
               onChange={(e) => setForm({ ...form, periodLen: parseInt(e.target.value) })}
               className={inputCls}
             >
               {[30, 35, 40, 45, 50, 55, 60].map((m) => (
-                <option key={m} value={m}>{m} minutes</option>
+                <option key={m} value={m}>{t('{{m}} minutes', { m })}</option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Periods Per Day</label>
+            <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant">{t('Periods Per Day')}</label>
             <input
               type="number"
               min={2}
@@ -165,7 +167,7 @@ export default function Step1SchoolWeek({
 
         <div className="mt-6 space-y-2">
           <label className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-1.5">
-            <CalendarDays className="w-4 h-4" /> Working Days
+            <CalendarDays className="w-4 h-4" /> {t('Working Days')}
           </label>
           <div className="flex flex-wrap gap-2">
             {DAYS.map((d) => {
@@ -187,7 +189,7 @@ export default function Step1SchoolWeek({
                       : 'bg-surface-container-low text-on-surface-variant border-outline-variant/10 hover:bg-surface-container'
                   }`}
                 >
-                  {d.label}
+                  {t(d.label)}
                 </button>
               );
             })}
@@ -197,26 +199,26 @@ export default function Step1SchoolWeek({
         <div className="mt-8 border-t border-outline-variant/10 pt-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h4 className="font-bold text-sm">School Breaks</h4>
-              <p className="text-xs text-on-surface-variant">Periods adjust automatically around these breaks.</p>
+              <h4 className="font-bold text-sm">{t('School Breaks')}</h4>
+              <p className="text-xs text-on-surface-variant">{t('Periods adjust automatically around these breaks.')}</p>
             </div>
             <button
               onClick={() => setForm((wf) => ({ ...wf, breaks: [...wf.breaks, { time: '10:00', len: 20 }] }))}
               className="text-xs font-black uppercase tracking-widest text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-1 transition-all"
             >
-              <Plus className="w-3.5 h-3.5" /> Add Break
+              <Plus className="w-3.5 h-3.5" /> {t('Add Break')}
             </button>
           </div>
 
           <div className="space-y-3">
             {form.breaks.length === 0 && (
-              <p className="text-xs text-outline italic">No breaks configured. Periods run back-to-back.</p>
+              <p className="text-xs text-outline italic">{t('No breaks configured. Periods run back-to-back.')}</p>
             )}
             {form.breaks.map((br, i) => (
               <div key={i} className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant/10">
-                <span className="text-[10px] font-black uppercase tracking-widest text-outline w-20">Break {i + 1}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-outline w-20">{t('Break {{i}}', { i: i + 1 })}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-on-surface-variant">Starts after period ending at:</span>
+                  <span className="text-xs text-on-surface-variant">{t('Starts after period ending at:')}</span>
                   <input
                     type="time"
                     value={br.time}
@@ -230,7 +232,7 @@ export default function Step1SchoolWeek({
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-on-surface-variant">Length:</span>
+                  <span className="text-xs text-on-surface-variant">{t('Length:')}</span>
                   <select
                     value={br.len}
                     onChange={(e) =>
@@ -242,7 +244,7 @@ export default function Step1SchoolWeek({
                     className="bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
                   >
                     {[10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 75, 90].map((m) => (
-                      <option key={m} value={m}>{m} mins</option>
+                      <option key={m} value={m}>{t('{{m}} mins', { m })}</option>
                     ))}
                   </select>
                 </div>
@@ -258,11 +260,11 @@ export default function Step1SchoolWeek({
         </div>
 
         <div className="mt-8 bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
-          <p className="text-[11px] font-black uppercase tracking-widest text-outline mb-2">Live Periods Preview</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-outline mb-2">{t('Live Periods Preview')}</p>
           <div className="flex flex-wrap gap-2">
             {buildPeriods(form).map((p, i) => (
               <span key={i} className="px-3 py-1.5 rounded-lg bg-white border border-outline-variant/10 text-xs font-bold text-on-surface">
-                P{i + 1}: {p.start} – {p.end}
+                {t('P{{n}}: {{start}} – {{end}}', { n: i + 1, start: p.start, end: p.end })}
               </span>
             ))}
           </div>
@@ -275,7 +277,7 @@ export default function Step1SchoolWeek({
           disabled={saving}
           className="bg-primary text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save & Continue'}
+          {saving ? t('Saving...') : t('Save & Continue')}
         </button>
       </div>
     </div>

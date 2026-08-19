@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
@@ -45,6 +46,7 @@ type NotificationItem =
 const POLL_INTERVAL_MS = 45000;
 
 export default function NotificationsDropdown() {
+  const { t } = useTranslation('layout');
   const navigate = useNavigate();
   const { roles } = useAuthStore();
   const [open, setOpen] = useState(false);
@@ -239,13 +241,13 @@ export default function NotificationsDropdown() {
   const timeAgo = (ts: string) => {
     try {
       const seconds = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-      if (seconds < 60) return 'just now';
+      if (seconds < 60) return t('just now');
       const minutes = Math.floor(seconds / 60);
-      if (minutes < 60) return `${minutes}m ago`;
+      if (minutes < 60) return t('{{minutes}}m ago', { minutes });
       const hours = Math.floor(minutes / 60);
-      if (hours < 24) return `${hours}h ago`;
+      if (hours < 24) return t('{{hours}}h ago', { hours });
       const days = Math.floor(hours / 24);
-      if (days < 7) return `${days}d ago`;
+      if (days < 7) return t('{{days}}d ago', { days });
       return new Date(ts).toLocaleDateString();
     } catch {
       return '';
@@ -286,13 +288,13 @@ export default function NotificationsDropdown() {
 
   const itemMeta = (item: NotificationItem) => {
     if (item.type === 'notification') return item.data.category_display;
-    if (item.type === 'announcement') return `By ${item.data.created_by_name} • ${item.data.audience_display}`;
-    return `From ${item.data.sender_name}`;
+    if (item.type === 'announcement') return t('By {{name}} • {{audience}}', { name: item.data.created_by_name, audience: item.data.audience_display });
+    return t('From {{name}}', { name: item.data.sender_name });
   };
 
   const itemTitle = (item: NotificationItem) => {
     if (item.type === 'announcement') return item.data.title;
-    if (item.type === 'message') return item.data.subject || 'Direct Message';
+    if (item.type === 'message') return item.data.subject || t('Direct Message');
     return item.data.title;
   };
 
@@ -301,7 +303,7 @@ export default function NotificationsDropdown() {
       <button
         onClick={handleBellClick}
         className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all"
-        title="Notifications"
+        title={t('Notifications')}
       >
         <span className="material-symbols-outlined">notifications</span>
         {unreadCount > 0 && (
@@ -314,10 +316,10 @@ export default function NotificationsDropdown() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-900">Notifications</h3>
+            <h3 className="font-bold text-slate-900">{t('Notifications')}</h3>
             {unreadCount > 0 && (
               <span className="text-xs bg-error/10 text-error font-semibold px-2 py-0.5 rounded-full">
-                {unreadCount} unread
+                {t('{{count}} unread', { count: unreadCount })}
               </span>
             )}
           </div>
@@ -332,7 +334,7 @@ export default function NotificationsDropdown() {
             {!loading && items.length === 0 && (
               <div className="py-12 text-center">
                 <span className="material-symbols-outlined text-slate-300 text-4xl mb-2">notifications_off</span>
-                <p className="text-sm text-slate-400">No notifications yet</p>
+                <p className="text-sm text-slate-400">{t('No notifications yet')}</p>
               </div>
             )}
 
@@ -393,7 +395,7 @@ export default function NotificationsDropdown() {
                 onClick={handleViewAll}
                 className="text-xs font-semibold text-primary hover:underline"
               >
-                View all notifications
+                {t('View all notifications')}
               </button>
             </div>
           )}
@@ -435,9 +437,9 @@ export default function NotificationsDropdown() {
                       ? selectedItem.data.category_display
                       : selectedItem.type === 'announcement'
                       ? selectedItem.data.is_urgent
-                        ? 'Urgent Announcement'
-                        : 'Announcement'
-                      : 'Direct Message'}
+                        ? t('Urgent Announcement')
+                        : t('Announcement')
+                      : t('Direct Message')}
                   </span>
                   <h2 className="text-xl font-bold tracking-tight mt-1 leading-snug">
                     {itemTitle(selectedItem)}
@@ -452,9 +454,9 @@ export default function NotificationsDropdown() {
                 <div>
                   <span className="font-semibold text-slate-700">
                     {selectedItem.type === 'announcement'
-                      ? `Author: ${selectedItem.data.created_by_name}`
+                      ? t('Author: {{name}}', { name: selectedItem.data.created_by_name })
                       : selectedItem.type === 'message'
-                      ? `From: ${selectedItem.data.sender_name}`
+                      ? t('From: {{name}}', { name: selectedItem.data.sender_name })
                       : 'School OS'}
                   </span>
                   {selectedItem.type === 'announcement' && (
@@ -481,14 +483,14 @@ export default function NotificationsDropdown() {
                     }}
                     className="px-5 py-2.5 rounded-xl font-semibold bg-primary text-white hover:bg-primary/90 active:scale-95 transition-all text-sm"
                   >
-                    View details
+                    {t('View details')}
                   </button>
                 )}
                 <button
                   onClick={() => setSelectedItem(null)}
                   className="px-5 py-2.5 rounded-xl font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all text-sm"
                 >
-                  Dismiss
+                  {t('Dismiss')}
                 </button>
               </div>
             </div>

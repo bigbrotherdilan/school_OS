@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Outlet, useNavigate } from 'react-router-dom';
 import BursarSidebar from './BursarSidebar';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTenantStore } from '../../../stores/tenantStore';
 
 export default function BursarLayout() {
+  const { t } = useTranslation('layout');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
@@ -49,8 +51,8 @@ export default function BursarLayout() {
 
             <div className="flex items-center gap-2 ml-auto">
               <div className="text-right hidden md:block">
-                <p className="text-xs font-bold text-on-surface">{user?.full_name || 'Bursar'}</p>
-                <p className="text-[10px] text-emerald-600 uppercase tracking-widest font-bold">Finance Access</p>
+                <p className="text-xs font-bold text-on-surface">{user?.full_name || t('Bursar')}</p>
+                <p className="text-[10px] text-emerald-600 uppercase tracking-widest font-bold">{t('Finance Access')}</p>
               </div>
               <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-black">
                 {initials}
@@ -58,7 +60,7 @@ export default function BursarLayout() {
               <button
                 onClick={() => setShowLogoutConfirm(true)}
                 className="ml-1 lg:ml-2 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-lg transition-colors"
-                title="Logout"
+                title={t('Logout')}
               >
                 <span className="material-symbols-outlined text-lg">logout</span>
               </button>
@@ -71,7 +73,7 @@ export default function BursarLayout() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                <p className="text-sm text-on-surface-variant font-medium">Loading...</p>
+                <p className="text-sm text-on-surface-variant font-medium">{t('Loading...')}</p>
               </div>
             </div>
           )}
@@ -86,21 +88,21 @@ export default function BursarLayout() {
               <div className="w-14 h-14 bg-error-container/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="material-symbols-outlined text-error text-2xl">logout</span>
               </div>
-              <h3 className="text-lg font-bold text-on-surface mb-2">Confirm Logout</h3>
-              <p className="text-sm text-on-surface-variant">You will be signed out and redirected to the login page.</p>
+              <h3 className="text-lg font-bold text-on-surface mb-2">{t('Confirm Logout')}</h3>
+              <p className="text-sm text-on-surface-variant">{t('You will be signed out and redirected to the login page.')}</p>
             </div>
             <div className="flex border-t border-outline-variant/10">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
                 className="flex-1 py-3 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low transition-colors"
               >
-                Cancel
+                {t('Cancel')}
               </button>
               <button
                 onClick={handleLogout}
                 className="flex-1 py-3 text-sm font-semibold text-error hover:bg-error-container/20 transition-colors border-l border-outline-variant/10"
               >
-                Logout
+                {t('Logout')}
               </button>
             </div>
           </div>

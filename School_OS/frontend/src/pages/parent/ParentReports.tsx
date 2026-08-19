@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParentStore } from '../../stores/parentStore';
 import { useAuthStore } from '../../stores/authStore';
 import { reportsApi } from '../../services/reportsApi';
@@ -15,6 +16,7 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 const ParentReports = () => {
+  const { t } = useTranslation('parent');
   const { dashboardData } = useParentStore();
   const { user } = useAuthStore();
   const wards = dashboardData?.wards || [];
@@ -67,8 +69,8 @@ const ParentReports = () => {
     <div className="flex flex-col gap-5 pb-6">
       {/* Header */}
       <header>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Report Cards</h1>
-        <p className="text-sm text-slate-500 mt-1">Download termly academic reports</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{t('Report Cards')}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t('Download termly academic reports')}</p>
       </header>
 
       {/* Ward Switcher (if multiple children) */}
@@ -113,8 +115,8 @@ const ParentReports = () => {
       ) : reportCards.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
           <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">description</span>
-          <p className="font-bold text-slate-900">No Report Cards Yet</p>
-          <p className="text-sm text-slate-500 mt-1">Report cards will appear once your school generates them.</p>
+          <p className="font-bold text-slate-900">{t('No Report Cards Yet')}</p>
+          <p className="text-sm text-slate-500 mt-1">{t('Report cards will appear once your school generates them.')}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -140,7 +142,7 @@ const ParentReports = () => {
                 ) : (
                   <span className="material-symbols-outlined text-lg">download</span>
                 )}
-                {downloadingId === rc.id ? 'Downloading...' : 'Download PDF'}
+                {downloadingId === rc.id ? t('Downloading...') : t('Download PDF')}
               </button>
             </div>
           ))}
@@ -156,10 +158,10 @@ const ParentReports = () => {
             </div>
             <div className="flex-1">
               <p className="font-bold text-slate-900 text-sm">{activeWard.first_name} {activeWard.last_name}</p>
-              <p className="text-xs text-slate-500">{activeWard.grade} • {reportCards.length} report(s)</p>
+              <p className="text-xs text-slate-500">{activeWard.grade} • {t('{{count}} report(s)', { count: reportCards.length })}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-500">Attendance</p>
+              <p className="text-xs text-slate-500">{t('Attendance')}</p>
               <p className="font-bold text-slate-900">{activeWard.attendance_percentage}%</p>
             </div>
           </div>

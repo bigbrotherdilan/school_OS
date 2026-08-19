@@ -1,4 +1,5 @@
 ﻿import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const FAQ_ITEMS = [
   {
@@ -35,6 +36,7 @@ const SHORTCUTS = [
 ];
 
 export default function HelpPanel() {
+  const { t } = useTranslation('layout');
   const [open, setOpen] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ export default function HelpPanel() {
       <button
         onClick={() => setOpen(!open)}
         className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all"
-        title="Help & Support"
+        title={t('Help & Support')}
       >
         <span className="material-symbols-outlined">help</span>
       </button>
@@ -60,14 +62,14 @@ export default function HelpPanel() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-primary/5 to-transparent">
-            <h3 className="font-bold text-slate-900 text-lg">Help & Support</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Find answers to common questions</p>
+            <h3 className="font-bold text-slate-900 text-lg">{t('Help & Support')}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{t('Find answers to common questions')}</p>
           </div>
 
           <div className="max-h-[480px] overflow-y-auto">
             {/* FAQ Section */}
             <div className="px-5 pt-4 pb-2">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Frequently Asked Questions</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">{t('Frequently Asked Questions')}</h4>
               <div className="space-y-2">
                 {FAQ_ITEMS.map((item, i) => (
                   <div key={i} className="border border-slate-100 rounded-xl overflow-hidden">
@@ -75,7 +77,7 @@ export default function HelpPanel() {
                       onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                       className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
                     >
-                      <span className="text-sm font-medium text-slate-700">{item.q}</span>
+                      <span className="text-sm font-medium text-slate-700">{t(item.q)}</span>
                       <span
                         className={`material-symbols-outlined text-slate-400 text-lg transition-transform ${
                           expandedFaq === i ? 'rotate-180' : ''
@@ -86,7 +88,7 @@ export default function HelpPanel() {
                     </button>
                     {expandedFaq === i && (
                       <div className="px-4 pb-3">
-                        <p className="text-sm text-slate-500 leading-relaxed">{item.a}</p>
+                        <p className="text-sm text-slate-500 leading-relaxed">{t(item.a)}</p>
                       </div>
                     )}
                   </div>
@@ -96,15 +98,15 @@ export default function HelpPanel() {
 
             {/* Keyboard Shortcuts */}
             <div className="px-5 pt-2 pb-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Keyboard Shortcuts</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">{t('Keyboard Shortcuts')}</h4>
               <div className="space-y-2">
                 {SHORTCUTS.map((s, i) => (
                   <div key={i} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
-                    <span className="text-sm text-slate-600">{s.desc}</span>
+                    <span className="text-sm text-slate-600">{t(s.desc)}</span>
                     <div className="flex items-center gap-1">
                       {s.keys.map((k, j) =>
                         k === 'then' ? (
-                          <span key={j} className="text-[10px] text-slate-400 mx-0.5">then</span>
+                          <span key={j} className="text-[10px] text-slate-400 mx-0.5">{t('then')}</span>
                         ) : (
                           <kbd
                             key={j}
@@ -128,8 +130,8 @@ export default function HelpPanel() {
                 <span className="material-symbols-outlined text-primary text-lg">support_agent</span>
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-700">Need more help?</p>
-                <p className="text-[11px] text-slate-400">Contact your school administrator</p>
+                <p className="text-xs font-semibold text-slate-700">{t('Need more help?')}</p>
+                <p className="text-[11px] text-slate-400">{t('Contact your school administrator')}</p>
               </div>
             </div>
           </div>

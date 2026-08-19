@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useToastStore } from '../../stores/toastStore';
 import { api } from '../../services/api';
 import { Mail, ArrowLeft, CheckCircle, KeyRound } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation('auth');
   const { addToast } = useToastStore();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,7 +19,7 @@ export default function ForgotPasswordPage() {
       await api.post('/auth/password-reset-request/', { email });
       setSent(true);
     } catch {
-      addToast('Failed to send reset email. Try again.', 'error');
+      addToast(t('Failed to send reset email. Try again.'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -31,22 +33,22 @@ export default function ForgotPasswordPage() {
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto">
               <CheckCircle className="w-8 h-8 text-emerald-600" />
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-900">Check Your Email</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900">{t('Check Your Email')}</h2>
             <p className="text-sm text-slate-500">
-              If an account exists with <span className="font-bold text-slate-700">{email}</span>, we've sent a password reset link.
+              {t('If an account exists with')} <span className="font-bold text-slate-700">{email}</span>{t(", we've sent a password reset link.")}
             </p>
             <p className="text-xs text-slate-400">
-              Didn't receive it? Check your spam folder or try again.
+              {t("Didn't receive it? Check your spam folder or try again.")}
             </p>
             <div className="pt-4 space-y-3">
               <button
                 onClick={() => { setSent(false); setEmail(''); }}
                 className="w-full py-3 px-4 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all"
               >
-                Try Another Email
+                {t('Try Another Email')}
               </button>
               <Link to="/login" className="block text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
-                Back to Login
+                {t('Back to Login')}
               </Link>
             </div>
           </div>
@@ -63,8 +65,8 @@ export default function ForgotPasswordPage() {
         <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
           <KeyRound className="w-7 h-7 text-white" />
         </div>
-        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Reset Password</h2>
-        <p className="mt-2 text-sm text-slate-500">Enter your email to receive a reset link</p>
+        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{t('Reset Password')}</h2>
+        <p className="mt-2 text-sm text-slate-500">{t('Enter your email to receive a reset link')}</p>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
@@ -72,7 +74,7 @@ export default function ForgotPasswordPage() {
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-800"></div>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Email Address')}</label>
               <div className="mt-1 relative rounded-xl shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="text-slate-400 w-5 h-5" />
@@ -93,13 +95,13 @@ export default function ForgotPasswordPage() {
               disabled={isSubmitting || !email}
               className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-800 disabled:opacity-50 transition-all"
             >
-              {isSubmitting ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : 'Send Reset Link'}
+              {isSubmitting ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : t('Send Reset Link')}
             </button>
           </form>
         </div>
         <div className="mt-6 text-center">
           <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1 justify-center">
-            <ArrowLeft className="w-4 h-4" /> Back to Login
+            <ArrowLeft className="w-4 h-4" /> {t('Back to Login')}
           </Link>
         </div>
       </div>

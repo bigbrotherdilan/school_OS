@@ -2,12 +2,14 @@ import React, { useState, useRef } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import { useTranslation } from 'react-i18next';
 
 interface ProfileEditorProps {
   role: 'admin' | 'teacher' | 'parent';
 }
 
 const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
+  const { t } = useTranslation('ui');
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,13 +50,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      addToast('File too large. Maximum size is 5MB.', 'error');
+      addToast(t('File too large. Maximum size is 5MB.'), 'error');
       return;
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      addToast('Unsupported file type. Use JPG, PNG, WebP, or GIF.', 'error');
+      addToast(t('Unsupported file type. Use JPG, PNG, WebP, or GIF.'), 'error');
       return;
     }
 
@@ -73,9 +75,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
         useAuthStore.getState().tenants,
         useAuthStore.getState().roles,
       );
-      addToast('Profile photo updated.', 'success');
+      addToast(t('Profile photo updated.'), 'success');
     } catch {
-      addToast('Failed to upload photo.', 'error');
+      addToast(t('Failed to upload photo.'), 'error');
     } finally {
       setUploadingPhoto(false);
     }
@@ -103,9 +105,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
         useAuthStore.getState().tenants,
         useAuthStore.getState().roles,
       );
-      addToast('Profile saved successfully.', 'success');
+      addToast(t('Profile saved successfully.'), 'success');
     } catch {
-      addToast('Failed to save profile.', 'error');
+      addToast(t('Failed to save profile.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -126,7 +128,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
               className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 hover:border-primary transition-colors"
             >
               {photoUrl ? (
-                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                <img src={photoUrl} alt={t('Profile')} className="w-full h-full object-cover" />
               ) : (
                 <div className={`w-full h-full ${accentColor} text-white flex items-center justify-center font-black text-2xl`}>
                   {getInitials()}
@@ -153,7 +155,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
           {/* Name Fields */}
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">First Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">{t('First Name')}</label>
               <input
                 type="text"
                 value={firstName}
@@ -162,7 +164,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">Middle Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">{t('Middle Name')}</label>
               <input
                 type="text"
                 value={middleName}
@@ -171,7 +173,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ role }) => {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">Last Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">{t('Last Name')}</label>
               <input
                 type="text"
                 value={lastName}

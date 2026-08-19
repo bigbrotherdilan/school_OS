@@ -1,5 +1,7 @@
 ﻿import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../../ui/LanguageSwitcher';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -11,6 +13,7 @@ const navLinks = [
 ];
 
 export default function PublicNavbar() {
+  const { t } = useTranslation('layout');
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -32,38 +35,39 @@ export default function PublicNavbar() {
                 School<span className="text-secondary">OS</span>
               </span>
               <span className="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase opacity-70 hidden sm:block">
-                School Management Platform
+                {t('School Management Platform')}
               </span>
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center space-x-7">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 className={
                   isActive(link.to)
-                    ? 'text-blue-900 font-semibold border-b-2 border-blue-900 pb-1'
-                    : 'text-slate-600 hover:text-blue-900 transition-colors'
+                    ? 'text-blue-900 font-semibold border-b-2 border-blue-900 pb-1 whitespace-nowrap text-sm'
+                    : 'text-slate-600 hover:text-blue-900 transition-colors whitespace-nowrap text-sm'
                 }
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ))}
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <LanguageSwitcher />
             <Link
               to="/login"
               className="px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
             >
-              Login
+              {t('Login')}
             </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden p-2 -mr-2 text-slate-600 hover:text-blue-900 transition-colors"
-              aria-label="Toggle menu"
+              aria-label={t('Toggle menu')}
             >
               <span className="material-symbols-outlined text-2xl">{mobileOpen ? 'close' : 'menu'}</span>
             </button>
@@ -88,7 +92,7 @@ export default function PublicNavbar() {
                       : 'text-slate-600 hover:bg-slate-50 rounded-xl px-4 py-3 transition-colors'
                   }
                 >
-                  {link.label}
+                  {t(link.label)}
                 </Link>
               ))}
             </div>

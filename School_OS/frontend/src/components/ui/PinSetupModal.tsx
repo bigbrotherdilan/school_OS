@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface PinSetupModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export default function PinSetupModal({
   onSuccess,
   currentPinIsSet,
 }: PinSetupModalProps) {
+  const { t } = useTranslation('ui');
   const [step, setStep] = useState<Step>(currentPinIsSet ? 'current' : 'new');
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [newDigits, setNewDigits] = useState<string[]>(['', '', '', '', '', '']);
@@ -94,7 +96,7 @@ export default function PinSetupModal({
       await api.post('/auth/pin/set/', { current_pin: currentPin, new_pin: newPin });
       onSuccess();
     } catch (err: any) {
-      const detail = err.response?.data?.detail || 'Failed to set PIN. Please try again.';
+      const detail = err.response?.data?.detail || t('Failed to set PIN. Please try again.');
       setError(detail);
       setNewDigits(['', '', '', '', '', '']);
       setConfirmDigits(['', '', '', '', '', '']);
@@ -108,7 +110,7 @@ export default function PinSetupModal({
   const handleConfirmComplete = useCallback(async (confirmPin: string) => {
     const newPin = newDigits.join('');
     if (confirmPin !== newPin) {
-      setError('PINs do not match. Please try again.');
+      setError(t('PINs do not match. Please try again.'));
       setConfirmDigits(['', '', '', '', '', '']);
       setTimeout(() => confirmRef.current[0]?.focus(), 50);
       return;
@@ -230,11 +232,11 @@ export default function PinSetupModal({
           </div>
 
           <h2 className="text-2xl font-black text-on-surface tracking-tight mb-2">
-            {cfg.title}
+            {t(cfg.title)}
           </h2>
 
           <p className="text-on-surface-variant text-sm font-medium leading-relaxed px-2 mb-8">
-            {cfg.subtitle}
+            {t(cfg.subtitle)}
           </p>
 
           <div className="flex gap-3 mb-4">
@@ -276,7 +278,7 @@ export default function PinSetupModal({
               disabled={isSubmitting}
               className="flex-1 py-3 px-6 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface-variant font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-50"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             {step !== 'current' && (
               <button
@@ -295,9 +297,9 @@ export default function PinSetupModal({
                 {isSubmitting ? (
                   <span className="material-symbols-outlined animate-spin text-lg">sync</span>
                 ) : step === 'new' ? (
-                  'Next'
+                  t('Next')
                 ) : (
-                  'Set PIN'
+                  t('Set PIN')
                 )}
               </button>
             )}

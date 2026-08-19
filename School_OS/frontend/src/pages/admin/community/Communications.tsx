@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 
 export default function Communications() {
+  const { t } = useTranslation('adminGov');
   const { addToast } = useToastStore();
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,9 +46,9 @@ export default function Communications() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Internal Communications</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">Announcements & Messaging</h2>
-          <p className="text-on-surface-variant text-lg mt-2">Broadcast school-wide announcements and communicate directly with parents, teachers, and staff.</p>
+          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Internal Communications')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Announcements & Messaging')}</h2>
+          <p className="text-on-surface-variant text-lg mt-2">{t('Broadcast school-wide announcements and communicate directly with parents, teachers, and staff.')}</p>
         </div>
         <button
           onClick={() => setComposing(!composing)}
@@ -55,37 +57,37 @@ export default function Communications() {
           <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
             {composing ? 'close' : 'campaign'}
           </span>
-          {composing ? 'Cancel' : 'New Announcement'}
+          {composing ? t('Cancel') : t('New Announcement')}
         </button>
       </div>
 
       {/* Composer */}
       {composing && (
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-lg p-8 animate-in slide-in-from-top duration-300">
-          <h3 className="text-xl font-bold text-on-surface mb-6">Compose Announcement</h3>
+          <h3 className="text-xl font-bold text-on-surface mb-6">{t('Compose Announcement')}</h3>
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-on-surface mb-2">Title</label>
+              <label className="block text-sm font-semibold text-on-surface mb-2">{t('Title')}</label>
               <input
                 value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })}
                 className="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:ring-primary focus:border-primary bg-surface-bright placeholder-outline focus:outline-none"
-                placeholder="Enter announcement title..."
+                placeholder={t('Enter announcement title...')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-on-surface mb-2">Message</label>
+              <label className="block text-sm font-semibold text-on-surface mb-2">{t('Message')}</label>
               <textarea
                 value={form.body}
                 onChange={e => setForm({ ...form, body: e.target.value })}
                 rows={4}
                 className="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:ring-primary focus:border-primary bg-surface-bright placeholder-outline focus:outline-none resize-none"
-                placeholder="Write the body of the announcement..."
+                placeholder={t('Write the body of the announcement...')}
               />
             </div>
             <div className="flex gap-6 items-end">
               <div className="flex-1">
-                <label className="block text-sm font-semibold text-on-surface mb-2">Target Audience</label>
+                <label className="block text-sm font-semibold text-on-surface mb-2">{t('Target Audience')}</label>
                 <div className="flex gap-2 flex-wrap">
                   {audienceOptions.map(opt => (
                     <button
@@ -98,7 +100,7 @@ export default function Communications() {
                         }`}
                     >
                       <span className="material-symbols-outlined text-lg">{opt.icon}</span>
-                      {opt.label}
+                      {t(opt.label)}
                     </button>
                   ))}
                 </div>
@@ -111,17 +113,17 @@ export default function Communications() {
                   onChange={e => setForm({ ...form, is_urgent: e.target.checked })}
                   className="h-4 w-4 text-error focus:ring-error border-outline-variant rounded"
                 />
-                <label htmlFor="urgent" className="text-sm font-semibold text-error cursor-pointer">Mark as Urgent</label>
+                <label htmlFor="urgent" className="text-sm font-semibold text-error cursor-pointer">{t('Mark as Urgent')}</label>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/15">
               <button onClick={() => setComposing(false)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors">
-                Discard
+                {t('Discard')}
               </button>
               <button
                 onClick={async () => {
                   if (!form.title.trim() || !form.body.trim()) {
-                    addToast('Title and message are required.', 'error');
+                    addToast(t('Title and message are required.'), 'error');
                     return;
                   }
                   setPublishing(true);
@@ -133,14 +135,14 @@ export default function Communications() {
                       is_urgent: form.is_urgent,
                       published: true,
                     });
-                    addToast('Announcement published successfully!', 'success');
+                    addToast(t('Announcement published successfully!'), 'success');
                     setForm({ title: '', body: '', audience: 'all', is_urgent: false });
                     setComposing(false);
                     // Refresh list
                     const res = await api.get('/notifications/announcements/');
                     setAnnouncements(res.data.results || res.data);
                   } catch (err: any) {
-                    addToast(err.response?.data?.detail || 'Failed to publish.', 'error');
+                    addToast(err.response?.data?.detail || t('Failed to publish.'), 'error');
                   } finally {
                     setPublishing(false);
                   }
@@ -149,7 +151,7 @@ export default function Communications() {
                 className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-lg">{publishing ? 'sync' : 'send'}</span>
-                {publishing ? 'Publishing...' : 'Publish Announcement'}
+                {publishing ? t('Publishing...') : t('Publish Announcement')}
               </button>
             </div>
           </div>
@@ -160,24 +162,24 @@ export default function Communications() {
       <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 xl:col-span-8 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-on-surface">Recent Announcements</h3>
+            <h3 className="text-xl font-bold text-on-surface">{t('Recent Announcements')}</h3>
             <div className="flex bg-surface-container-high rounded-lg p-1">
-              <button className="px-4 py-1.5 text-sm font-bold bg-white text-on-surface rounded shadow-sm">All</button>
-              <button className="px-4 py-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface">Urgent</button>
-              <button className="px-4 py-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface">Drafts</button>
+              <button className="px-4 py-1.5 text-sm font-bold bg-white text-on-surface rounded shadow-sm">{t('All')}</button>
+              <button className="px-4 py-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface">{t('Urgent')}</button>
+              <button className="px-4 py-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface">{t('Drafts')}</button>
             </div>
           </div>
 
           {loading ? (
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm p-12 text-center text-on-surface-variant">
               <span className="material-symbols-outlined animate-spin text-3xl text-primary mb-4">sync</span>
-              <p>Loading announcements...</p>
+              <p>{t('Loading announcements...')}</p>
             </div>
           ) : announcements.length === 0 ? (
             <div className="bg-surface-container-lowest rounded-2xl border border-dashed border-outline-variant/30 p-16 text-center">
               <span className="material-symbols-outlined text-4xl text-outline mb-4 block">forum</span>
-              <h4 className="text-lg font-bold text-on-surface mb-2">No Announcements Yet</h4>
-              <p className="text-sm text-on-surface-variant max-w-sm mx-auto">Create the first school-wide announcement to communicate with parents, teachers, and students.</p>
+              <h4 className="text-lg font-bold text-on-surface mb-2">{t('No Announcements Yet')}</h4>
+              <p className="text-sm text-on-surface-variant max-w-sm mx-auto">{t('Create the first school-wide announcement to communicate with parents, teachers, and students.')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -191,7 +193,7 @@ export default function Communications() {
                       <h4 className="text-lg font-bold text-on-surface">{a.title}</h4>
                     </div>
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${a.published ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-highest text-on-surface-variant'}`}>
-                      {a.published ? 'Published' : 'Draft'}
+                      {a.published ? t('Published') : t('Draft')}
                     </span>
                   </div>
                   <p className="text-sm text-on-surface-variant leading-relaxed mb-4 line-clamp-2">{a.body}</p>
@@ -203,10 +205,10 @@ export default function Communications() {
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">person</span>
-                        {a.created_by_name || 'Admin'}
+                        {a.created_by_name || t('Admin')}
                       </span>
                     </div>
-                    <button className="text-primary text-sm font-semibold hover:underline">Edit</button>
+                    <button className="text-primary text-sm font-semibold hover:underline">{t('Edit')}</button>
                   </div>
                 </div>
               ))}
@@ -219,13 +221,13 @@ export default function Communications() {
           <div className="bg-surface-container-low p-6 rounded-2xl">
             <div className="flex items-center gap-2 mb-6">
               <span className="material-symbols-outlined text-primary">chat</span>
-              <h3 className="font-bold text-on-surface">Quick Message</h3>
+              <h3 className="font-bold text-on-surface">{t('Quick Message')}</h3>
             </div>
-            <p className="text-sm text-on-surface-variant mb-4">Send a direct message to a specific parent or teacher.</p>
+            <p className="text-sm text-on-surface-variant mb-4">{t('Send a direct message to a specific parent or teacher.')}</p>
             <div className="space-y-4">
               <input
                 className="w-full border border-outline-variant rounded-xl px-4 py-2.5 text-sm bg-surface-bright placeholder-outline focus:ring-primary focus:border-primary focus:outline-none"
-                placeholder="Search recipient by name or email..."
+                placeholder={t('Search recipient by name or email...')}
                 value={msgRecipient}
                 onChange={async (e) => {
                   const val = e.target.value;
@@ -256,21 +258,21 @@ export default function Communications() {
               )}
               <input
                 className="w-full border border-outline-variant rounded-xl px-4 py-2.5 text-sm bg-surface-bright placeholder-outline focus:ring-primary focus:border-primary focus:outline-none"
-                placeholder="Subject..."
+                placeholder={t('Subject...')}
                 value={msgSubject}
                 onChange={(e) => setMsgSubject(e.target.value)}
               />
               <textarea
                 className="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm bg-surface-bright placeholder-outline focus:ring-primary focus:border-primary focus:outline-none resize-none"
                 rows={3}
-                placeholder="Write a message..."
+                placeholder={t('Write a message...')}
                 value={msgBody}
                 onChange={(e) => setMsgBody(e.target.value)}
               />
               <button
                 onClick={async () => {
                   if (!msgRecipient || !msgBody.trim()) {
-                    addToast('Recipient and message are required.', 'error');
+                    addToast(t('Recipient and message are required.'), 'error');
                     return;
                   }
                   setSendingMsg(true);
@@ -280,12 +282,12 @@ export default function Communications() {
                       subject: msgSubject,
                       body: msgBody,
                     });
-                    addToast('Message sent!', 'success');
+                    addToast(t('Message sent!'), 'success');
                     setMsgRecipient('');
                     setMsgSubject('');
                     setMsgBody('');
                   } catch (err: any) {
-                    addToast(err.response?.data?.detail || 'Failed to send message.', 'error');
+                    addToast(err.response?.data?.detail || t('Failed to send message.'), 'error');
                   } finally {
                     setSendingMsg(false);
                   }
@@ -294,7 +296,7 @@ export default function Communications() {
                 className="w-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-lg">{sendingMsg ? 'sync' : 'send'}</span>
-                {sendingMsg ? 'Sending...' : 'Send Message'}
+                {sendingMsg ? t('Sending...') : t('Send Message')}
               </button>
             </div>
           </div>
@@ -302,7 +304,7 @@ export default function Communications() {
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/15 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-outline">analytics</span>
-              <h3 className="font-bold text-on-surface">Delivery Stats</h3>
+              <h3 className="font-bold text-on-surface">{t('Delivery Stats')}</h3>
             </div>
             <div className="space-y-4">
               {[
@@ -310,7 +312,7 @@ export default function Communications() {
                 { label: 'Pending Drafts', value: announcements.filter(a => !a.published).length.toString(), color: 'text-on-surface-variant' },
               ].map((stat, i) => (
                 <div key={i} className="flex justify-between items-center p-3 bg-surface-container-low/50 rounded-lg">
-                  <span className="text-sm text-on-surface-variant">{stat.label}</span>
+                  <span className="text-sm text-on-surface-variant">{t(stat.label)}</span>
                   <span className={`text-lg font-bold ${stat.color}`}>{stat.value}</span>
                 </div>
               ))}

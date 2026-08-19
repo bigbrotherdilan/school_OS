@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../../services/api';
 import { useToastStore } from '../../../../stores/toastStore';
 import {
@@ -143,6 +144,7 @@ export default function TimetableGridView({
   subjects,
   teachers,
 }: TimetableGridViewProps) {
+  const { t } = useTranslation('adminAcademic');
   const [selected, setSelected] = useState(initialSelected);
   const [tab, setTab] = useState<'grid' | 'lessons'>('grid');
   const [detailLoading, setDetailLoading] = useState(false);
@@ -187,7 +189,7 @@ export default function TimetableGridView({
       });
       setClassSubjects(csRes.data.results || csRes.data);
     } catch (err: any) {
-      addToast('Failed to load timetable details.', 'error');
+      addToast(t('Failed to load timetable details.'), 'error');
     } finally {
       setDetailLoading(false);
     }
@@ -203,7 +205,7 @@ export default function TimetableGridView({
   const periodsOf = (tt: any) => (tt?.periods?.length ? tt.periods : DEFAULT_PERIODS);
 
   const dayLabel = (val: number) => DAYS.find((d) => d.value === val)?.label || `Day ${val}`;
-  const dayShort = (val: number) => dayLabel(val).slice(0, 3);
+  const dayShort = (val: number) => t(dayLabel(val)).slice(0, 3);
   const teacherLabel = (t: any) => t.user?.full_name || t.employee_id || `#${t.id}`;
 
   const slotsAt = (day: number, periodIdx: number) => {
@@ -236,7 +238,7 @@ export default function TimetableGridView({
       return (
         <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
               style={{ background: 'rgba(255,255,255,0.6)', color: fg }}>
-          Full cohort
+          {t('Full cohort')}
         </span>
       );
     }
@@ -252,19 +254,19 @@ export default function TimetableGridView({
   const statusPill = (tt: any) => {
     switch (tt?.generation_status) {
       case 'published':
-        return <span className="bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Published</span>;
+        return <span className="bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Published')}</span>;
       case 'approved':
-        return <span className="bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Approved</span>;
+        return <span className="bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Approved')}</span>;
       case 'under_review':
-        return <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Under Review</span>;
+        return <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Under Review')}</span>;
       case 'generated':
-        return <span className="bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Generated</span>;
+        return <span className="bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Generated')}</span>;
       case 'relaxed':
-        return <span className="bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Has Clashes</span>;
+        return <span className="bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Has Clashes')}</span>;
       case 'infeasible':
-        return <span className="bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Infeasible</span>;
+        return <span className="bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Infeasible')}</span>;
       default:
-        return <span className="bg-surface-container-highest text-on-surface-variant text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">Draft</span>;
+        return <span className="bg-surface-container-highest text-on-surface-variant text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{t('Draft')}</span>;
     }
   };
 
@@ -288,22 +290,22 @@ export default function TimetableGridView({
     try {
       const nextLocked = !slot.is_locked;
       await api.patch(`/timetable/time-slots/${slot.id}/`, { is_locked: nextLocked });
-      addToast(nextLocked ? 'Slot locked.' : 'Slot unlocked.', 'success');
+      addToast(nextLocked ? t('Slot locked.') : t('Slot unlocked.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast('Failed to toggle lock.', 'error');
+      addToast(t('Failed to toggle lock.'), 'error');
     }
   };
 
   const handleDeleteSlot = async (slot: any) => {
-    if (!window.confirm('Delete this slot from the grid?')) return;
+    if (!window.confirm(t('Delete this slot from the grid?'))) return;
     try {
       await api.delete(`/timetable/time-slots/${slot.id}/`);
-      addToast('Slot deleted.', 'success');
+      addToast(t('Slot deleted.'), 'success');
       setCellModal(null);
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast('Failed to delete slot.', 'error');
+      addToast(t('Failed to delete slot.'), 'error');
     }
   };
 
@@ -335,7 +337,7 @@ export default function TimetableGridView({
 
   const handleSaveSlot = async () => {
     if (!slotForm.subject || !slotForm.teacher) {
-      addToast('Please fill in subject and teacher.', 'warning');
+      addToast(t('Please fill in subject and teacher.'), 'warning');
       return;
     }
     setSavingSlot(true);
@@ -354,15 +356,15 @@ export default function TimetableGridView({
       };
       if (slotForm.id) {
         await api.put(`/timetable/time-slots/${slotForm.id}/`, payload);
-        addToast('Lesson updated.', 'success');
+        addToast(t('Lesson updated.'), 'success');
       } else {
         await api.post('/timetable/time-slots/', payload);
-        addToast('Lesson added.', 'success');
+        addToast(t('Lesson added.'), 'success');
       }
       setCellModal(null);
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to save slot.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to save slot.'), 'error');
     } finally {
       setSavingSlot(false);
     }
@@ -392,7 +394,7 @@ export default function TimetableGridView({
   const handleAddAllocation = async () => {
     if (!lessonForm.id) return;
     if (!allocationForm.teacher) {
-      addToast('Choose a teacher for the split (or leave TBD by editing later).', 'warning');
+      addToast(t('Choose a teacher for the split (or leave TBD by editing later).'), 'warning');
       return;
     }
     setSavingAllocation(true);
@@ -405,10 +407,10 @@ export default function TimetableGridView({
       });
       setAllocations([...allocations, res.data]);
       setAllocationForm({ teacher: '', periods: 1, is_double: false });
-      addToast('Teacher split added.', 'success');
+      addToast(t('Teacher split added.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to add teacher split.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to add teacher split.'), 'error');
     } finally {
       setSavingAllocation(false);
     }
@@ -418,16 +420,16 @@ export default function TimetableGridView({
     try {
       await api.delete(`/timetable/allocations/${allocation.id}/`);
       setAllocations(allocations.filter((a) => a.id !== allocation.id));
-      addToast('Teacher split removed.', 'success');
+      addToast(t('Teacher split removed.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast('Failed to remove teacher split.', 'error');
+      addToast(t('Failed to remove teacher split.'), 'error');
     }
   };
 
   const handleSaveLesson = async () => {
     if (!lessonForm.subject) {
-      addToast('Please select a subject.', 'warning');
+      addToast(t('Please select a subject.'), 'warning');
       return;
     }
     setSavingLesson(true);
@@ -443,28 +445,28 @@ export default function TimetableGridView({
       };
       if (lessonForm.id) {
         await api.put(`/timetable/lessons/${lessonForm.id}/`, payload);
-        addToast('Lesson updated.', 'success');
+        addToast(t('Lesson updated.'), 'success');
       } else {
         await api.post('/timetable/lessons/', payload);
-        addToast('Lesson added.', 'success');
+        addToast(t('Lesson added.'), 'success');
       }
       setLessonModal(false);
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to save lesson.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to save lesson.'), 'error');
     } finally {
       setSavingLesson(false);
     }
   };
 
   const handleDeleteLesson = async (lesson: any) => {
-    if (!window.confirm(`Delete all cards of ${lesson.subject_name}? This removes them from the grid too.`)) return;
+    if (!window.confirm(t('Delete all cards of {{name}}? This removes them from the grid too.', { name: lesson.subject_name }))) return;
     try {
       await api.delete(`/timetable/lessons/${lesson.id}/`);
-      addToast('Lesson deleted.', 'success');
+      addToast(t('Lesson deleted.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast('Failed to delete lesson.', 'error');
+      addToast(t('Failed to delete lesson.'), 'error');
     }
   };
 
@@ -472,10 +474,10 @@ export default function TimetableGridView({
     setSuggesting(true);
     try {
       await api.post(`/timetable/timetables/${selected.id}/suggest/`);
-      addToast('Lessons built successfully from subject hours.', 'success');
+      addToast(t('Lessons built successfully from subject hours.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to build lessons.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to build lessons.'), 'error');
     } finally {
       setSuggesting(false);
     }
@@ -487,7 +489,7 @@ export default function TimetableGridView({
       setPlacingLesson(null);
     } else {
       setPlacingLesson(lesson);
-      addToast(`Click any free cell to place ${lesson.subject_name}.`, 'info');
+      addToast(t('Click any free cell to place {{name}}.', { name: lesson.subject_name }), 'info');
     }
   };
 
@@ -506,11 +508,11 @@ export default function TimetableGridView({
         student_group: placingLesson.student_group || null,
         classroom: placingLesson.note || '',
       });
-      addToast(`Placed ${placingLesson.subject_name}.`, 'success');
+      addToast(t('Placed {{name}}.', { name: placingLesson.subject_name }), 'success');
       setPlacingLesson(null);
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to place lesson.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to place lesson.'), 'error');
     }
   };
 
@@ -533,18 +535,18 @@ export default function TimetableGridView({
           periods,
           working_days: days,
         });
-        addToast('Week setup saved for the whole section.', 'success');
+        addToast(t('Week setup saved for the whole section.'), 'success');
       } else {
         await api.patch(`/timetable/timetables/${selected.id}/`, {
           periods,
           working_days: days,
         });
-        addToast('Week setup saved for this class.', 'success');
+        addToast(t('Week setup saved for this class.'), 'success');
       }
       setWeekModal(false);
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to save school week.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to save school week.'), 'error');
     } finally {
       setSavingWeek(false);
     }
@@ -558,12 +560,12 @@ export default function TimetableGridView({
       const res = await api.get(`/timetable/timetables/${selected.id}/validate/`);
       setIssues(res.data.issues);
       if (res.data.valid) {
-        addToast('Timetable is valid and clash-free!', 'success');
+        addToast(t('Timetable is valid and clash-free!'), 'success');
       } else {
-        addToast(`Found ${res.data.issues.length} clashes/issues.`, 'warning');
+        addToast(t('Found {{count}} clashes/issues.', { count: res.data.issues.length }), 'warning');
       }
     } catch (err: any) {
-      addToast('Failed to validate timetable.', 'error');
+      addToast(t('Failed to validate timetable.'), 'error');
     } finally {
       setValidating(false);
     }
@@ -571,15 +573,15 @@ export default function TimetableGridView({
 
   const handleApprove = async () => {
     if (!window.confirm(
-      'Approve this timetable? Its teachers and rooms become RESERVED school-wide — every other section will generate around it.'
+      t('Approve this timetable? Its teachers and rooms become RESERVED school-wide — every other section will generate around it.')
     )) return;
     setApproving(true);
     try {
       const res = await api.post(`/timetable/timetables/${selected.id}/approve/`);
-      addToast(res.data.message || 'Timetable approved.', 'success');
+      addToast(res.data.message || t('Timetable approved.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to approve timetable.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to approve timetable.'), 'error');
     } finally {
       setApproving(false);
     }
@@ -588,10 +590,10 @@ export default function TimetableGridView({
   const handleUnderReview = async () => {
     try {
       const res = await api.post(`/timetable/timetables/${selected.id}/under_review/`);
-      addToast(res.data.message || 'Timetable moved to under review.', 'success');
+      addToast(res.data.message || t('Timetable moved to under review.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to update status.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to update status.'), 'error');
     }
   };
 
@@ -600,29 +602,28 @@ export default function TimetableGridView({
       const nextActive = !selected.is_active;
       await api.patch(`/timetable/timetables/${selected.id}/`, { is_active: nextActive });
       setSelected((prev: any) => ({ ...prev, is_active: nextActive }));
-      addToast(nextActive ? 'Timetable active/published.' : 'Timetable saved as draft.', 'success');
+      addToast(nextActive ? t('Timetable active/published.') : t('Timetable saved as draft.'), 'success');
     } catch (err: any) {
-      addToast('Failed to toggle status.', 'error');
+      addToast(t('Failed to toggle status.'), 'error');
     }
   };
 
   const handleDeleteTimetable = async (tt: any) => {
-    if (!window.confirm(`Delete timetable for ${tt.class_name}? This deletes all scheduled slots.`)) return;
+    if (!window.confirm(t('Delete timetable for {{name}}? This deletes all scheduled slots.', { name: tt.class_name }))) return;
     try {
       await api.delete(`/timetable/timetables/${tt.id}/`);
-      addToast('Timetable deleted.', 'success');
+      addToast(t('Timetable deleted.'), 'success');
       onBack();
     } catch (err: any) {
-      addToast('Failed to delete timetable.', 'error');
+      addToast(t('Failed to delete timetable.'), 'error');
     }
   };
 
   const handleGenerateSection = async () => {
     if (!singleClassSection(selected)) {
       const ok = window.confirm(
-        `Regenerate the whole ${selected.section_name} section together?\n\n` +
-        'All classes of this section are solved in one pass, so a shared teacher is never double-booked. ' +
-        'Locked slots stay fixed and committed slots of other sections stay reserved.'
+        `${t('Regenerate the whole {{section}} section together?', { section: selected.section_name })}\n\n` +
+        t('All classes of this section are solved in one pass, so a shared teacher is never double-booked. Locked slots stay fixed and committed slots of other sections stay reserved.')
       );
       if (!ok) return;
     }
@@ -632,10 +633,16 @@ export default function TimetableGridView({
         academic_year: selected.academic_year,
         stream: selected.class_details?.stream || 'none',
       });
-      addToast(res.data.message || 'Timetable generated successfully.', 'success');
+      addToast(res.data.message || t('Timetable generated successfully.'), 'success');
       loadDetail(selected.id);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to generate timetable.', 'error');
+      const reason = err.response?.data?.detail || err.response?.data?.message;
+      addToast(
+        reason
+          ? t('{{reason}} — The button is ready again; fix it and regenerate, or retry for a different combination.', { reason })
+          : t('Failed to generate timetable.'),
+        'error'
+      );
     } finally {
       setGeneratingSection(false);
     }
@@ -652,7 +659,7 @@ export default function TimetableGridView({
             <button
               onClick={onBack}
               className="p-2.5 rounded-xl hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface"
-              title="Back to list"
+              title={t('Back to list')}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -675,27 +682,27 @@ export default function TimetableGridView({
               disabled={generatingSection || selected.lessons?.length === 0}
               className="bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 flex items-center gap-1.5"
               title={singleClassSection(selected)
-                ? 'Generate this class timetable'
-                : `Regenerate the whole ${selected.section_name} section in one pass (clash-free)`}
+                ? t('Generate this class timetable')
+                : t('Regenerate the whole {{section}} section in one pass (clash-free)', { section: selected.section_name })}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              {generatingSection ? 'Solving...' : selected.generation_status === 'generated'
-                ? (singleClassSection(selected) ? 'Regenerate' : 'Regenerate section')
-                : (singleClassSection(selected) ? 'Generate timetable' : 'Generate section')}
+              {generatingSection ? t('Solving...') : selected.generation_status === 'generated'
+                ? (singleClassSection(selected) ? t('Regenerate') : t('Regenerate section'))
+                : (singleClassSection(selected) ? t('Generate timetable') : t('Generate section'))}
             </button>
             <button
               onClick={() => setTab('lessons')}
               className="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-primary bg-primary/5 border border-primary/30 hover:bg-primary/15 transition-colors"
             >
-              <Wand2 className="w-3.5 h-3.5 inline mr-1" /> Edit hours & lessons
+              <Wand2 className="w-3.5 h-3.5 inline mr-1" /> {t('Edit hours & lessons')}
             </button>
             {selected.is_committed ? (
               <span
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 border border-green-300 text-green-700 text-xs font-black uppercase tracking-widest"
-                title={selected.approved_by_name ? `Approved by ${selected.approved_by_name}` : 'Committed to the school schedule'}
+                title={selected.approved_by_name ? t('Approved by {{name}}', { name: selected.approved_by_name }) : t('Committed to the school schedule')}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                Committed — resources reserved
+                {t('Committed — resources reserved')}
               </span>
             ) : (
               <div className="flex items-center gap-2">
@@ -703,19 +710,19 @@ export default function TimetableGridView({
                   <button
                     onClick={handleUnderReview}
                     className="px-3.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-600 border border-indigo-300 hover:bg-indigo-500/20 transition-colors"
-                    title="Mark as the working draft for manual editing (reserves nothing school-wide)"
+                    title={t('Mark as the working draft for manual editing (reserves nothing school-wide)')}
                   >
-                    Under review
+                    {t('Under review')}
                   </button>
                 )}
                 <button
                   onClick={handleApprove}
                   disabled={approving || !selected.slots?.length}
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-green-600 text-white shadow-lg shadow-green-600/25 hover:bg-green-700 active:scale-95 transition-all disabled:opacity-40"
-                  title="Validate (RED clashes block) then commit teachers/rooms to the school schedule"
+                  title={t('Validate (RED clashes block) then commit teachers/rooms to the school schedule')}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  {approving ? 'Approving...' : 'Approve & commit'}
+                  {approving ? t('Approving...') : t('Approve & commit')}
                 </button>
               </div>
             )}
@@ -723,28 +730,26 @@ export default function TimetableGridView({
               onClick={handleToggleActive}
               className={`px-3.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${selected.is_active ? 'bg-secondary/10 text-secondary hover:bg-secondary/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
             >
-              {selected.is_active ? '● Published' : '○ Draft'}
+              {selected.is_active ? t('● Published') : t('○ Draft')}
             </button>
             <button
               onClick={() => openWeekEditor('class')}
               className="px-3.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors"
             >
-              Week: {daysOf(selected).length} days × {periodsOf(selected).length} periods
+              {t('Week: {{days}} days × {{periods}} periods', { days: daysOf(selected).length, periods: periodsOf(selected).length })}
             </button>
             <button
               onClick={() => handleDeleteTimetable(selected)}
               className="px-3.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors"
             >
-              Delete
+              {t('Delete')}
             </button>
           </div>
         </div>
         {!singleClassSection(selected) && (
           <p className="mt-3 text-xs text-on-surface-variant bg-surface-container-low rounded-xl px-4 py-2.5">
-            This class is generated together with its whole <b>{selected.section_name}</b> section —
-            <b> Regenerate section</b> re-solves all of its classes in one pass from the same lessons,
-            so a shared teacher is never double-booked. Locked slots stay fixed; committed slots of
-            other sections stay reserved.
+            {t('This class is generated together with its whole')} <b>{selected.section_name}</b> {t('section —')}
+            <b> {t('Regenerate section')}</b> {t('re-solves all of its classes in one pass from the same lessons, so a shared teacher is never double-booked. Locked slots stay fixed; committed slots of other sections stay reserved.')}
           </p>
         )}
       </div>
@@ -755,13 +760,13 @@ export default function TimetableGridView({
           onClick={() => setTab('grid')}
           className={`flex items-center gap-2 px-5 py-3 rounded-t-2xl text-sm font-black uppercase tracking-widest transition-colors ${tab === 'grid' ? 'bg-surface-container-lowest text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
-          <LayoutGrid className="w-4 h-4" /> Timetable Grid
+          <LayoutGrid className="w-4 h-4" /> {t('Timetable Grid')}
         </button>
         <button
           onClick={() => setTab('lessons')}
           className={`flex items-center gap-2 px-5 py-3 rounded-t-2xl text-sm font-black uppercase tracking-widest transition-colors ${tab === 'lessons' ? 'bg-surface-container-lowest text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
-          <BookOpen className="w-4 h-4" /> Lessons & Hours
+          <BookOpen className="w-4 h-4" /> {t('Lessons & Hours')}
         </button>
       </div>
 
@@ -772,34 +777,34 @@ export default function TimetableGridView({
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant/10">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold text-on-surface-variant">
-                {daysOf(selected).map(dayShort).join(' • ')} — {periodsOf(selected).length} periods/day
+                {t('{{days}} — {{count}} periods/day', { days: daysOf(selected).map(dayShort).join(' • '), count: periodsOf(selected).length })}
               </span>
               {placingLesson && (
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest">
-                  Placing {placingLesson.subject_name} — click a free cell
+                  {t('Placing {{name}} — click a free cell', { name: placingLesson.subject_name })}
                   <button onClick={() => setPlacingLesson(null)} className="hover:opacity-70">✕</button>
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
               <div className="hidden md:flex items-center gap-3 mr-1">
-                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-red-600" /> Clash</span>
-                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-amber-400" /> Availability</span>
-                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-outline" /> TBD</span>
-                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-green-500" /> OK</span>
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-red-600" /> {t('Clash')}</span>
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-amber-400" /> {t('Availability')}</span>
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-outline" /> {t('TBD')}</span>
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-on-surface-variant"><span className="w-2 h-2 rounded-full bg-green-500" /> {t('OK')}</span>
               </div>
               <button
                 onClick={handleValidate}
                 disabled={validating || selected.slots?.length === 0}
                 className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-outline-variant/30 hover:bg-surface-variant transition-colors disabled:opacity-40"
               >
-                {validating ? 'Checking...' : 'Check for clashes'}
+                {validating ? t('Checking...') : t('Check for clashes')}
               </button>
               <button
                 onClick={() => openWeekEditor('class')}
                 className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors"
               >
-                Edit school week
+                {t('Edit school week')}
               </button>
             </div>
           </div>
@@ -809,7 +814,7 @@ export default function TimetableGridView({
             <div className="flex items-start gap-3 bg-green-50 border-b border-green-200 px-5 py-3">
               <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
               <div>
-                <p className="font-bold text-green-800">Timetable generated — clash-free</p>
+                <p className="font-bold text-green-800">{t('Timetable generated — clash-free')}</p>
                 <p className="text-sm text-green-700 whitespace-pre-line">{selected.generation_message}</p>
               </div>
             </div>
@@ -818,7 +823,7 @@ export default function TimetableGridView({
             <div className="flex items-start gap-3 bg-red-50 border-b border-red-200 px-5 py-3">
               <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
               <div>
-                <p className="font-bold text-red-800">The week cannot be scheduled as configured</p>
+                <p className="font-bold text-red-800">{t('The week cannot be scheduled as configured')}</p>
                 <p className="text-sm text-red-700 whitespace-pre-line">{selected.generation_message}</p>
               </div>
             </div>
@@ -826,12 +831,12 @@ export default function TimetableGridView({
           {issues !== null && issues.length === 0 && (
             <div className="flex items-start gap-3 bg-green-50 border-b border-green-200 px-5 py-3">
               <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
-              <p className="text-sm font-bold text-green-800">✓ No clashes. The grid is clean.</p>
+              <p className="text-sm font-bold text-green-800">{t('✓ No clashes. The grid is clean.')}</p>
             </div>
           )}
           {issues !== null && issues.length > 0 && (
             <div className="border-b border-outline-variant/10 px-5 py-3 space-y-2">
-              <p className="text-sm font-bold text-amber-700">{issues.length} issue{issues.length > 1 ? 's' : ''} found:</p>
+              <p className="text-sm font-bold text-amber-700">{issues.length} {t(issues.length > 1 ? 'issues found:' : 'issue found:')}</p>
               {issues.map((issue: any, i: number) => (
                 <div key={i} className={`rounded-xl px-4 py-2.5 text-xs border ${issue.severity === 'error' ? 'bg-red-50 border-red-200 text-red-800' : issue.severity === 'info' ? 'bg-surface-container-low border-outline-variant/30 text-on-surface-variant' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
                   {issue.message}
@@ -841,18 +846,18 @@ export default function TimetableGridView({
           )}
 
           {detailLoading ? (
-            <div className="text-center py-16 text-on-surface-variant">Loading lessons...</div>
+            <div className="text-center py-16 text-on-surface-variant">{t('Loading lessons...')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse min-w-[920px]">
                 <thead>
                   <tr>
                     <th className="sticky left-0 bg-surface-container-lowest text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-outline w-24">
-                      Period
+                      {t('Period')}
                     </th>
                     {daysOf(selected).map((d: number) => (
                       <th key={d} className="px-2 py-3 text-[10px] font-black uppercase tracking-widest text-outline">
-                        {dayLabel(d)}
+                        {t(dayLabel(d))}
                       </th>
                     ))}
                   </tr>
@@ -864,7 +869,7 @@ export default function TimetableGridView({
                       <tr key={p} className={isBreak ? 'border-t-4 border-dashed border-outline-variant/40' : ''}>
                         <td className="sticky left-0 bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface-variant whitespace-nowrap">
                           {period.start}–{period.end}
-                          {isBreak && <span className="block text-[9px] font-normal text-outline">break</span>}
+                          {isBreak && <span className="block text-[9px] font-normal text-outline">{t('break')}</span>}
                         </td>
                         {daysOf(selected).map((d: number) => {
                           const slots = slotsAt(d, p);
@@ -897,7 +902,7 @@ export default function TimetableGridView({
                                   style={{ background: continuation ? bg : cBg }}
                                 >
                                   {st?.level && st.level !== 'green' && (
-                                    <span className={`absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full ${meta.dot} ring-2 ring-white z-10`} title={meta.label} />
+                                    <span className={`absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full ${meta.dot} ring-2 ring-white z-10`} title={t(meta.label)} />
                                   )}
                                   {!continuation ? (
                                     <div className="flex items-start justify-between gap-1">
@@ -905,11 +910,11 @@ export default function TimetableGridView({
                                       {slot.is_locked && <Lock className="w-3 h-3 shrink-0" style={{ color: cFg }} />}
                                     </div>
                                   ) : (
-                                    <p className="text-[10px] font-black text-on-surface-variant">↳ cont.</p>
+                                    <p className="text-[10px] font-black text-on-surface-variant">{t('↳ cont.')}</p>
                                   )}
                                   <p className="text-[10px] text-on-surface-variant truncate mt-0.5">
                                     {slot.teacher_name}
-                                    {!slot.teacher && <span className="ml-1 px-1 py-px rounded bg-white/60 text-[8px] font-black uppercase tracking-wider text-on-surface-variant">TBD</span>}
+                                    {!slot.teacher && <span className="ml-1 px-1 py-px rounded bg-white/60 text-[8px] font-black uppercase tracking-wider text-on-surface-variant">{t('TBD')}</span>}
                                   </p>
                                   {!continuation && (
                                     <div className="flex flex-wrap items-center gap-1 mt-0.5">
@@ -921,15 +926,15 @@ export default function TimetableGridView({
                                   <div className="absolute top-1 right-1 hidden group-hover/slot:flex gap-0.5 bg-white/95 rounded-md p-0.5 shadow-md z-10">
                                     <button
                                       onClick={(e) => { e.stopPropagation(); toggleLock(slot); }}
-                                      title={slot.is_locked ? 'Unlock' : 'Lock (kept on regenerate)'}
+                                      title={slot.is_locked ? t('Unlock') : t('Lock (kept on regenerate)')}
                                       className="p-1 rounded hover:bg-black/5"
                                     >
                                       {slot.is_locked ? <Unlock className="w-3 h-3 text-amber-600" /> : <Lock className="w-3 h-3 text-on-surface-variant" />}
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); openCellModal(d, p, slot); }} title="Edit" className="p-1 rounded hover:bg-black/5">
+                                    <button onClick={(e) => { e.stopPropagation(); openCellModal(d, p, slot); }} title={t('Edit')} className="p-1 rounded hover:bg-black/5">
                                       <Pencil className="w-3 h-3 text-on-surface-variant" />
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteSlot(slot); }} title="Remove" className="p-1 rounded hover:bg-black/5">
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteSlot(slot); }} title={t('Remove')} className="p-1 rounded hover:bg-black/5">
                                       <Trash2 className="w-3 h-3 text-red-500" />
                                     </button>
                                   </div>
@@ -956,17 +961,17 @@ export default function TimetableGridView({
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm p-6">
             <div className="flex items-center justify-between mb-1">
               <div>
-                <h3 className="text-lg font-bold">Weekly hours</h3>
-                <p className="text-sm text-on-surface-variant">Hours per subject for this class, plus double-period flags.</p>
+                <h3 className="text-lg font-bold">{t('Weekly hours')}</h3>
+                <p className="text-sm text-on-surface-variant">{t('Hours per subject for this class, plus double-period flags.')}</p>
               </div>
               <span className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest">
-                {classSubjects.reduce((s: number, cs: any) => s + (cs.weekly_hours || 0), 0)} h/wk
+                {t('{{count}} h/wk', { count: classSubjects.reduce((s: number, cs: any) => s + (cs.weekly_hours || 0), 0) })}
               </span>
             </div>
             <div className="space-y-2 mt-4 max-h-96 overflow-y-auto pr-1">
               {classSubjects.length === 0 && (
                 <p className="text-xs text-outline bg-surface-container-low rounded-xl p-4">
-                  No subjects linked to this class yet. Link subjects to the class first.
+                  {t('No subjects linked to this class yet. Link subjects to the class first.')}
                 </p>
               )}
               {classSubjects.map((cs: any) => (
@@ -976,10 +981,10 @@ export default function TimetableGridView({
                       {cs.subject_name}
                       {cs.group_name && <span className="ml-2 px-1.5 py-0.5 bg-secondary/10 text-secondary rounded text-[8px] font-black uppercase tracking-wider align-middle">{cs.group_name}</span>}
                     </p>
-                    <p className="text-[10px] text-outline">coeff {cs.coefficient}</p>
+                    <p className="text-[10px] text-outline">{t('coeff {{coeff}}', { coeff: cs.coefficient })}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <label className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer text-[10px] font-black uppercase tracking-wider transition-colors ${cs.is_double === true ? 'bg-primary/10 text-primary' : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container'}`} title="Run as 2 consecutive periods">
+                    <label className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer text-[10px] font-black uppercase tracking-wider transition-colors ${cs.is_double === true ? 'bg-primary/10 text-primary' : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container'}`} title={t('Run as 2 consecutive periods')}>
                       <input
                         type="checkbox"
                         checked={cs.is_double === true}
@@ -987,13 +992,13 @@ export default function TimetableGridView({
                           const val = e.target.checked ? true : null;
                           setClassSubjects((list) => list.map((x) => (x.id === cs.id ? { ...x, is_double: val } : x)));
                           api.patch(`/academic/class-subjects/${cs.id}/`, { is_double: val }).catch((err: any) => {
-                            addToast(err.response?.data?.detail || 'Failed to save double setting.', 'error');
+                            addToast(err.response?.data?.detail || t('Failed to save double setting.'), 'error');
                             setClassSubjects((list) => list.map((x) => (x.id === cs.id ? { ...x, is_double: cs.is_double } : x)));
                           });
                         }}
                         className="hidden"
                       />
-                      Double
+                      {t('Double')}
                     </label>
                     <input
                       type="number"
@@ -1007,23 +1012,23 @@ export default function TimetableGridView({
                           api.patch(`/academic/class-subjects/${cs.id}/`, { weekly_hours: v })
                             .then(() => {
                               setClassSubjects((list) => list.map((x) => (x.id === cs.id ? { ...x, weekly_hours: v } : x)));
-                              addToast(`${cs.subject_name}: ${v} h/week saved.`, 'success');
+                              addToast(t('{{name}}: {{hours}} h/week saved.', { name: cs.subject_name, hours: v }), 'success');
                             })
-                            .catch((err: any) => addToast(err.response?.data?.detail || 'Failed to save weekly hours.', 'error'))
+                            .catch((err: any) => addToast(err.response?.data?.detail || t('Failed to save weekly hours.'), 'error'))
                             .finally(() => setHoursSaving((s) => { const n = { ...s }; delete n[`d-${cs.id}`]; return n; }));
                         }
                       }}
                       onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                       className="w-14 bg-white border border-outline-variant/30 rounded-lg px-2 py-1.5 text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
-                    <span className="text-[10px] text-outline w-8">h/wk</span>
-                    {hoursSaving[`d-${cs.id}`] && <span className="text-[10px] text-primary animate-pulse">saving</span>}
+                    <span className="text-[10px] text-outline w-8">{t('h/wk')}</span>
+                    {hoursSaving[`d-${cs.id}`] && <span className="text-[10px] text-primary animate-pulse">{t('saving')}</span>}
                   </div>
                 </div>
               ))}
             </div>
             <p className="text-[11px] text-outline mt-3">
-              Changes save automatically. Press <b>Suggest</b> to turn these hours into lesson cards.
+              {t('Changes save automatically. Press')} <b>{t('Suggest')}</b> {t('to turn these hours into lesson cards.')}
             </p>
           </div>
 
@@ -1031,29 +1036,29 @@ export default function TimetableGridView({
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm p-6">
             <div className="flex items-center justify-between mb-1">
               <div>
-                <h3 className="text-lg font-bold">Lessons to schedule</h3>
-                <p className="text-sm text-on-surface-variant">One card per subject. Doubles stay consecutive and never cross a break.</p>
+                <h3 className="text-lg font-bold">{t('Lessons to schedule')}</h3>
+                <p className="text-sm text-on-surface-variant">{t('One card per subject. Doubles stay consecutive and never cross a break.')}</p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => openLessonForm(null)}
                   className="text-primary border border-primary/30 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-primary/5 transition-colors"
                 >
-                  + Add
+                  {t('+ Add')}
                 </button>
                 <button
                   onClick={handleSuggest}
                   disabled={suggesting}
                   className="bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-md shadow-primary/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  <Wand2 className="w-3.5 h-3.5" /> {suggesting ? 'Building...' : 'Suggest from hours'}
+                  <Wand2 className="w-3.5 h-3.5" /> {suggesting ? t('Building...') : t('Suggest from hours')}
                 </button>
               </div>
             </div>
             <div className="space-y-2 mt-4 max-h-96 overflow-y-auto pr-1">
               {selected.lessons?.length === 0 && (
                 <p className="text-xs text-outline bg-surface-container-low rounded-xl p-4">
-                  No lessons yet. Set weekly hours, then press <b>Suggest from hours</b> — or add lessons manually.
+                  {t('No lessons yet. Set weekly hours, then press')} <b>{t('Suggest from hours')}</b> {t('— or add lessons manually.')}
                 </p>
               )}
               {selected.lessons?.map((lesson: any) => {
@@ -1070,14 +1075,14 @@ export default function TimetableGridView({
                           <span className="px-1.5 py-0.5 bg-secondary/10 text-secondary rounded text-[9px] font-black uppercase tracking-wider shrink-0">{lesson.group_name}</span>
                         )}
                         {lesson.is_double && (
-                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[9px] font-black uppercase tracking-wider shrink-0">Double</span>
+                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[9px] font-black uppercase tracking-wider shrink-0">{t('Double')}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => openLessonForm(lesson)} className="text-on-surface-variant hover:text-primary p-1.5 rounded opacity-0 group-hover/lesson:opacity-100 transition-opacity" title="Edit lesson">
+                        <button onClick={() => openLessonForm(lesson)} className="text-on-surface-variant hover:text-primary p-1.5 rounded opacity-0 group-hover/lesson:opacity-100 transition-opacity" title={t('Edit lesson')}>
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => handleDeleteLesson(lesson)} className="text-red-500 hover:bg-red-50 p-1.5 rounded opacity-0 group-hover/lesson:opacity-100 transition-opacity" title="Remove lesson">
+                        <button onClick={() => handleDeleteLesson(lesson)} className="text-red-500 hover:bg-red-50 p-1.5 rounded opacity-0 group-hover/lesson:opacity-100 transition-opacity" title={t('Remove lesson')}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -1087,7 +1092,7 @@ export default function TimetableGridView({
                         <p className="text-xs text-on-surface-variant truncate">
                           {lesson.teacher_name}
                           {lesson.teacher_status === 'UNASSIGNED' && (
-                            <span className="ml-1.5 px-1.5 py-0.5 rounded bg-surface-container-highest text-[8px] font-black uppercase tracking-wider">TBD</span>
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded bg-surface-container-highest text-[8px] font-black uppercase tracking-wider">{t('TBD')}</span>
                           )}
                         </p>
                         {lesson.allocations?.length > 0 && (
@@ -1096,7 +1101,7 @@ export default function TimetableGridView({
                             {lesson.allocations.map((a: any) => (
                               <span key={a.id} className="px-1.5 py-0.5 rounded bg-primary/5 border border-primary/20 text-[9px] font-bold text-primary">
                                 {a.teacher_name} ×{a.periods}
-                                {a.is_double ? ' 2-in-a-row' : ''}
+                                {a.is_double ? ' ' + t('2-in-a-row') : ''}
                               </span>
                             ))}
                             <span
@@ -1126,7 +1131,7 @@ export default function TimetableGridView({
                               : 'text-primary bg-primary/5 hover:bg-primary/15'
                           }`}
                         >
-                          {placingLesson?.id === lesson.id ? 'Placing...' : 'Place on grid'}
+                          {placingLesson?.id === lesson.id ? t('Placing...') : t('Place on grid')}
                         </button>
                       </div>
                     </div>
@@ -1145,7 +1150,7 @@ export default function TimetableGridView({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-surface-container-lowest w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center">
-              <h3 className="text-xl font-bold">{slotForm.id ? 'Edit Lesson' : 'Add a Lesson'}</h3>
+              <h3 className="text-xl font-bold">{slotForm.id ? t('Edit Lesson') : t('Add a Lesson')}</h3>
               <button onClick={() => setCellModal(null)} className="text-on-surface-variant hover:rotate-90 transition-transform p-2">
                 <span className="material-symbols-outlined text-3xl">close</span>
               </button>
@@ -1153,42 +1158,42 @@ export default function TimetableGridView({
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-sm">
                 <CalendarDays className="w-4 h-4 text-primary" />
-                <span className="font-bold text-on-surface">{dayLabel(slotForm.day_of_week)}</span>
+                <span className="font-bold text-on-surface">{t(dayLabel(slotForm.day_of_week))}</span>
                 <span className="text-on-surface-variant">• {slotForm.start_time} – {slotForm.end_time}</span>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Subject *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Subject *')}</label>
                 <select value={slotForm.subject} onChange={(e) => setSlotForm({ ...slotForm, subject: e.target.value })} className={`${inputCls} mt-1`}>
-                  <option value="">Choose subject</option>
+                  <option value="">{t('Choose subject')}</option>
                   {subjects.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Teacher *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Teacher *')}</label>
                 <select value={slotForm.teacher} onChange={(e) => setSlotForm({ ...slotForm, teacher: e.target.value })} className={`${inputCls} mt-1`}>
-                  <option value="">Choose teacher</option>
+                  <option value="">{t('Choose teacher')}</option>
                   {teachers.map((t: any) => <option key={t.id} value={t.id}>{teacherLabel(t)}</option>)}
                 </select>
               </div>
               {selected.student_groups?.length > 0 && (
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Student group</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Student group')}</label>
                   <select value={slotForm.student_group} onChange={(e) => setSlotForm({ ...slotForm, student_group: e.target.value })} className={`${inputCls} mt-1`}>
-                    <option value="">Full cohort (all students)</option>
+                    <option value="">{t('Full cohort (all students)')}</option>
                     {selected.student_groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
               )}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Room / resource</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Room / resource')}</label>
                 <select value={slotForm.room} onChange={(e) => setSlotForm({ ...slotForm, room: e.target.value })} className={`${inputCls} mt-1`}>
-                  <option value="">No specific room</option>
+                  <option value="">{t('No specific room')}</option>
                   {selected.rooms?.map((r: any) => <option key={r.id} value={r.id}>{r.name}{r.capacity ? ` (${r.capacity})` : ''}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Classroom (optional)</label>
-                <input type="text" placeholder="e.g. Room 12" value={slotForm.classroom} onChange={(e) => setSlotForm({ ...slotForm, classroom: e.target.value })} className={`${inputCls} mt-1`} />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Classroom (optional)')}</label>
+                <input type="text" placeholder={t('e.g. Room 12')} value={slotForm.classroom} onChange={(e) => setSlotForm({ ...slotForm, classroom: e.target.value })} className={`${inputCls} mt-1`} />
               </div>
               <label className="flex items-center gap-2 cursor-pointer pt-1">
                 <input
@@ -1197,12 +1202,12 @@ export default function TimetableGridView({
                   onChange={(e) => setSlotForm({ ...slotForm, is_locked: e.target.checked })}
                   className="w-4 h-4 accent-[var(--primary,#7c3aed)]"
                 />
-                <span className="text-sm font-semibold text-on-surface-variant">Keep this lesson when regenerating</span>
+                <span className="text-sm font-semibold text-on-surface-variant">{t('Keep this lesson when regenerating')}</span>
               </label>
               <div className="flex gap-4 pt-2">
-                <button onClick={() => setCellModal(null)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">Cancel</button>
+                <button onClick={() => setCellModal(null)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">{t('Cancel')}</button>
                 <button onClick={handleSaveSlot} disabled={savingSlot} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg transition-all disabled:opacity-50">
-                  {savingSlot ? 'Saving...' : slotForm.id ? 'Save Changes' : 'Add Lesson'}
+                  {savingSlot ? t('Saving...') : slotForm.id ? t('Save Changes') : t('Add Lesson')}
                 </button>
               </div>
               {slotForm.id && (
@@ -1210,7 +1215,7 @@ export default function TimetableGridView({
                   onClick={() => handleDeleteSlot(selected.slots.find((s: any) => String(s.id) === String(slotForm.id)))}
                   className="w-full text-center py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                 >
-                  Remove this lesson from the grid
+                  {t('Remove this lesson from the grid')}
                 </button>
               )}
             </div>
@@ -1223,50 +1228,50 @@ export default function TimetableGridView({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-surface-container-lowest w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center">
-              <h3 className="text-xl font-bold">{lessonForm.id ? 'Edit Lesson' : 'Add Lesson'}</h3>
+              <h3 className="text-xl font-bold">{lessonForm.id ? t('Edit Lesson') : t('Add Lesson')}</h3>
               <button onClick={() => setLessonModal(false)} className="text-on-surface-variant hover:rotate-90 transition-transform p-2">
                 <span className="material-symbols-outlined text-3xl">close</span>
               </button>
             </div>
             <div className="p-6 space-y-5">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Subject *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Subject *')}</label>
                 <select
                   value={lessonForm.subject}
                   onChange={(e) => setLessonForm({ ...lessonForm, subject: e.target.value })}
                   className={`${inputCls} mt-1`}
                 >
-                  <option value="">Choose subject</option>
+                  <option value="">{t('Choose subject')}</option>
                   {subjects.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Teacher (optional)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Teacher (optional)')}</label>
                 <select
                   value={lessonForm.teacher}
                   onChange={(e) => setLessonForm({ ...lessonForm, teacher: e.target.value })}
                   className={`${inputCls} mt-1`}
                 >
-                  <option value="">Choose teacher</option>
+                  <option value="">{t('Choose teacher')}</option>
                   {teachers.map((t: any) => <option key={t.id} value={t.id}>{teacherLabel(t)}</option>)}
                 </select>
               </div>
               {selected.student_groups?.length > 0 && (
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Student group</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Student group')}</label>
                   <select
                     value={lessonForm.student_group}
                     onChange={(e) => setLessonForm({ ...lessonForm, student_group: e.target.value })}
                     className={`${inputCls} mt-1`}
                   >
-                    <option value="">Full cohort (all students)</option>
+                    <option value="">{t('Full cohort (all students)')}</option>
                     {selected.student_groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
               )}
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Periods per week *</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Periods per week *')}</label>
                   <input
                     type="number"
                     min={1}
@@ -1277,10 +1282,10 @@ export default function TimetableGridView({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Classroom (optional)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Classroom (optional)')}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Lab 1"
+                    placeholder={t('e.g. Lab 1')}
                     value={lessonForm.note}
                     onChange={(e) => setLessonForm({ ...lessonForm, note: e.target.value })}
                     className={`${inputCls} mt-1`}
@@ -1294,7 +1299,7 @@ export default function TimetableGridView({
                   onChange={(e) => setLessonForm({ ...lessonForm, is_double: e.target.checked })}
                   className="w-4 h-4 accent-[var(--primary,#7c3aed)]"
                 />
-                <span className="text-sm font-semibold">Double period (2 consecutive periods)</span>
+                <span className="text-sm font-semibold">{t('Double period (2 consecutive periods)')}</span>
               </label>
 
               {/* Multi-teacher split (spec §11-13) */}
@@ -1302,8 +1307,8 @@ export default function TimetableGridView({
                 <div className="bg-surface-container-low rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-bold flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> Teacher split</p>
-                      <p className="text-[11px] text-on-surface-variant">Split this subject across teachers. The shares must sum to the weekly volume.</p>
+                      <p className="text-sm font-bold flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> {t('Teacher split')}</p>
+                      <p className="text-[11px] text-on-surface-variant">{t('Split this subject across teachers. The shares must sum to the weekly volume.')}</p>
                     </div>
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${allocations.reduce((s: number, a: any) => s + (a.periods || 0), 0) === lessonForm.periods_per_week ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                       {allocations.reduce((s: number, a: any) => s + (a.periods || 0), 0)}/{lessonForm.periods_per_week}
@@ -1313,31 +1318,31 @@ export default function TimetableGridView({
                     <div key={a.id} className="flex items-center gap-2 bg-white border border-outline-variant/20 rounded-xl px-3 py-2">
                       <span className="flex-1 text-xs font-bold truncate">
                         {a.teacher_name}
-                        {a.teacher_status === 'UNASSIGNED' && <span className="ml-1.5 px-1 py-px rounded bg-surface-container-highest text-[8px] font-black uppercase tracking-wider">TBD</span>}
+                        {a.teacher_status === 'UNASSIGNED' && <span className="ml-1.5 px-1 py-px rounded bg-surface-container-highest text-[8px] font-black uppercase tracking-wider">{t('TBD')}</span>}
                       </span>
-                      <span className="text-[10px] font-black text-on-surface-variant">{a.periods} p/wk{a.is_double ? ' • double' : ''}</span>
-                      <button onClick={() => handleDeleteAllocation(a)} className="text-red-500 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title="Remove split">
+                      <span className="text-[10px] font-black text-on-surface-variant">{a.periods} {t('p/wk')}{a.is_double ? ' ' + t('• double') : ''}</span>
+                      <button onClick={() => handleDeleteAllocation(a)} className="text-red-500 hover:bg-red-50 rounded-lg p-1.5 transition-colors" title={t('Remove split')}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
                   {allocations.length === 0 && (
-                    <p className="text-[11px] text-outline">No split — this subject is taught entirely by the lesson teacher above.</p>
+                    <p className="text-[11px] text-outline">{t('No split — this subject is taught entirely by the lesson teacher above.')}</p>
                   )}
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">Teacher</label>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">{t('Teacher')}</label>
                       <select
                         value={allocationForm.teacher}
                         onChange={(e) => setAllocationForm({ ...allocationForm, teacher: e.target.value })}
                         className={`${inputCls} mt-1 !py-2`}
                       >
-                        <option value="">Choose teacher</option>
+                        <option value="">{t('Choose teacher')}</option>
                         {teachers.map((t: any) => <option key={t.id} value={t.id}>{teacherLabel(t)}</option>)}
                       </select>
                     </div>
                     <div className="w-24">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">Periods</label>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">{t('Periods')}</label>
                       <input
                         type="number"
                         min={1}
@@ -1347,29 +1352,29 @@ export default function TimetableGridView({
                         className={`${inputCls} mt-1 !py-2`}
                       />
                     </div>
-                    <label className="flex items-center gap-1.5 pb-2.5 cursor-pointer text-[10px] font-black uppercase tracking-wider text-on-surface-variant" title="Run this teacher's share as 2 consecutive periods">
+                    <label className="flex items-center gap-1.5 pb-2.5 cursor-pointer text-[10px] font-black uppercase tracking-wider text-on-surface-variant" title={t("Run this teacher's share as 2 consecutive periods")}>
                       <input
                         type="checkbox"
                         checked={allocationForm.is_double}
                         onChange={(e) => setAllocationForm({ ...allocationForm, is_double: e.target.checked })}
                         className="w-4 h-4 accent-[var(--primary,#7c3aed)]"
                       />
-                      Double
+                      {t('Double')}
                     </label>
                     <button
                       onClick={handleAddAllocation}
                       disabled={savingAllocation}
                       className="px-3.5 py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
                     >
-                      {savingAllocation ? 'Adding...' : 'Add'}
+                      {savingAllocation ? t('Adding...') : t('Add')}
                     </button>
                   </div>
                 </div>
               )}
               <div className="flex gap-4 pt-2">
-                <button onClick={() => setLessonModal(false)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">Cancel</button>
+                <button onClick={() => setLessonModal(false)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">{t('Cancel')}</button>
                 <button onClick={handleSaveLesson} disabled={savingLesson} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg transition-all disabled:opacity-50">
-                  {savingLesson ? 'Saving...' : lessonForm.id ? 'Save Changes' : 'Add Lesson'}
+                  {savingLesson ? t('Saving...') : lessonForm.id ? t('Save Changes') : t('Add Lesson')}
                 </button>
               </div>
             </div>
@@ -1383,9 +1388,9 @@ export default function TimetableGridView({
           <div className="bg-surface-container-lowest w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center">
               <div>
-                <h3 className="text-xl font-bold">School Week</h3>
+                <h3 className="text-xl font-bold">{t('School Week')}</h3>
                 <p className="text-sm text-on-surface-variant">
-                  {weekScope === 'section' ? 'Applies to every class in the section' : 'Applies to this class'}
+                  {weekScope === 'section' ? t('Applies to every class in the section') : t('Applies to this class')}
                 </p>
               </div>
               <button onClick={() => setWeekModal(false)} className="text-on-surface-variant hover:rotate-90 transition-transform p-2">
@@ -1395,24 +1400,24 @@ export default function TimetableGridView({
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">First period starts</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('First period starts')}</label>
                   <input type="time" value={weekForm.start} onChange={(e) => setWeekForm({ ...weekForm, start: e.target.value })} className={`${inputCls} mt-1`} />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Period length</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Period length')}</label>
                   <select value={weekForm.periodLen} onChange={(e) => setWeekForm({ ...weekForm, periodLen: parseInt(e.target.value) })} className={`${inputCls} mt-1`}>
                     {[30, 35, 40, 45, 50, 55, 60].map((m) => (
-                      <option key={m} value={m}>{m} minutes</option>
+                      <option key={m} value={m}>{t('{{m}} minutes', { m })}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Periods per day</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Periods per day')}</label>
                   <input type="number" min={2} max={14} value={weekForm.count} onChange={(e) => setWeekForm({ ...weekForm, count: Math.max(2, Math.min(14, parseInt(e.target.value) || 2)) })} className={`${inputCls} mt-1`} />
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Working days</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Working days')}</label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {DAYS.map((d) => (
                     <button
@@ -1427,33 +1432,33 @@ export default function TimetableGridView({
                           : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'
                       }`}
                     >
-                      {d.label.slice(0, 3)}
+                      {t(d.label).slice(0, 3)}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Breaks</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Breaks')}</label>
                   <button
                     onClick={() => setWeekForm((wf) => ({ ...wf, breaks: [...wf.breaks, { time: '10:00', len: 20 }] }))}
                     className="text-primary border border-primary/30 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-primary/5 transition-colors"
                   >
-                    + Add break
+                    {t('+ Add break')}
                   </button>
                 </div>
                 <div className="space-y-2">
                   {weekForm.breaks.length === 0 && (
-                    <p className="text-xs text-outline">No breaks — periods run back to back.</p>
+                    <p className="text-xs text-outline">{t('No breaks — periods run back to back.')}</p>
                   )}
                   {weekForm.breaks.map((br, i) => (
                     <div key={i} className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-2.5">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-outline w-16">Break {i + 1}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-outline w-16">{t('Break {{i}}', { i: i + 1 })}</span>
                       <input type="time" value={br.time} onChange={(e) => setWeekForm((wf) => ({ ...wf, breaks: wf.breaks.map((b, j) => (j === i ? { ...b, time: e.target.value } : b)) }))} className="bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-outline">for</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-outline">{t('for')}</span>
                       <select value={br.len} onChange={(e) => setWeekForm((wf) => ({ ...wf, breaks: wf.breaks.map((b, j) => (j === i ? { ...b, len: parseInt(e.target.value) } : b)) }))} className="bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30">
                         {[10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 75, 90].map((m) => (
-                          <option key={m} value={m}>{m} min</option>
+                          <option key={m} value={m}>{t('{{m}} min', { m })}</option>
                         ))}
                       </select>
                       <button onClick={() => setWeekForm((wf) => ({ ...wf, breaks: wf.breaks.filter((_, j) => j !== i) }))} className="ml-auto text-red-500 hover:bg-red-50 rounded-lg p-1.5 transition-colors">
@@ -1465,7 +1470,7 @@ export default function TimetableGridView({
               </div>
               {/* Preview */}
               <div className="bg-surface-container-low rounded-xl p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">Preview</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">{t('Preview')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {buildPeriods(weekForm).map((p, i) => (
                     <span key={i} className="px-2 py-1 rounded-lg bg-surface-container-highest text-[11px] font-bold text-on-surface-variant">
@@ -1475,9 +1480,9 @@ export default function TimetableGridView({
                 </div>
               </div>
               <div className="flex gap-4">
-                <button onClick={() => setWeekModal(false)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">Cancel</button>
+                <button onClick={() => setWeekModal(false)} className="flex-1 py-3 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">{t('Cancel')}</button>
                 <button onClick={handleSaveWeek} disabled={savingWeek} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg transition-all disabled:opacity-50">
-                  {savingWeek ? 'Saving...' : weekScope === 'section' ? 'Save for whole section' : 'Save for this class'}
+                  {savingWeek ? t('Saving...') : weekScope === 'section' ? t('Save for whole section') : t('Save for this class')}
                 </button>
               </div>
             </div>

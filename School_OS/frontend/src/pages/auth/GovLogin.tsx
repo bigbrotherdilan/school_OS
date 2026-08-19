@@ -1,9 +1,11 @@
 ﻿import { useAuthLogin } from '../../hooks/useAuthLogin';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import DeviceLimitDialog from '../../components/ui/DeviceLimitDialog';
 import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function GovLogin() {
+    const { t } = useTranslation('auth');
     const { email, setEmail, password, setPassword, error, isLoading, handleLogin, activeSessions, confirmKillSessions, cancelLogin } = useAuthLogin({ 
         allowedRole: 'government', 
         targetPath: '/gov' 
@@ -20,7 +22,7 @@ export default function GovLogin() {
             <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center mb-8">
                 <span className="material-symbols-outlined text-primary text-5xl mb-4">account_balance</span>
                 <h2 className="text-3xl font-extrabold text-primary tracking-tight">MINESEC</h2>
-                <p className="mt-2 text-sm text-slate-500 font-medium tracking-widest uppercase">Inspection Portal</p>
+                <p className="mt-2 text-sm text-slate-500 font-medium tracking-widest uppercase">{t('Inspection Portal')}</p>
             </div>
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
@@ -28,7 +30,7 @@ export default function GovLogin() {
                     <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary"></div>
                     <form className="space-y-6" onSubmit={handleLogin}>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Official ID / Email</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Official ID / Email')}</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span className="material-symbols-outlined text-slate-400 text-[20px]">shield_person</span>
@@ -38,14 +40,14 @@ export default function GovLogin() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="block w-full pl-10 pr-3 py-3 border border-slate-200 bg-white text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors sm:text-sm"
-                                    placeholder="Enter your government email"
+                                    placeholder={t('Enter your government email')}
                                     required
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Passcode</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Passcode')}</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
                                 <PasswordInput
                                     value={password}
@@ -70,21 +72,21 @@ export default function GovLogin() {
                             {isLoading ? (
                                 <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
                             ) : (
-                                "Authenticate"
+                                t('Authenticate')
                             )}
                         </button>
                     </form>
                 </div>
                 <div className="mt-6 text-center space-y-3">
                     <Link to="/forgot-password" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors block">
-                        Forgot your password?
+                        {t('Forgot your password?')}
                     </Link>
                     <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-1 justify-center">
-                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> Change Portal
+                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> {t('Change Portal')}
                     </Link>
                 </div>
                 <div className="mt-8 text-center">
-                    <p className="text-xs text-slate-500">Restricted Access. Unauthorized entry is prohibited by law.</p>
+                    <p className="text-xs text-slate-500">{t('Restricted Access. Unauthorized entry is prohibited by law.')}</p>
                 </div>
             </div>
         </div>

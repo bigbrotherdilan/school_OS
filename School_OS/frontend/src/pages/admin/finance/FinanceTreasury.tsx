@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
@@ -65,6 +66,7 @@ const modules = [
 ];
 
 export default function FinanceTreasury() {
+  const { t } = useTranslation('adminFinance');
   const navigate = useNavigate();
   const { addToast } = useToastStore();
   const canRecord = useCanRecordFinance();
@@ -88,26 +90,26 @@ export default function FinanceTreasury() {
 
   const handleExport = async () => {
     try {
-      addToast('Preparing export...', 'info');
+      addToast(t('Preparing export...'), 'info');
       const res = await api.get('/finance/invoices/export/', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url; a.download = `ledger_${new Date().toISOString().split('T')[0]}.csv`;
       a.click(); a.remove();
-      addToast('Ledger exported.', 'success');
-    } catch { addToast('Export failed.', 'error'); }
+      addToast(t('Ledger exported.'), 'success');
+    } catch { addToast(t('Export failed.'), 'error'); }
   };
 
   const handlePrintReceipt = async (tx: any) => {
     try {
       await openPdfInNewTab(`/finance/transactions/${tx.id}/receipt/`, `receipt_${tx.receipt_number}.pdf`);
-    } catch { addToast('Failed to open receipt.', 'error'); }
+    } catch { addToast(t('Failed to open receipt.'), 'error'); }
   };
 
   const handleDownloadReceipt = async (tx: any) => {
     try {
       await downloadPdf(`/finance/transactions/${tx.id}/receipt/`, `receipt_${tx.receipt_number}.pdf`);
-    } catch { addToast('Failed to download receipt.', 'error'); }
+    } catch { addToast(t('Failed to download receipt.'), 'error'); }
   };
 
   return (
@@ -115,13 +117,13 @@ export default function FinanceTreasury() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Financial Management</span>
-          <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Finance & Treasury</h1>
-          <p className="text-on-surface-variant mt-1">Manage fees, payments, and expenses.</p>
+          <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Financial Management')}</span>
+          <h1 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Finance & Treasury')}</h1>
+          <p className="text-on-surface-variant mt-1">{t('Manage fees, payments, and expenses.')}</p>
         </div>
         <div className="flex gap-3">
           <button onClick={handleExport} className="px-5 py-3 bg-surface-container-highest text-on-surface font-bold rounded-xl hover:bg-slate-200 transition-all text-xs uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-lg">download</span> Export Ledger
+            <span className="material-symbols-outlined text-lg">download</span> {t('Export Ledger')}
           </button>
         </div>
       </div>
@@ -136,38 +138,38 @@ export default function FinanceTreasury() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Revenue Collected</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t('Revenue Collected')}</span>
             <p className="text-3xl font-bold text-primary mt-1">CFA {summary.total_revenue.toLocaleString()}</p>
             <div className="mt-3 w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
               <div className="bg-primary h-full rounded-full" style={{ width: Math.min(summary.collection_rate, 100) + '%' }} />
             </div>
-            <p className="text-xs text-on-surface-variant mt-1">{summary.collection_rate}% of goal (CFA {summary.total_expected.toLocaleString()})</p>
+            <p className="text-xs text-on-surface-variant mt-1">{t('{{rate}}% of goal (CFA {{goal}})', { rate: summary.collection_rate, goal: summary.total_expected.toLocaleString() })}</p>
           </div>
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Outstanding Arrears</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t('Outstanding Arrears')}</span>
             <p className="text-3xl font-bold text-error mt-1">CFA {summary.total_arrears.toLocaleString()}</p>
-            <p className="text-xs text-on-surface-variant mt-1">{summary.unpaid_count} of {summary.total_invoices} fees unpaid</p>
+            <p className="text-xs text-on-surface-variant mt-1">{t('{{num}} of {{total}} fees unpaid', { num: summary.unpaid_count, total: summary.total_invoices })}</p>
           </div>
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Today's Collections</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t("Today's Collections")}</span>
             <p className="text-3xl font-bold text-secondary mt-1">CFA {summary.daily_volume.toLocaleString()}</p>
-            <p className="text-xs text-on-surface-variant mt-1">Real-time daily total</p>
+            <p className="text-xs text-on-surface-variant mt-1">{t('Real-time daily total')}</p>
           </div>
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Total Expenses</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t('Total Expenses')}</span>
             <p className="text-3xl font-bold text-on-surface mt-1">CFA {summary.total_expenses.toLocaleString()}</p>
-            <p className="text-xs text-on-surface-variant mt-1">All-time expenditure</p>
+            <p className="text-xs text-on-surface-variant mt-1">{t('All-time expenditure')}</p>
           </div>
         </div>
       )}
 
       {/* Quick Navigation Modules */}
       <div>
-        <h2 className="text-lg font-bold text-on-surface mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-bold text-on-surface mb-4">{t('Quick Actions')}</h2>
         {!canRecord && (
           <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl px-5 py-4 text-sm font-semibold">
             <span className="material-symbols-outlined">lock</span>
-            Finance recording is restricted to the bursar. You can view fees and the ledger, but recording payments and expenses requires the bursar account.
+            {t('Finance recording is restricted to the bursar. You can view fees and the ledger, but recording payments and expenses requires the bursar account.')}
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -180,8 +182,8 @@ export default function FinanceTreasury() {
               <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${m.color} flex items-center justify-center shadow-sm mb-3`}>
                 <span className="material-symbols-outlined text-white text-xl">{m.icon}</span>
               </div>
-              <h3 className="font-bold text-on-surface group-hover:text-primary transition-colors">{m.title}</h3>
-              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">{m.desc}</p>
+              <h3 className="font-bold text-on-surface group-hover:text-primary transition-colors">{t(m.title)}</h3>
+              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">{t(m.desc)}</p>
             </button>
           ))}
         </div>
@@ -190,25 +192,25 @@ export default function FinanceTreasury() {
       {/* Recent Transactions */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
-          <h3 className="font-bold text-on-surface">Recent Transactions</h3>
+          <h3 className="font-bold text-on-surface">{t('Recent Transactions')}</h3>
           {canRecord && (
             <button onClick={() => navigate('/admin/finance/transactions/new')} className="text-xs font-bold text-primary hover:underline">
-              + Record Payment
+              {t('+ Record Payment')}
             </button>
           )}
         </div>
         {recentTx.length === 0 ? (
-          <div className="p-12 text-center text-on-surface-variant text-sm font-medium">No payments recorded yet. Record your first payment to start tracking finances.</div>
+          <div className="p-12 text-center text-on-surface-variant text-sm font-medium">{t('No payments recorded yet. Record your first payment to start tracking finances.')}</div>
         ) : (
           <table className="w-full text-left">
             <thead>
               <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
-                <th className="px-6 py-3">Receipt</th>
-                <th className="px-6 py-3">Student</th>
-                <th className="px-6 py-3">Amount</th>
-                <th className="px-6 py-3">Method</th>
-                <th className="px-6 py-3">Date</th>
-                <th className="px-6 py-3 text-right">Receipt</th>
+                <th className="px-6 py-3">{t('Receipt')}</th>
+                <th className="px-6 py-3">{t('Student')}</th>
+                <th className="px-6 py-3">{t('Amount')}</th>
+                <th className="px-6 py-3">{t('Method')}</th>
+                <th className="px-6 py-3">{t('Date')}</th>
+                <th className="px-6 py-3 text-right">{t('Receipt')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/5">
@@ -224,7 +226,7 @@ export default function FinanceTreasury() {
                       onClick={() => handlePrintReceipt(tx)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors"
                     >
-                      <span className="material-symbols-outlined text-sm">print</span> Print
+                      <span className="material-symbols-outlined text-sm">print</span> {t('Print')}
                     </button>
                     <button
                       onClick={() => handleDownloadReceipt(tx)}

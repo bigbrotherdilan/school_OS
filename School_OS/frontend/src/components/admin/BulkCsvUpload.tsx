@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertTriangle, X } from 'lucide-react';
 
 interface ColumnDef {
@@ -24,6 +25,7 @@ export default function BulkCsvUpload({
   uploadEndpoint,
   onComplete,
 }: BulkCsvUploadProps) {
+  const { t } = useTranslation('adminStaffOps');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string[][]>([]);
@@ -34,7 +36,7 @@ export default function BulkCsvUpload({
 
   const handleFile = useCallback((f: File) => {
     if (!f.name.endsWith('.csv')) {
-      alert('Please upload a CSV file.');
+      alert(t('Please upload a CSV file.'));
       return;
     }
     setFile(f);
@@ -85,7 +87,7 @@ export default function BulkCsvUpload({
       setResult(res);
       if (!dryRun) onComplete(res);
     } catch (err: any) {
-      const detail = err.response?.data?.detail || 'Upload failed. Please try again.';
+      const detail = err.response?.data?.detail || t('Upload failed. Please try again.');
       setResult({ created: [], errors: [{ row: 0, error: detail }], message: detail });
     } finally {
       setIsUploading(false);
@@ -117,13 +119,13 @@ export default function BulkCsvUpload({
       <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 flex items-start gap-4">
         <FileSpreadsheet className="w-6 h-6 text-primary shrink-0 mt-1" />
         <div className="flex-1">
-          <h4 className="text-sm font-bold text-on-surface mb-1">CSV Format Requirements</h4>
-          <p className="text-xs text-on-surface-variant mb-3">Required columns: {requiredColumns.map(c => <code key={c.key} className="bg-surface-container-highest px-2 py-0.5 rounded mx-0.5 font-mono text-[10px]">{c.key}</code>)}</p>
+          <h4 className="text-sm font-bold text-on-surface mb-1">{t('CSV Format Requirements')}</h4>
+          <p className="text-xs text-on-surface-variant mb-3">{t('Required columns:')} {requiredColumns.map(c => <code key={c.key} className="bg-surface-container-highest px-2 py-0.5 rounded mx-0.5 font-mono text-[10px]">{c.key}</code>)}</p>
           {optionalColumns.length > 0 && (
-            <p className="text-xs text-on-surface-variant mb-3">Optional: {optionalColumns.map(c => <code key={c.key} className="bg-surface-container-highest px-2 py-0.5 rounded mx-0.5 font-mono text-[10px]">{c.key}</code>)}</p>
+            <p className="text-xs text-on-surface-variant mb-3">{t('Optional:')} {optionalColumns.map(c => <code key={c.key} className="bg-surface-container-highest px-2 py-0.5 rounded mx-0.5 font-mono text-[10px]">{c.key}</code>)}</p>
           )}
           <button onClick={generateTemplate} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
-            Download Template CSV
+            {t('Download Template CSV')}
           </button>
         </div>
       </div>
@@ -141,8 +143,8 @@ export default function BulkCsvUpload({
         >
           <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
           <Upload className="w-12 h-12 mx-auto mb-4 text-on-surface-variant/30" />
-          <p className="text-lg font-bold text-on-surface mb-2">Drop your CSV file here</p>
-          <p className="text-sm text-on-surface-variant">or click to browse</p>
+          <p className="text-lg font-bold text-on-surface mb-2">{t('Drop your CSV file here')}</p>
+          <p className="text-sm text-on-surface-variant">{t('or click to browse')}</p>
         </div>
       )}
 
@@ -181,14 +183,14 @@ export default function BulkCsvUpload({
             </table>
             {preview.length >= 6 && (
               <div className="p-3 text-center text-[10px] text-on-surface-variant font-bold uppercase tracking-widest border-t border-outline-variant/10">
-                Previewing first 5 rows...
+                {t('Previewing first 5 rows...')}
               </div>
             )}
           </div>
 
           <div className="flex justify-end gap-4">
             <button onClick={reset} className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
-              Choose Different File
+              {t('Choose Different File')}
             </button>
             <button onClick={() => handleUpload(true)} disabled={isUploading} className="flex items-center gap-2 px-6 py-3 bg-surface-container border border-outline-variant/20 text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-high transition-all disabled:opacity-50">
               {isUploading && isDryRun ? (
@@ -196,7 +198,7 @@ export default function BulkCsvUpload({
               ) : (
                 <AlertTriangle className="w-4 h-4" />
               )}
-              {isUploading && isDryRun ? 'Checking...' : 'Preview'}
+              {isUploading && isDryRun ? t('Checking...') : t('Preview')}
             </button>
             <button onClick={() => handleUpload(false)} disabled={isUploading} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
               {isUploading && !isDryRun ? (
@@ -204,7 +206,7 @@ export default function BulkCsvUpload({
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              {isUploading && !isDryRun ? 'Importing...' : `Import ${title}`}
+              {isUploading && !isDryRun ? t('Importing...') : t('Import {{title}}', { title })}
             </button>
           </div>
         </div>
@@ -224,16 +226,16 @@ export default function BulkCsvUpload({
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden">
               <div className="p-4 bg-secondary/5 border-b border-outline-variant/10">
                 <h5 className="text-xs font-black uppercase tracking-widest text-secondary flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3" /> {result.created.length} Created Successfully
+                  <CheckCircle className="w-3 h-3" /> {t('{{count}} Created Successfully', { count: result.created.length })}
                 </h5>
               </div>
               <div className="max-h-64 overflow-y-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-surface-container text-outline text-[10px] font-bold uppercase tracking-wider">
-                      <th className="p-4">Name</th>
-                      <th className="p-4">ID</th>
-                      <th className="p-4">Status</th>
+                      <th className="p-4">{t('Name')}</th>
+                      <th className="p-4">{t('ID')}</th>
+                      <th className="p-4">{t('Status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
@@ -241,7 +243,7 @@ export default function BulkCsvUpload({
                       <tr key={i} className="hover:bg-surface-container-low/50">
                         <td className="p-4 font-bold">{item.name || item.admission_number}</td>
                         <td className="p-4 font-mono text-[10px]">{item.employee_id || item.admission_number}</td>
-                        <td className="p-4 text-success text-[10px] font-bold">Credentials sent</td>
+                        <td className="p-4 text-success text-[10px] font-bold">{t('Credentials sent')}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -254,16 +256,16 @@ export default function BulkCsvUpload({
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden">
               <div className="p-4 bg-error/5 border-b border-outline-variant/10">
                 <h5 className="text-xs font-black uppercase tracking-widest text-error flex items-center gap-2">
-                  <XCircle className="w-3 h-3" /> {result.errors.length} Errors
+                  <XCircle className="w-3 h-3" /> {t('{{count}} Errors', { count: result.errors.length })}
                 </h5>
               </div>
               <div className="max-h-64 overflow-y-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-surface-container text-outline text-[10px] font-bold uppercase tracking-wider">
-                      <th className="p-4">Row</th>
-                      <th className="p-4">Email / Name</th>
-                      <th className="p-4">Error</th>
+                      <th className="p-4">{t('Row')}</th>
+                      <th className="p-4">{t('Email / Name')}</th>
+                      <th className="p-4">{t('Error')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
@@ -284,7 +286,7 @@ export default function BulkCsvUpload({
             {result.dry_run ? (
               <>
                 <button onClick={reset} className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button onClick={() => handleUpload(false)} disabled={isUploading} className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50">
                   {isUploading ? (
@@ -292,12 +294,12 @@ export default function BulkCsvUpload({
                   ) : (
                     <CheckCircle className="w-4 h-4" />
                   )}
-                  {isUploading ? 'Importing...' : 'Confirm Import'}
+                  {isUploading ? t('Importing...') : t('Confirm Import')}
                 </button>
               </>
             ) : (
               <button onClick={reset} className="px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all">
-                Import Another File
+                {t('Import Another File')}
               </button>
             )}
           </div>

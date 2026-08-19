@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTenantStore } from '../../../stores/tenantStore';
 
@@ -13,6 +14,7 @@ const navItems = [
 ];
 
 export default function BursarSidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () => void }) {
+  const { t } = useTranslation('layout');
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, tenants } = useAuthStore();
@@ -50,7 +52,7 @@ export default function BursarSidebar({ isOpen, onClose }: { isOpen?: boolean, o
             <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-600/20">{schoolName.charAt(0)}</div>
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-blue-900 leading-none truncate">{schoolName}</h1>
-              <p className="text-[10px] uppercase tracking-widest text-emerald-600 font-bold mt-1">Bursar Portal</p>
+              <p className="text-[10px] uppercase tracking-widest text-emerald-600 font-bold mt-1">{t('Bursar Portal')}</p>
             </div>
           </Link>
           <button onClick={onClose} className="lg:hidden p-2 text-slate-400 hover:text-emerald-600">
@@ -64,8 +66,8 @@ export default function BursarSidebar({ isOpen, onClose }: { isOpen?: boolean, o
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-900 truncate">{user?.full_name || 'Bursar'}</p>
-            <p className="text-[10px] text-emerald-700 uppercase tracking-widest font-bold">Finance Access</p>
+            <p className="text-sm font-bold text-slate-900 truncate">{user?.full_name || t('Bursar')}</p>
+            <p className="text-[10px] text-emerald-700 uppercase tracking-widest font-bold">{t('Finance Access')}</p>
           </div>
         </div>
 
@@ -88,7 +90,7 @@ export default function BursarSidebar({ isOpen, onClose }: { isOpen?: boolean, o
                 <span className={`material-symbols-outlined transition-colors ${isActive ? 'text-emerald-700' : 'text-slate-400 group-hover:text-emerald-600'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1" : "" }}>
                   {item.icon}
                 </span>
-                <span className="text-sm">{item.label}</span>
+                <span className="text-sm">{t(item.label)}</span>
               </Link>
             );
           })}
@@ -101,7 +103,7 @@ export default function BursarSidebar({ isOpen, onClose }: { isOpen?: boolean, o
             className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 group"
           >
             <span className="material-symbols-outlined text-slate-400 group-hover:text-red-500 transition-colors">logout</span>
-            <span className="text-sm font-medium">Sign Out</span>
+            <span className="text-sm font-medium">{t('Sign Out')}</span>
           </button>
         </div>
       </aside>

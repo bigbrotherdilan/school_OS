@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { format, parseISO } from 'date-fns';
 
 export default function InspectorDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminGov');
   const { addToast } = useToastStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export default function InspectorDashboard() {
       setDashboardData(response.data);
     } catch (err) {
       console.error('Failed to fetch inspector dashboard', err);
-      addToast('Failed to load dashboard data', 'error');
+      addToast(t('Failed to load dashboard data'), 'error');
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ export default function InspectorDashboard() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-4">dashboard</span>
-            <p className="text-on-surface-variant">Loading Inspector Dashboard...</p>
+            <p className="text-on-surface-variant">{t('Loading Inspector Dashboard...')}</p>
           </div>
         </div>
       </div>
@@ -97,10 +99,10 @@ export default function InspectorDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-outline-variant/15 pb-8">
         <div>
-          <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-primary/60 mb-2 block font-headline">MINESEC Inspector Portal</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface font-headline">Inspections Dashboard</h2>
+          <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-primary/60 mb-2 block font-headline">{t('MINESEC Inspector Portal')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface font-headline">{t('Inspections Dashboard')}</h2>
           <p className="text-on-surface-variant mt-2 max-w-xl text-lg leading-relaxed">
-            Manage and track school inspections, findings, and corrective actions across your region.
+            {t('Manage and track school inspections, findings, and corrective actions across your region.')}
           </p>
         </div>
         <div className="flex gap-3 flex-wrap">
@@ -109,14 +111,14 @@ export default function InspectorDashboard() {
             className="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold rounded-xl text-sm shadow-xl transition-all active:scale-95 flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-sm font-bold">add_circle</span>
-            New Inspection
+            {t('New Inspection')}
           </button>
           <button
             onClick={fetchDashboard}
             className="px-6 py-3 bg-surface-container-highest text-on-surface font-semibold rounded-xl text-sm transition-all hover:bg-surface-container-high active:scale-95 flex items-center gap-2 shadow-sm"
           >
             <span className="material-symbols-outlined text-sm">refresh</span>
-            Refresh
+            {t('Refresh')}
           </button>
         </div>
       </div>
@@ -125,37 +127,37 @@ export default function InspectorDashboard() {
       {dashboardData?.stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           <StatCard
-            label="Total Inspections"
+            label={t('Total Inspections')}
             value={dashboardData.stats.total_inspections}
             icon="fact_check"
             color="bg-blue-500"
           />
           <StatCard
-            label="This Year"
+            label={t('This Year')}
             value={dashboardData.stats.this_year}
             icon="event"
             color="bg-emerald-500"
           />
           <StatCard
-            label="Completed"
+            label={t('Completed')}
             value={dashboardData.stats.completed_this_year}
             icon="check_circle"
             color="bg-secondary-500"
           />
           <StatCard
-            label="Completion Rate"
+            label={t('Completion Rate')}
             value={`${dashboardData.stats.completion_rate}%`}
             icon="trending_up"
             color="bg-amber-500"
           />
           <StatCard
-            label="Avg Score"
+            label={t('Avg Score')}
             value={dashboardData.stats.average_score ? `${dashboardData.stats.average_score}/100` : '—'}
             icon="score"
             color="bg-purple-500"
           />
           <StatCard
-            label="Overdue Findings"
+            label={t('Overdue Findings')}
             value={dashboardData.overdue_findings?.length || 0}
             icon="warning"
             color="bg-red-500"
@@ -186,7 +188,7 @@ export default function InspectorDashboard() {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>{tab.icon}</span>
-                {tab.label}
+                {t(tab.label)}
                 {tab.count > 0 && (
                   <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
                     activeTab === tab.id ? 'bg-on-primary/20' : 'bg-surface-container-highest'
@@ -204,8 +206,8 @@ export default function InspectorDashboard() {
           {activeTab === 'upcoming' && (
             <InspectionList
               inspections={dashboardData?.upcoming || []}
-              title="Upcoming Inspections"
-              emptyMessage="No upcoming inspections scheduled."
+              title={t('Upcoming Inspections')}
+              emptyMessage={t('No upcoming inspections scheduled.')}
               formatDate={formatDate}
               getStatusColor={getStatusColor}
             />
@@ -213,8 +215,8 @@ export default function InspectorDashboard() {
           {activeTab === 'in-progress' && (
             <InspectionList
               inspections={dashboardData?.in_progress || []}
-              title="In-Progress Inspections"
-              emptyMessage="No inspections currently in progress."
+              title={t('In-Progress Inspections')}
+              emptyMessage={t('No inspections currently in progress.')}
               formatDate={formatDateTime}
               getStatusColor={getStatusColor}
             />
@@ -222,8 +224,8 @@ export default function InspectorDashboard() {
           {activeTab === 'completed' && (
             <InspectionList
               inspections={dashboardData?.recent_completed || []}
-              title="Recently Completed"
-              emptyMessage="No recently completed inspections."
+              title={t('Recently Completed')}
+              emptyMessage={t('No recently completed inspections.')}
               formatDate={formatDate}
               getStatusColor={getStatusColor}
               getOutcomeColor={getOutcomeColor}
@@ -233,8 +235,8 @@ export default function InspectorDashboard() {
           {activeTab === 'findings' && (
             <FindingsList
               findings={dashboardData?.overdue_findings || []}
-              title="Overdue Findings"
-              emptyMessage="No overdue findings. All corrective actions are on track."
+              title={t('Overdue Findings')}
+              emptyMessage={t('No overdue findings. All corrective actions are on track.')}
               formatDate={formatDate}
               getSeverityColor={getSeverityColor}
             />
@@ -242,8 +244,8 @@ export default function InspectorDashboard() {
           {activeTab === 'actions' && (
             <ActionsList
               actions={dashboardData?.pending_actions || []}
-              title="Pending Corrective Actions"
-              emptyMessage="No pending corrective actions awaiting review."
+              title={t('Pending Corrective Actions')}
+              emptyMessage={t('No pending corrective actions awaiting review.')}
               formatDate={formatDate}
             />
           )}
@@ -255,11 +257,11 @@ export default function InspectorDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SeverityBreakdownChart
             data={dashboardData.stats.severity_breakdown}
-            title="Findings by Severity"
+            title={t('Findings by Severity')}
           />
           <CategoryBreakdownChart
             data={dashboardData.stats.category_breakdown}
-            title="Findings by Category"
+            title={t('Findings by Category')}
           />
         </div>
       )}
@@ -296,6 +298,7 @@ interface InspectionListProps {
 }
 
 function InspectionList({ inspections, title, emptyMessage, formatDate, getStatusColor, getOutcomeColor, showOutcome }: InspectionListProps) {
+  const { t } = useTranslation('adminGov');
   if (inspections.length === 0) {
     return (
       <div className="text-center py-16">
@@ -315,28 +318,28 @@ function InspectionList({ inspections, title, emptyMessage, formatDate, getStatu
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="text-outline text-[11px] font-bold uppercase tracking-wider border-b border-outline-variant/15">
-              <th className="p-3 pb-2">School</th>
-              <th className="p-3 pb-2">Type</th>
-              <th className="p-3 pb-2">Scheduled</th>
-              <th className="p-3 pb-2">Lead Inspector</th>
-              <th className="p-3 pb-2">Status</th>
-              {showOutcome && <th className="p-3 pb-2">Outcome</th>}
-              {showOutcome && <th className="p-3 pb-2">Score</th>}
-              <th className="p-3 pb-2 text-right">Actions</th>
+              <th className="p-3 pb-2">{t('School')}</th>
+              <th className="p-3 pb-2">{t('Type')}</th>
+              <th className="p-3 pb-2">{t('Scheduled')}</th>
+              <th className="p-3 pb-2">{t('Lead Inspector')}</th>
+              <th className="p-3 pb-2">{t('Status')}</th>
+              {showOutcome && <th className="p-3 pb-2">{t('Outcome')}</th>}
+              {showOutcome && <th className="p-3 pb-2">{t('Score')}</th>}
+              <th className="p-3 pb-2 text-right">{t('Actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/10">
             {inspections.map((insp: any) => (
               <tr key={insp.id} className="hover:bg-surface-container-low/50 transition-colors">
                 <td className="p-3">
-                  <div className="font-medium text-on-surface">{insp.school?.school_name || 'Unknown School'}</div>
+                  <div className="font-medium text-on-surface">{insp.school?.school_name || t('Unknown School')}</div>
                   <div className="text-[10px] text-outline">{insp.school?.school_code} • {insp.school?.region}</div>
                 </td>
                 <td className="p-3">
                   <span className="text-sm text-on-surface-variant">{insp.inspection_type_display}</span>
                 </td>
                 <td className="p-3 text-sm text-on-surface-variant">{formatDate(insp.scheduled_date)}</td>
-                <td className="p-3 text-sm text-on-surface-variant">{insp.lead_inspector_name || insp.lead_inspector_detail?.full_name || 'Unassigned'}</td>
+                <td className="p-3 text-sm text-on-surface-variant">{insp.lead_inspector_name || insp.lead_inspector_detail?.full_name || t('Unassigned')}</td>
                 <td className="p-3">
                   <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${getStatusColor(insp.status)}`}>
                     {insp.status_display}
@@ -350,7 +353,7 @@ function InspectionList({ inspections, title, emptyMessage, formatDate, getStatu
                           {insp.outcome_display}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-outline">Pending</span>
+                        <span className="text-[10px] text-outline">{t('Pending')}</span>
                       )}
                     </td>
                     <td className="p-3 text-sm font-mono text-on-surface-variant">
@@ -364,7 +367,7 @@ function InspectionList({ inspections, title, emptyMessage, formatDate, getStatu
                     className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-primary/20 transition-colors flex items-center gap-1 justify-center mx-auto"
                   >
                     <span className="material-symbols-outlined text-sm">visibility</span>
-                    View
+                    {t('View')}
                   </button>
                 </td>
               </tr>
@@ -386,6 +389,7 @@ interface FindingsListProps {
 }
 
 function FindingsList({ findings, title, emptyMessage, formatDate, getSeverityColor }: FindingsListProps) {
+  const { t } = useTranslation('adminGov');
   if (findings.length === 0) {
     return (
       <div className="text-center py-16">
@@ -417,9 +421,9 @@ function FindingsList({ findings, title, emptyMessage, formatDate, getSeverityCo
                 <h5 className="font-semibold text-on-surface mb-1">{finding.title}</h5>
                 <p className="text-sm text-on-surface-variant mb-2 line-clamp-2">{finding.description}</p>
                 <div className="flex flex-wrap gap-4 text-[10px] text-outline">
-                  <span>Deadline: <span className="font-medium text-error">{formatDate(finding.deadline)}</span></span>
-                  <span>School: <span className="font-medium">{finding.inspection?.school?.school_name}</span></span>
-                  <span>Inspection: <span className="font-medium">{finding.inspection?.inspection_type_display}</span></span>
+                  <span>{t('Deadline:')} <span className="font-medium text-error">{formatDate(finding.deadline)}</span></span>
+                  <span>{t('School:')} <span className="font-medium">{finding.inspection?.school?.school_name}</span></span>
+                  <span>{t('Inspection:')} <span className="font-medium">{finding.inspection?.inspection_type_display}</span></span>
                 </div>
               </div>
               <div className="flex items-center gap-2 md:ml-4">
@@ -427,7 +431,7 @@ function FindingsList({ findings, title, emptyMessage, formatDate, getSeverityCo
                   onClick={() => window.location.href = `/admin/compliance/inspections/${finding.inspection?.id}?finding=${finding.id}`}
                   className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
-                  Review
+                  {t('Review')}
                 </button>
               </div>
             </div>
@@ -447,6 +451,7 @@ interface ActionsListProps {
 }
 
 function ActionsList({ actions, title, emptyMessage, formatDate }: ActionsListProps) {
+  const { t } = useTranslation('adminGov');
   if (actions.length === 0) {
     return (
       <div className="text-center py-16">
@@ -475,12 +480,12 @@ function ActionsList({ actions, title, emptyMessage, formatDate }: ActionsListPr
                     {action.finding?.severity_display} • {action.finding?.category_display}
                   </span>
                 </div>
-                <h5 className="font-semibold text-on-surface mb-1">Finding: {action.finding?.title}</h5>
+                <h5 className="font-semibold text-on-surface mb-1">{t('Finding: {{title}}', { title: action.finding?.title })}</h5>
                 <p className="text-sm text-on-surface-variant mb-2 line-clamp-2">{action.action_taken}</p>
                 <div className="flex flex-wrap gap-4 text-[10px] text-outline">
-                  <span>Submitted: <span className="font-medium">{formatDate(action.submitted_at)}</span></span>
-                  <span>By: <span className="font-medium">{action.submitted_by_name || action.submitted_by}</span></span>
-                  <span>School: <span className="font-medium">{action.finding?.inspection?.school?.school_name}</span></span>
+                  <span>{t('Submitted:')} <span className="font-medium">{formatDate(action.submitted_at)}</span></span>
+                  <span>{t('By:')} <span className="font-medium">{action.submitted_by_name || action.submitted_by}</span></span>
+                  <span>{t('School:')} <span className="font-medium">{action.finding?.inspection?.school?.school_name}</span></span>
                 </div>
               </div>
               <div className="flex items-center gap-2 md:ml-4">
@@ -488,7 +493,7 @@ function ActionsList({ actions, title, emptyMessage, formatDate }: ActionsListPr
                   onClick={() => window.location.href = `/admin/compliance/inspections/${action.finding?.inspection?.id}?action=${action.id}`}
                   className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
-                  Review
+                  {t('Review')}
                 </button>
               </div>
             </div>
@@ -501,6 +506,7 @@ function ActionsList({ actions, title, emptyMessage, formatDate }: ActionsListPr
 
 // Severity Breakdown Chart
 function SeverityBreakdownChart({ data, title }: { data: Record<string, number>; title: string }) {
+  const { t } = useTranslation('adminGov');
   const severityOrder = ['critical', 'major', 'minor', 'observation', 'good_practice'];
   const severityLabels: Record<string, string> = {
     critical: 'Critical',
@@ -523,7 +529,7 @@ function SeverityBreakdownChart({ data, title }: { data: Record<string, number>;
     <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/15 shadow-sm">
       <h4 className="text-lg font-bold text-on-surface mb-6">{title}</h4>
       {total === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant">No findings data available</div>
+        <div className="text-center py-8 text-on-surface-variant">{t('No findings data available')}</div>
       ) : (
         <div className="space-y-4">
           {severityOrder.map((severity) => {
@@ -532,7 +538,7 @@ function SeverityBreakdownChart({ data, title }: { data: Record<string, number>;
             return (
               <div key={severity} className="flex items-center gap-4">
                 <div className="w-24 text-[11px] font-medium text-on-surface-variant uppercase tracking-wider">
-                  {severityLabels[severity]}
+                  {t(severityLabels[severity])}
                 </div>
                 <div className="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
                   <div
@@ -554,6 +560,7 @@ function SeverityBreakdownChart({ data, title }: { data: Record<string, number>;
 
 // Category Breakdown Chart
 function CategoryBreakdownChart({ data, title }: { data: Record<string, number>; title: string }) {
+  const { t } = useTranslation('adminGov');
   const categoryLabels: Record<string, string> = {
     governance: 'Governance',
     curriculum: 'Curriculum',
@@ -580,7 +587,7 @@ function CategoryBreakdownChart({ data, title }: { data: Record<string, number>;
     <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/15 shadow-sm">
       <h4 className="text-lg font-bold text-on-surface mb-6">{title}</h4>
       {total === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant">No category data available</div>
+        <div className="text-center py-8 text-on-surface-variant">{t('No category data available')}</div>
       ) : (
         <div className="space-y-4">
           {sortedCategories.map(([category, count]) => {
@@ -588,7 +595,7 @@ function CategoryBreakdownChart({ data, title }: { data: Record<string, number>;
             return (
               <div key={category} className="flex items-center gap-4">
                 <div className="w-32 text-[11px] font-medium text-on-surface-variant truncate">
-                  {categoryLabels[category] || category}
+                  {t(categoryLabels[category] || category)}
                 </div>
                 <div className="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
                   <div

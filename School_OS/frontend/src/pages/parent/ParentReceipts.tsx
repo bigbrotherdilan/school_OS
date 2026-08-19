@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { parentApi, type ReceiptRecord } from '../../services/parentApi';
 import { useParentStore } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
@@ -12,6 +13,7 @@ interface ChildReceiptGroup {
 }
 
 const ParentReceipts = () => {
+    const { t } = useTranslation('parent');
     const { dashboardData } = useParentStore();
     const { schoolConfig } = useTenantStore();
     const wards = dashboardData?.wards || [];
@@ -40,7 +42,7 @@ const ParentReceipts = () => {
         receipts.forEach(r => {
             const sid = r.student_id || 'unknown';
             if (!map.has(sid)) {
-                map.set(sid, { student_id: sid, student_name: r.student_name || 'Unknown', receipts: [], totalPaid: 0 });
+                map.set(sid, { student_id: sid, student_name: r.student_name || t('Unknown'), receipts: [], totalPaid: 0 });
             }
             const g = map.get(sid)!;
             g.receipts.push(r);
@@ -76,21 +78,21 @@ const ParentReceipts = () => {
     return (
         <div className="flex flex-col gap-5 pb-6">
             <header>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Payment Receipts</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{t('Payment Receipts')}</h1>
                 <p className="text-sm text-slate-500 mt-1">
-                    {wards.length > 0 ? `For ${wards.map(w => w.first_name).join(', ')}` : 'Receipt archive'}
+                    {wards.length > 0 ? t('For {{names}}', { names: wards.map(w => w.first_name).join(', ') }) : t('Receipt archive')}
                 </p>
             </header>
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                     <span className="material-symbols-outlined text-blue-900 text-xl mb-2 block">receipt_long</span>
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Receipts</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">{t('Receipts')}</p>
                     <p className="text-xl font-extrabold text-slate-900 mt-1">{receipts.length}</p>
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                     <span className="material-symbols-outlined text-emerald-500 text-xl mb-2 block">payments</span>
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Total Paid</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase">{t('Total Paid')}</p>
                     <p className="text-xl font-extrabold text-slate-900 mt-1">{totalPaidAll.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{schoolConfig.currency_symbol}</span></p>
                 </div>
             </div>
@@ -119,15 +121,15 @@ const ParentReceipts = () => {
                     {selectedGroup.receipts.length === 0 ? (
                         <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
                             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">receipt</span>
-                            <p className="text-slate-500 font-medium">No receipts yet</p>
-                            <p className="text-xs text-slate-400 mt-1">Once a fee payment is recorded, its official receipt appears here and can be downloaded or printed at any time.</p>
+                            <p className="text-slate-500 font-medium">{t('No receipts yet')}</p>
+                            <p className="text-xs text-slate-400 mt-1">{t('Once a fee payment is recorded, its official receipt appears here and can be downloaded or printed at any time.')}</p>
                         </div>
                     ) : (
                         <>
                             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between">
                                 <div>
                                     <p className="font-bold text-slate-900">{selectedGroup.student_name}</p>
-                                    <p className="text-xs text-slate-400">{selectedGroup.receipts.length} receipt{selectedGroup.receipts.length > 1 ? 's' : ''}</p>
+                                    <p className="text-xs text-slate-400">{t(selectedGroup.receipts.length > 1 ? '{{count}} receipts' : '{{count}} receipt', { count: selectedGroup.receipts.length })}</p>
                                 </div>
                                 <p className="font-black text-emerald-600">{selectedGroup.totalPaid.toLocaleString()} {schoolConfig.currency_symbol}</p>
                             </div>
@@ -147,7 +149,7 @@ const ParentReceipts = () => {
                                             <p className="font-black text-slate-900">{parseFloat(r.amount).toLocaleString()} {schoolConfig.currency_symbol}</p>
                                             {r.balance_after !== null && (
                                                 <p className={`text-[11px] font-semibold mt-0.5 ${Number(r.balance_after) > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                                    {Number(r.balance_after) > 0 ? `Balance: ${Number(r.balance_after).toLocaleString()}` : 'Fully settled'}
+                                                    {Number(r.balance_after) > 0 ? t('Balance: {{amount}}', { amount: Number(r.balance_after).toLocaleString() }) : t('Fully settled')}
                                                 </p>
                                             )}
                                         </div>
@@ -158,14 +160,14 @@ const ParentReceipts = () => {
                                             className="flex-1 py-2.5 bg-blue-900 text-white rounded-xl text-sm font-bold active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                                         >
                                             <span className="material-symbols-outlined text-lg">print</span>
-                                            Print
+                                            {t('Print')}
                                         </button>
                                         <button
                                             onClick={() => downloadPdf(parentApi.receiptDownloadUrl(r.id), `receipt_${r.receipt_number}.pdf`)}
                                             className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                                         >
                                             <span className="material-symbols-outlined text-lg">download</span>
-                                            Download
+                                            {t('Download')}
                                         </button>
                                     </div>
                                 </div>
@@ -178,8 +180,8 @@ const ParentReceipts = () => {
             {groups.length === 0 && (
                 <div className="bg-white rounded-2xl p-10 text-center border border-slate-100">
                     <span className="material-symbols-outlined text-5xl text-slate-200 block mb-3">receipt_long</span>
-                    <p className="text-slate-500 font-medium">No payment receipts yet</p>
-                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">When the school records a fee payment — whether cash at the office or paid online — the official receipt will appear here, ready to download or print at any time.</p>
+                    <p className="text-slate-500 font-medium">{t('No payment receipts yet')}</p>
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">{t('When the school records a fee payment — whether cash at the office or paid online — the official receipt will appear here, ready to download or print at any time.')}</p>
                 </div>
             )}
         </div>

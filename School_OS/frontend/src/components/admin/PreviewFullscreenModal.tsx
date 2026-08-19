@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PreviewFullscreenModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ export default function PreviewFullscreenModal({
   controls,
   children,
 }: PreviewFullscreenModalProps) {
+  const { t } = useTranslation('adminStaffOps');
   const contentRef = useRef<HTMLDivElement>(null);
   const [native, setNative] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(0);
@@ -118,21 +120,21 @@ export default function PreviewFullscreenModal({
           <button
             onClick={() => setZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)))}
             className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-            title="Zoom out"
+            title={t('Zoom out')}
           >
             <span className="material-symbols-outlined text-lg">zoom_out</span>
           </button>
           <button
             onClick={() => setZoom(z => Math.min(4, +(z + 0.25).toFixed(2)))}
             className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-            title="Zoom in"
+            title={t('Zoom in')}
           >
             <span className="material-symbols-outlined text-lg">zoom_in</span>
           </button>
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-            title="Close (Esc)"
+            title={t('Close (Esc)')}
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>

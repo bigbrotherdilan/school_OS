@@ -1,9 +1,11 @@
 ﻿import { useState, useEffect, useCallback, Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, apiFetchAll } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { downloadPdf, openPdfInNewTab } from '../../../utils/pdf';
 
 export default function StudentLedger() {
+  const { t } = useTranslation('adminFinance');
   const { addToast } = useToastStore();
   const [years, setYears] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -62,10 +64,10 @@ export default function StudentLedger() {
           if (created > 0 || updated > 0) {
             invoicesData = await apiFetchAll('/finance/invoices/', invoiceParams);
             if (created > 0) {
-              addToast(`Fee invoices created for ${created} student${created !== 1 ? 's' : ''}.`, 'success');
+              addToast(t('Fee invoices created for {{count}} student(s).', { count: created }), 'success');
             }
             if (updated > 0) {
-              addToast(`Fees topped up for ${updated} student${updated !== 1 ? 's' : ''}.`, 'success');
+              addToast(t('Fees topped up for {{count}} student(s).', { count: updated }), 'success');
             }
           }
         } catch (e) { console.error('ensure-invoices failed:', e); }
@@ -125,15 +127,15 @@ export default function StudentLedger() {
 
   const statusBadge = (inv: any) => {
     if (!inv) return (
-      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-error-container text-on-error-container">Unpaid</span>
+      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-error-container text-on-error-container">{t('Unpaid')}</span>
     );
     switch (inv.status) {
       case 'paid':
-        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-secondary-container text-on-secondary-container">Paid</span>;
+        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-secondary-container text-on-secondary-container">{t('Paid')}</span>;
       case 'partial':
-        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-700">Partial</span>;
+        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-700">{t('Partial')}</span>;
       case 'unpaid':
-        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-error-container text-on-error-container">Unpaid</span>;
+        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-error-container text-on-error-container">{t('Unpaid')}</span>;
       default:
         return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-surface-container-high text-on-surface-variant">{inv.status}</span>;
     }
@@ -150,9 +152,9 @@ export default function StudentLedger() {
     setReminding(invoiceId);
     try {
       const res = await api.post(`/finance/invoices/${invoiceId}/send-reminder/`);
-      addToast(res.data.detail || `Reminder sent for ${invoiceNumber}.`, 'success');
+      addToast(res.data.detail || t('Reminder sent for {{invoiceNumber}}.', { invoiceNumber }), 'success');
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to send reminder.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to send reminder.'), 'error');
     } finally {
       setReminding(null);
     }
@@ -164,9 +166,9 @@ export default function StudentLedger() {
     setBulkReminding(true);
     try {
       const res = await api.post('/finance/invoices/send-reminders/', { invoice_ids: ids });
-      addToast(res.data.detail || 'Reminders sent.', 'success');
+      addToast(res.data.detail || t('Reminders sent.'), 'success');
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to send reminders.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to send reminders.'), 'error');
     } finally {
       setBulkReminding(false);
     }
@@ -189,49 +191,49 @@ export default function StudentLedger() {
   return (
     <div className="p-4 lg:p-12 space-y-8 max-w-[1400px] mx-auto animate-in fade-in duration-500">
       <div>
-        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Student Accounts</span>
-        <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Student Ledger</h1>
-        <p className="text-on-surface-variant mt-1">View per-student fee summaries, balances and payment history.</p>
+        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Student Accounts')}</span>
+        <h1 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Student Ledger')}</h1>
+        <p className="text-on-surface-variant mt-1">{t('View per-student fee summaries, balances and payment history.')}</p>
       </div>
 
       {/* Filters */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-1">School Year</label>
+          <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-1">{t('School Year')}</label>
           <select
             value={academicYear}
             onChange={e => setAcademicYear(e.target.value)}
             className="bg-surface-container-low border border-outline-variant/10 rounded-xl px-3 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20"
           >
-            {years.map((y: any) => <option key={y.id} value={y.id}>{y.name}{y.is_active ? ' (Active)' : ''}</option>)}
+            {years.map((y: any) => <option key={y.id} value={y.id}>{y.is_active ? t('{{name}} (Active)', { name: y.name }) : y.name}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-1">Class</label>
+          <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-1">{t('Class')}</label>
           <select
             value={classFilter}
             onChange={e => setClassFilter(e.target.value)}
             className="bg-surface-container-low border border-outline-variant/10 rounded-xl px-3 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20"
           >
-            <option value="">All Classes</option>
+            <option value="">{t('All Classes')}</option>
             {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-1">Payment Status</label>
+          <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-1">{t('Payment Status')}</label>
           <select
             value={paymentStatus}
             onChange={e => setPaymentStatus(e.target.value)}
             className="bg-surface-container-low border border-outline-variant/10 rounded-xl px-3 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20"
           >
-            <option value="all">All Statuses</option>
-            <option value="paid">Fully Paid</option>
-            <option value="partial">Partially Paid</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="draft">Draft</option>
+            <option value="all">{t('All Statuses')}</option>
+            <option value="paid">{t('Fully Paid')}</option>
+            <option value="partial">{t('Partially Paid')}</option>
+            <option value="unpaid">{t('Unpaid')}</option>
+            <option value="cancelled">{t('Cancelled')}</option>
+            <option value="draft">{t('Draft')}</option>
           </select>
         </div>
 
@@ -240,7 +242,7 @@ export default function StudentLedger() {
             onClick={handleReset}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-on-surface-variant hover:bg-surface-container-low transition-colors"
           >
-            <span className="material-symbols-outlined text-sm">filter_alt_off</span> Clear
+            <span className="material-symbols-outlined text-sm">filter_alt_off</span> {t('Clear')}
           </button>
         )}
       </div>
@@ -249,8 +251,8 @@ export default function StudentLedger() {
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-bold text-on-surface text-sm">Students</h3>
-            <p className="text-xs text-on-surface-variant mt-0.5">{loading ? 'Loading...' : `${filteredStudents.length} student${filteredStudents.length !== 1 ? 's' : ''} · ${remindableStudents.length} with outstanding balance`}</p>
+            <h3 className="font-bold text-on-surface text-sm">{t('Students')}</h3>
+            <p className="text-xs text-on-surface-variant mt-0.5">{loading ? t('Loading...') : t('{{count}} student(s) · {{remindCount}} with outstanding balance', { count: filteredStudents.length, remindCount: remindableStudents.length })}</p>
           </div>
           <button
             onClick={handleRemindAll}
@@ -258,29 +260,29 @@ export default function StudentLedger() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-on-primary text-xs font-bold uppercase tracking-widest shadow-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-sm">notifications_active</span>
-            {bulkReminding ? 'Sending...' : `Remind ${remindableStudents.length} Parent${remindableStudents.length !== 1 ? 's' : ''}`}
+            {bulkReminding ? t('Sending...') : t('Remind {{count}} Parent(s)', { count: remindableStudents.length })}
           </button>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-on-surface-variant text-sm">Loading...</div>
+          <div className="p-12 text-center text-on-surface-variant text-sm">{t('Loading...')}</div>
         ) : filteredStudents.length === 0 ? (
           <div className="p-12 text-center text-on-surface-variant text-sm">
             <span className="material-symbols-outlined text-5xl block mb-3 opacity-30 mx-auto">filter_alt_off</span>
-            No students match the selected filters.
+            {t('No students match the selected filters.')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
-                  <th className="px-6 py-4">Student</th>
-                  <th className="px-6 py-4">Class</th>
-                  <th className="px-6 py-4">Year</th>
-                  <th className="px-6 py-4">Amount Paid</th>
-                  <th className="px-6 py-4">Amount Left</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Reminder</th>
+                  <th className="px-6 py-4">{t('Student')}</th>
+                  <th className="px-6 py-4">{t('Class')}</th>
+                  <th className="px-6 py-4">{t('Year')}</th>
+                  <th className="px-6 py-4">{t('Amount Paid')}</th>
+                  <th className="px-6 py-4">{t('Amount Left')}</th>
+                  <th className="px-6 py-4">{t('Status')}</th>
+                  <th className="px-6 py-4 text-right">{t('Reminder')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/5">
@@ -298,7 +300,7 @@ export default function StudentLedger() {
                           <p className="font-bold text-sm text-on-surface">{s.first_name} {s.last_name}</p>
                           <p className="text-[10px] text-on-surface-variant font-medium mt-0.5">{s.admission_number}</p>
                         </td>
-                        <td className="px-6 py-4 text-sm text-on-surface-variant">{s.class_display || 'Unassigned'}</td>
+                        <td className="px-6 py-4 text-sm text-on-surface-variant">{s.class_display || t('Unassigned')}</td>
                         <td className="px-6 py-4 text-sm text-on-surface-variant">{yearName(inv)}</td>
                         <td className="px-6 py-4 text-sm">{inv ? `CFA ${parseFloat(inv.amount_paid).toLocaleString()}` : '—'}</td>
                         <td className="px-6 py-4 text-sm font-bold">
@@ -307,7 +309,7 @@ export default function StudentLedger() {
                           ) : balance > 0 ? (
                             <span className="text-error">CFA {balance.toLocaleString()}</span>
                           ) : (
-                            <span className="text-secondary">Settled</span>
+                            <span className="text-secondary">{t('Settled')}</span>
                           )}
                         </td>
                         <td className="px-6 py-4">{statusBadge(inv)}</td>
@@ -319,7 +321,7 @@ export default function StudentLedger() {
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
                             >
                               <span className="material-symbols-outlined text-sm">campaign</span>
-                              {reminding === inv.id ? 'Sending...' : 'Remind'}
+                              {reminding === inv.id ? t('Sending...') : t('Remind')}
                             </button>
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40">—</span>
@@ -331,42 +333,42 @@ export default function StudentLedger() {
                         <tr>
                           <td colSpan={7} className="px-6 py-6 bg-surface-container-low/40">
                             {ledgerLoading ? (
-                              <div className="py-12 text-center text-on-surface-variant text-sm">Loading ledger...</div>
+                              <div className="py-12 text-center text-on-surface-variant text-sm">{t('Loading ledger...')}</div>
                             ) : (
                               <div className="space-y-6">
                                 {/* Summary cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                   <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/10">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Total Fees</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t('Total Fees')}</span>
                                     <p className="text-2xl font-bold text-on-surface mt-1">CFA {totalFees.toLocaleString()}</p>
                                   </div>
                                   <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/10">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Total Paid</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t('Total Paid')}</span>
                                     <p className="text-2xl font-bold text-secondary mt-1">CFA {totalPaid.toLocaleString()}</p>
                                   </div>
                                   <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/10">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Balance</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">{t('Balance')}</span>
                                     <p className={`text-2xl font-bold mt-1 ${totalBalance > 0 ? 'text-error' : 'text-secondary'}`}>CFA {totalBalance.toLocaleString()}</p>
                                   </div>
                                 </div>
 
                                 {/* Fees */}
                                 <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
-                                  <div className="px-6 py-4 border-b border-outline-variant/10"><h3 className="font-bold text-on-surface">Fees</h3></div>
+                                  <div className="px-6 py-4 border-b border-outline-variant/10"><h3 className="font-bold text-on-surface">{t('Fees')}</h3></div>
                                   {invoices.length === 0 ? (
-                                    <div className="p-8 text-center text-on-surface-variant text-sm">No fees.</div>
+                                    <div className="p-8 text-center text-on-surface-variant text-sm">{t('No fees.')}</div>
                                   ) : (
                                     <div className="overflow-x-auto">
                                       <table className="w-full text-left">
                                         <thead>
                                           <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
-                                            <th className="px-6 py-3">Ref</th>
-                                            <th className="px-6 py-3">Year</th>
-                                            <th className="px-6 py-3">Total</th>
-                                            <th className="px-6 py-3">Paid</th>
-                                            <th className="px-6 py-3">Balance</th>
-                                            <th className="px-6 py-3">Status</th>
-                                            <th className="px-6 py-3">Due</th>
+                                            <th className="px-6 py-3">{t('Ref')}</th>
+                                            <th className="px-6 py-3">{t('Year')}</th>
+                                            <th className="px-6 py-3">{t('Total')}</th>
+                                            <th className="px-6 py-3">{t('Paid')}</th>
+                                            <th className="px-6 py-3">{t('Balance')}</th>
+                                            <th className="px-6 py-3">{t('Status')}</th>
+                                            <th className="px-6 py-3">{t('Due')}</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-outline-variant/5">
@@ -376,7 +378,7 @@ export default function StudentLedger() {
                                               <td className="px-6 py-3 text-sm text-on-surface-variant">{yearName(inv)}</td>
                                               <td className="px-6 py-3 text-sm">CFA {parseFloat(inv.total_amount).toLocaleString()}</td>
                                               <td className="px-6 py-3 text-sm">CFA {parseFloat(inv.amount_paid).toLocaleString()}</td>
-                                              <td className="px-6 py-3 text-sm font-bold">{parseFloat(inv.balance) === 0 ? <span className="text-secondary">Settled</span> : `CFA ${parseFloat(inv.balance).toLocaleString()}`}</td>
+                                              <td className="px-6 py-3 text-sm font-bold">{parseFloat(inv.balance) === 0 ? <span className="text-secondary">{t('Settled')}</span> : `CFA ${parseFloat(inv.balance).toLocaleString()}`}</td>
                                               <td className="px-6 py-3">{statusBadge(inv)}</td>
                                               <td className="px-6 py-3 text-sm text-on-surface-variant">{new Date(inv.due_date).toLocaleDateString()}</td>
                                             </tr>
@@ -389,20 +391,20 @@ export default function StudentLedger() {
 
                                 {/* Transactions */}
                                 <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
-                                  <div className="px-6 py-4 border-b border-outline-variant/10"><h3 className="font-bold text-on-surface">Payment History</h3></div>
+                                  <div className="px-6 py-4 border-b border-outline-variant/10"><h3 className="font-bold text-on-surface">{t('Payment History')}</h3></div>
                                   {transactions.length === 0 ? (
-                                    <div className="p-8 text-center text-on-surface-variant text-sm">No payments recorded.</div>
+                                    <div className="p-8 text-center text-on-surface-variant text-sm">{t('No payments recorded.')}</div>
                                   ) : (
                                     <div className="overflow-x-auto">
                                       <table className="w-full text-left">
                                         <thead>
                                           <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
-                                            <th className="px-6 py-3">Receipt</th>
-                                            <th className="px-6 py-3">Date</th>
-                                            <th className="px-6 py-3">Method</th>
-                                            <th className="px-6 py-3">Amount</th>
-                                            <th className="px-6 py-3">Balance After</th>
-                                            <th className="px-6 py-3 text-right">Receipt</th>
+                                            <th className="px-6 py-3">{t('Receipt')}</th>
+                                            <th className="px-6 py-3">{t('Date')}</th>
+                                            <th className="px-6 py-3">{t('Method')}</th>
+                                            <th className="px-6 py-3">{t('Amount')}</th>
+                                            <th className="px-6 py-3">{t('Balance After')}</th>
+                                            <th className="px-6 py-3 text-right">{t('Receipt')}</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-outline-variant/5">
@@ -414,7 +416,7 @@ export default function StudentLedger() {
                                               <td className="px-6 py-3 text-sm font-bold">CFA {parseFloat(tx.amount).toLocaleString()}</td>
                                               <td className="px-6 py-3 text-sm">
                                                 {tx.balance_after !== null && tx.balance_after !== undefined
-                                                  ? (parseFloat(tx.balance_after) > 0 ? `CFA ${parseFloat(tx.balance_after).toLocaleString()}` : <span className="text-secondary">Settled</span>)
+                                                  ? (parseFloat(tx.balance_after) > 0 ? `CFA ${parseFloat(tx.balance_after).toLocaleString()}` : <span className="text-secondary">{t('Settled')}</span>)
                                                   : '—'}
                                               </td>
                                               <td className="px-6 py-3 text-right whitespace-nowrap">
@@ -422,7 +424,7 @@ export default function StudentLedger() {
                                                   onClick={() => handlePrintReceipt(tx)}
                                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors"
                                                 >
-                                                  <span className="material-symbols-outlined text-sm">print</span> Print
+                                                  <span className="material-symbols-outlined text-sm">print</span> {t('Print')}
                                                 </button>
                                                 <button
                                                   onClick={() => handleDownloadReceipt(tx)}

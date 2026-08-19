@@ -3,6 +3,7 @@
  * Renders front and back at CR80 standard size (85.6mm × 53.98mm).
  * Fully style-aware with position, size, and layout controls.
  */
+import { useTranslation } from 'react-i18next';
 
 export interface IDCardStyle {
   // Colors
@@ -125,6 +126,7 @@ export interface StudentIDCardData {
 }
 
 function StudentIDCardFront({ data, style }: { data: StudentIDCardData; style: IDCardStyle }) {
+  const { t } = useTranslation('adminStaffOps');
   const s = style;
   const CARD_W = 340;
   const CARD_H = 213;
@@ -195,7 +197,7 @@ function StudentIDCardFront({ data, style }: { data: StudentIDCardData; style: I
           {data.school_logo ? (
             <img
               src={data.school_logo}
-              alt="School Logo"
+              alt={t('School Logo')}
               style={{ width: s.logo_size, height: s.logo_size, borderRadius: 8, objectFit: 'contain' }}
             />
           ) : (
@@ -363,7 +365,7 @@ function StudentIDCardFront({ data, style }: { data: StudentIDCardData; style: I
                 marginTop: 3,
               }}
             >
-              ID No.
+              {t('ID No.')}
             </div>
             <div
               style={{
@@ -410,6 +412,7 @@ function StudentIDCardFront({ data, style }: { data: StudentIDCardData; style: I
 
 
 function StudentIDCardBack({ data, style }: { data: StudentIDCardData; style: IDCardStyle }) {
+  const { t } = useTranslation('adminStaffOps');
   const s = style;
 
   const detailRows = [
@@ -496,7 +499,7 @@ function StudentIDCardBack({ data, style }: { data: StudentIDCardData; style: ID
                     lineHeight: 1,
                   }}
                 >
-                  {row.label}
+                  {t(row.label)}
                 </div>
                 <div
                   style={{
@@ -567,7 +570,7 @@ function StudentIDCardBack({ data, style }: { data: StudentIDCardData; style: ID
                 lineHeight: 1.2,
               }}
             >
-              Scan for School Info
+              {t('Scan for School Info')}
             </div>
           </div>
         )}
@@ -578,13 +581,13 @@ function StudentIDCardBack({ data, style }: { data: StudentIDCardData; style: ID
         <div style={{ padding: '6px 18px 0', position: 'relative', zIndex: 10 }}>
           <div style={{ height: 0.5, background: '#D9DDE5', marginBottom: 5 }} />
           <div style={{ fontSize: 7, fontWeight: 700, color: s.primary_color, marginBottom: 3 }}>
-            Terms & Conditions
+            {t('Terms & Conditions')}
           </div>
           <div style={{ fontSize: 6, color: '#5E6472', lineHeight: 1.5 }}>
-            • This ID card is the property of the school.{' '}
-            • Carry it at all times.{' '}
-            • Report loss immediately.{' '}
-            • Non-transferable.
+            {t('• This ID card is the property of the school.')}{' '}
+            {t('• Carry it at all times.')}{' '}
+            {t('• Report loss immediately.')}{' '}
+            {t('• Non-transferable.')}
           </div>
         </div>
       )}
@@ -651,6 +654,7 @@ export default function StudentIDCard({
   side?: 'front' | 'back' | 'both';
   style?: Partial<IDCardStyle>;
 }) {
+  const { t } = useTranslation('adminStaffOps');
   const s = { ...DEFAULT_CARD_STYLE, ...style };
 
   if (side === 'front') return <StudentIDCardFront data={data} style={s} />;
@@ -669,7 +673,7 @@ export default function StudentIDCard({
             marginBottom: 8,
           }}
         >
-          Front
+          {t('Front')}
         </div>
         <StudentIDCardFront data={data} style={s} />
       </div>
@@ -684,7 +688,7 @@ export default function StudentIDCard({
             marginBottom: 8,
           }}
         >
-          Back
+          {t('Back')}
         </div>
         <StudentIDCardBack data={data} style={s} />
       </div>

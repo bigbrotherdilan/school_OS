@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { X, Loader2, CheckCircle2, Briefcase } from 'lucide-react';
@@ -10,6 +11,7 @@ interface EditTeacherModalProps {
 }
 
 export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTeacherModalProps) {
+  const { t } = useTranslation('adminStaffOps');
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,14 +37,14 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
     setLoading(true);
     try {
       const response = await api.patch(`/staff/teachers/${teacher.id}/`, formData);
-      addToast('Teacher profile updated.', 'success');
+      addToast(t('Teacher profile updated.'), 'success');
       setFormData(response.data);
       onUpdate();
       onClose();
     } catch (error: any) {
       const data = error.response?.data;
       const msg = typeof data === 'string' ? data
-        : data?.detail || data?.first_name?.[0] || data?.last_name?.[0] || data?.email?.[0] || data?.department?.[0] || JSON.stringify(data) || 'Failed to update teacher.';
+        : data?.detail || data?.first_name?.[0] || data?.last_name?.[0] || data?.email?.[0] || data?.department?.[0] || JSON.stringify(data) || t('Failed to update teacher.');
       addToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -56,9 +58,9 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
         {/* Modal Header */}
         <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/30">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-1">Staff Records</span>
-            <h2 className="text-2xl font-black text-on-surface tracking-tight">Edit Teacher Profile</h2>
-            <p className="text-xs text-on-surface-variant font-medium mt-1 uppercase tracking-widest">ID: <span className="text-primary">{teacher.employee_id}</span></p>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-1">{t('Staff Records')}</span>
+            <h2 className="text-2xl font-black text-on-surface tracking-tight">{t('Edit Teacher Profile')}</h2>
+            <p className="text-xs text-on-surface-variant font-medium mt-1 uppercase tracking-widest">{t('ID: ')}<span className="text-primary">{teacher.employee_id}</span></p>
           </div>
           <button 
             onClick={onClose}
@@ -73,11 +75,11 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
             {/* Name & Email */}
             <section className="space-y-6">
               <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">badge</span> Identity
+                <span className="material-symbols-outlined text-primary">badge</span> {t('Identity')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">First Name</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('First Name')}</label>
                   <input
                     required
                     type="text"
@@ -88,7 +90,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Middle Name</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Middle Name')}</label>
                   <input
                     type="text"
                     name="middle_name"
@@ -98,7 +100,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Last Name</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Last Name')}</label>
                   <input
                     required
                     type="text"
@@ -109,7 +111,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Email</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Email')}</label>
                   <input
                     required
                     type="email"
@@ -125,33 +127,33 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
             {/* Professional Details */}
             <section className="space-y-6">
               <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-primary" /> Professional Details
+                <Briefcase className="w-4 h-4 text-primary" /> {t('Professional Details')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Department</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Department')}</label>
                   <input
                     type="text"
                     name="department"
                     value={formData.department}
                     onChange={handleChange}
                     className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
-                    placeholder="e.g. Science, Arts, Languages"
+                    placeholder={t('e.g. Science, Arts, Languages')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Qualification</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Qualification')}</label>
                   <input
                     type="text"
                     name="qualification"
                     value={formData.qualification}
                     onChange={handleChange}
                     className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
-                    placeholder="e.g. M.Ed Mathematics"
+                    placeholder={t('e.g. M.Ed Mathematics')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Phone</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Phone')}</label>
                   <input
                     type="tel"
                     name="phone"
@@ -162,17 +164,17 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Availability</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Availability')}</label>
                   <select
                     name="availability"
                     value={formData.availability}
                     onChange={handleChange}
                     className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                   >
-                    <option value="full_time">Full Time</option>
-                    <option value="part_time">Part Time</option>
-                    <option value="contract">Contract</option>
-                    <option value="available">Available for Hire</option>
+                    <option value="full_time">{t('Full Time')}</option>
+                    <option value="part_time">{t('Part Time')}</option>
+                    <option value="contract">{t('Contract')}</option>
+                    <option value="available">{t('Available for Hire')}</option>
                   </select>
                 </div>
               </div>
@@ -180,21 +182,21 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
 
             {/* Bio */}
             <section className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Bio</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('Bio')}</label>
               <textarea
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
                 rows={4}
                 className="w-full bg-white border border-outline-variant/20 rounded-xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none"
-                placeholder="Short professional biography..."
+                placeholder={t('Short professional biography...')}
               />
             </section>
 
             {/* Settings */}
             <section className="space-y-4">
               <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">settings</span> Visibility & Settings
+                <span className="material-symbols-outlined text-primary">settings</span> {t('Visibility & Settings')}
               </h3>
               <div className="flex items-center gap-4 p-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5">
                 <input
@@ -206,8 +208,8 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                   className="w-4 h-4 text-primary border-outline-variant/20 rounded focus:ring-4 focus:ring-primary/5"
                 />
                 <label htmlFor="public_profile" className="flex items-center gap-2 text-sm font-medium text-on-surface cursor-pointer">
-                  Public Profile
-                  <span className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">(Marketplace)</span>
+                  {t('Public Profile')}
+                  <span className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">{t('(Marketplace)')}</span>
                 </label>
               </div>
             </section>
@@ -219,7 +221,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                 onClick={onClose}
                 className="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-black text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all active:scale-95"
               >
-                Cancel
+                {t('Cancel')}
               </button>
               <button
                 type="submit"
@@ -227,7 +229,7 @@ export default function EditTeacherModal({ teacher, onClose, onUpdate }: EditTea
                 className="px-6 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-50 active:scale-95"
               >
                 {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                Save Changes
+                {t('Save Changes')}
               </button>
             </div>
           </form>

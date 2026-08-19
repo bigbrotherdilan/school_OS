@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -8,6 +9,7 @@ import { useTenantStore } from '../../stores/tenantStore';
 import { useSectionStore } from '../../stores/sectionStore';
 
 export default function AdminLayout() {
+  const { t } = useTranslation('layout');
   const { tenants } = useAuthStore();
   const { activeTenantId, setActiveTenantId } = useTenantStore();
   const { fetchSections, setActiveSectionId } = useSectionStore();

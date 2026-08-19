@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useTeacherStore } from '../../../stores/teacherStore';
 
@@ -36,6 +37,7 @@ interface CoverageSummary {
 type ActiveTab = 'curriculum' | 'analytics';
 
 export default function TeacherCoveragePage() {
+  const { t } = useTranslation('teacher');
   const [modules, setModules] = useState<Module[]>([]);
   const [summary, setSummary] = useState<CoverageSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,7 +199,7 @@ export default function TeacherCoveragePage() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 px-1 sm:px-2">
         <div>
-          <h2 className="text-3xl sm:text-4xl font-black text-primary tracking-tighter mb-2">Program Coverage</h2>
+          <h2 className="text-3xl sm:text-4xl font-black text-primary tracking-tighter mb-2">{t('Program Coverage')}</h2>
           <p className="text-slate-500 font-medium text-sm">{activeAssignment?.subject_name} &bull; {activeAssignment?.class_name}</p>
         </div>
         <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
@@ -205,13 +207,13 @@ export default function TeacherCoveragePage() {
              onClick={() => setActiveTab('curriculum')}
              className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-sm transition-all min-h-[40px] ${activeTab === 'curriculum' ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
            >
-             Curriculum
+             {t('Curriculum')}
            </button>
            <button
              onClick={() => setActiveTab('analytics')}
              className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-sm transition-all min-h-[40px] ${activeTab === 'analytics' ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
            >
-             Analytics
+             {t('Analytics')}
            </button>
         </div>
       </div>
@@ -222,7 +224,7 @@ export default function TeacherCoveragePage() {
           <div className="absolute -right-4 -bottom-4 opacity-10 transition-transform group-hover:scale-110">
             <span className="material-symbols-outlined text-9xl">analytics</span>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-4">Overall Completion</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-4">{t('Overall Completion')}</p>
           <div className="flex items-baseline gap-2">
             <span className="text-6xl font-black">{totalProgress()}%</span>
             <span className="text-lg font-bold opacity-60">Covered</span>
@@ -242,13 +244,13 @@ export default function TeacherCoveragePage() {
           </div>
           <div className="mt-4 flex items-center gap-2 text-secondary text-xs font-bold">
             <span className="material-symbols-outlined text-sm">trending_up</span>
-            <span>{totalProgress() >= 50 ? 'On track for term completion' : 'Keep going - building momentum'}</span>
+            <span>{totalProgress() >= 50 ? t('On track for term completion') : t('Keep going - building momentum')}</span>
           </div>
         </div>
 
         <div className="bg-tertiary-fixed/10 p-5 sm:p-8 rounded-3xl border border-tertiary-fixed/20 shadow-sm flex flex-col justify-between">
            <div>
-             <p className="text-[10px] font-black text-on-tertiary-fixed-variant uppercase tracking-[0.2em] mb-4">Next Up</p>
+             <p className="text-[10px] font-black text-on-tertiary-fixed-variant uppercase tracking-[0.2em] mb-4">{t('Next Up')}</p>
              {nextUp ? (
                <>
                  <h4 className="text-xl font-bold text-on-tertiary-fixed">{nextUp.lesson.title}</h4>
@@ -256,18 +258,18 @@ export default function TeacherCoveragePage() {
                </>
              ) : (
                <>
-                 <h4 className="text-xl font-bold text-on-tertiary-fixed">All Complete! 🎉</h4>
-                 <p className="text-sm text-on-tertiary-fixed opacity-70 mt-1">Every lesson has been covered</p>
+<h4 className="text-xl font-bold text-on-tertiary-fixed">{t('All Complete!')}</h4>
+                  <p className="text-sm text-on-tertiary-fixed opacity-70 mt-1">{t('Every lesson has been covered')}</p>
                </>
              )}
            </div>
            {nextUp && (
-              <button
+<button
                 onClick={() => toggleLesson(nextUp.lesson)}
                 className="mt-4 w-full py-3 bg-tertiary-fixed text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-transform hover:scale-[1.02] active:scale-95 shadow-sm min-h-[44px]"
               >
-               Mark as Covered
-             </button>
+                {t('Mark as Covered')}
+              </button>
            )}
         </div>
       </div>
@@ -277,26 +279,26 @@ export default function TeacherCoveragePage() {
         /* ========== CURRICULUM TAB ========== */
         <div className="space-y-8">
           <div className="flex items-center justify-between px-1 sm:px-2">
-            <h3 className="text-xl sm:text-2xl font-black text-primary tracking-tight">Course Modules</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-primary tracking-tight">{t('Course Modules')}</h3>
             <button
               onClick={() => setShowAddModule(true)}
               className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-primary/5 text-primary rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all min-h-[40px]"
             >
               <span className="material-symbols-outlined text-sm">add</span>
-              Add Module
+              {t('Add Module')}
             </button>
           </div>
 
           {/* Add Module Modal */}
           {showAddModule && (
             <div className="bg-white rounded-3xl border border-primary/20 shadow-lg p-8 animate-in slide-in-from-top-2 duration-300">
-              <h4 className="text-lg font-black text-primary mb-4">New Module</h4>
+              <h4 className="text-lg font-black text-primary mb-4">{t('New Module')}</h4>
               <div className="flex gap-4">
                 <input
                   type="text"
                   value={newModuleName}
                   onChange={(e) => setNewModuleName(e.target.value)}
-                  placeholder="Module name (e.g., Trigonometry)"
+                  placeholder={t('Module name (e.g., Trigonometry)')}
                   className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddModule()}
                   autoFocus
@@ -306,7 +308,7 @@ export default function TeacherCoveragePage() {
                   disabled={addingModule || !newModuleName.trim()}
                   className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 hover:bg-primary/90 transition-all"
                 >
-                  {addingModule ? 'Saving...' : 'Create'}
+                  {addingModule ? t('Saving...') : t('Create')}
                 </button>
                 <button
                   onClick={() => { setShowAddModule(false); setNewModuleName(''); }}
@@ -324,15 +326,15 @@ export default function TeacherCoveragePage() {
               <div className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center mb-8 shadow-inner border border-slate-100">
                 <span className="material-symbols-outlined text-6xl text-slate-300" style={{ fontVariationSettings: "'FILL' 1" }}>library_books</span>
               </div>
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight">No Curriculum Data Yet</h3>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{t('No Curriculum Data Yet')}</h3>
               <p className="text-slate-500 max-w-md mt-4 text-sm leading-relaxed">
-                Start building your curriculum by adding modules and lessons. This will track your program coverage throughout the term.
+                {t('Start building your curriculum by adding modules and lessons. This will track your program coverage throughout the term.')}
               </p>
               <button
                 onClick={() => setShowAddModule(true)}
                 className="mt-8 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-sm"
               >
-                Create First Module
+                {t('Create First Module')}
               </button>
             </div>
           )}
@@ -348,12 +350,12 @@ export default function TeacherCoveragePage() {
                     </div>
                     <div>
                       <h4 className="text-xl font-black text-primary tracking-tight">{module.name}</h4>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{module.lessons.length} Lessons</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{t('{{count}} Lessons', { count: module.lessons.length })}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right hidden sm:block">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Module Progress</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('Module Progress')}</p>
                       <p className="text-lg font-black text-primary">{calculateProgress(module)}%</p>
                     </div>
                     <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
@@ -390,7 +392,7 @@ export default function TeacherCoveragePage() {
                           type="text"
                           value={newLessonTitle}
                           onChange={(e) => setNewLessonTitle(e.target.value)}
-                          placeholder="Lesson title..."
+                          placeholder={t('Lesson title...')}
                           className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-0"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleAddLesson(module.id);
@@ -418,7 +420,7 @@ export default function TeacherCoveragePage() {
                         className="p-3 sm:p-4 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center gap-2 text-slate-400 hover:border-primary-fixed hover:text-primary transition-all group/add min-h-[48px]"
                       >
                         <span className="material-symbols-outlined text-sm transition-transform group-hover/add:rotate-90">add</span>
-                        <span className="text-xs font-black uppercase tracking-widest">Add Lesson</span>
+                        <span className="text-xs font-black uppercase tracking-widest">{t('Add Lesson')}</span>
                       </button>
                     )}
                   </div>
@@ -430,32 +432,32 @@ export default function TeacherCoveragePage() {
       ) : (
         /* ========== ANALYTICS TAB ========== */
         <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-          <h3 className="text-xl sm:text-2xl font-black text-primary tracking-tight px-1 sm:px-2">Coverage Analytics</h3>
+          <h3 className="text-xl sm:text-2xl font-black text-primary tracking-tight px-1 sm:px-2">{t('Coverage Analytics')}</h3>
 
           {summary ? (
             <>
               {/* Summary Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
                 <AnalyticsCard
-                  label="Total Modules"
+                  label={t('Total Modules')}
                   value={summary.total_modules.toString()}
                   icon="folder_open"
                   color="primary"
                 />
                 <AnalyticsCard
-                  label="Total Lessons"
+                  label={t('Total Lessons')}
                   value={summary.total_lessons.toString()}
                   icon="menu_book"
                   color="primary"
                 />
                 <AnalyticsCard
-                  label="Completed"
+                  label={t('Completed')}
                   value={summary.total_completed.toString()}
                   icon="check_circle"
                   color="secondary"
                 />
                 <AnalyticsCard
-                  label="Remaining"
+                  label={t('Remaining')}
                   value={(summary.total_lessons - summary.total_completed).toString()}
                   icon="pending"
                   color="tertiary"
@@ -465,7 +467,7 @@ export default function TeacherCoveragePage() {
               {/* Pace Indicator */}
               <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                  <h4 className="text-lg font-black text-primary">Coverage Pace</h4>
+                  <h4 className="text-lg font-black text-primary">{t('Coverage Pace')}</h4>
                   <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${
                     summary.overall_progress >= 70 
                       ? 'bg-secondary/10 text-secondary border-secondary/20' 
@@ -476,7 +478,7 @@ export default function TeacherCoveragePage() {
                     <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                       {summary.overall_progress >= 70 ? 'verified' : summary.overall_progress >= 40 ? 'schedule' : 'warning'}
                     </span>
-                    {summary.overall_progress >= 70 ? 'Excellent Pace' : summary.overall_progress >= 40 ? 'On Track' : 'Needs Attention'}
+                    {summary.overall_progress >= 70 ? t('Excellent Pace') : summary.overall_progress >= 40 ? t('On Track') : t('Needs Attention')}
                   </div>
                 </div>
                 <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
@@ -487,7 +489,7 @@ export default function TeacherCoveragePage() {
                 </div>
                 <div className="flex justify-between mt-3 text-xs font-bold text-slate-400">
                   <span>0%</span>
-                  <span>{summary.overall_progress}% Complete</span>
+                  <span>{t('{{progress}}% Complete', { progress: summary.overall_progress })}</span>
                   <span>100%</span>
                 </div>
               </div>
@@ -495,8 +497,8 @@ export default function TeacherCoveragePage() {
               {/* Per-Module Breakdown */}
               <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="p-5 sm:p-8 pb-4">
-                  <h4 className="text-lg font-black text-primary mb-2">Module Breakdown</h4>
-                  <p className="text-xs text-slate-400 font-medium">Individual progress for each curriculum module</p>
+                  <h4 className="text-lg font-black text-primary mb-2">{t('Module Breakdown')}</h4>
+                  <p className="text-xs text-slate-400 font-medium">{t('Individual progress for each curriculum module')}</p>
                 </div>
                 <div className="px-5 sm:px-8 pb-5 sm:pb-8">
                   <div className="space-y-6">
@@ -533,15 +535,15 @@ export default function TeacherCoveragePage() {
                     <span className="material-symbols-outlined text-primary text-2xl">insights</span>
                   </div>
                   <div>
-                    <h4 className="text-lg font-black text-primary mb-1">Projection</h4>
+                    <h4 className="text-lg font-black text-primary mb-1">{t('Projection')}</h4>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       {summary.overall_progress === 100 
-                        ? 'Congratulations! 🎉 You have achieved full curriculum coverage for this subject. All lessons have been documented and linked to your logbook.'
+                        ? t('Congratulations! You have achieved full curriculum coverage for this subject. All lessons have been documented and linked to your logbook.')
                         : summary.overall_progress >= 70
-                          ? `You're making excellent progress. At your current pace, you're well on track to complete the remaining ${summary.total_lessons - summary.total_completed} lessons before the end of term.`
+                          ? t("You're making excellent progress. At your current pace, you're well on track to complete the remaining {{remaining}} lessons before the end of term.", { remaining: summary.total_lessons - summary.total_completed })
                           : summary.overall_progress >= 30
-                            ? `You've covered ${summary.total_completed} of ${summary.total_lessons} lessons. Consider increasing your coverage rate to ensure all topics are addressed by inspection time.`
-                            : `Coverage is at an early stage with ${summary.total_completed} of ${summary.total_lessons} lessons completed. Prioritize high-coefficient modules to maximize impact.`
+                            ? t('You have covered {{completed}} of {{total}} lessons. Consider increasing your coverage rate to ensure all topics are addressed by inspection time.', { completed: summary.total_completed, total: summary.total_lessons })
+                            : t('Coverage is at an early stage with {{completed}} of {{total}} lessons completed. Prioritize high-coefficient modules to maximize impact.', { completed: summary.total_completed, total: summary.total_lessons })
                       }
                     </p>
                   </div>
@@ -551,7 +553,7 @@ export default function TeacherCoveragePage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <span className="material-symbols-outlined text-4xl text-slate-300 mb-4">query_stats</span>
-              <p className="text-slate-500 font-medium">Loading analytics data...</p>
+              <p className="text-slate-500 font-medium">{t('Loading analytics data...')}</p>
             </div>
           )}
         </div>
@@ -566,6 +568,7 @@ function AnalyticsCard({ label, value, icon, color }: {
   icon: string;
   color: 'primary' | 'secondary' | 'tertiary';
 }) {
+  const { t } = useTranslation('teacher');
   const colorClasses = {
     primary: 'bg-primary/5 text-primary border-primary/10',
     secondary: 'bg-secondary/5 text-secondary border-secondary/10',

@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 
@@ -17,6 +18,7 @@ const highlights = [
 ];
 
 export default function LandingPage() {
+  const { t } = useTranslation('publicSite');
   const [schoolSearch, setSchoolSearch] = useState('');
   const navigate = useNavigate();
 
@@ -35,14 +37,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-full mb-6">
             <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-            <span className="text-xs font-bold tracking-widest text-primary uppercase">The Operating System for Schools</span>
+            <span className="text-xs font-bold tracking-widest text-primary uppercase">{t('The Operating System for Schools')}</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold text-primary tracking-tighter mb-6 leading-[1.05]">
-            Run Your School Like a<br className="hidden sm:block" /> Modern Organization
+            {t('Run Your School Like a')}<br className="hidden sm:block" /> {t('Modern Organization')}
           </h1>
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-on-surface-variant mb-10 leading-relaxed">
-            School OS brings student records, attendance, fees, report cards, timetables, and parent
-            communication into one secure platform -- so nothing falls through the cracks.
+            {t('School OS brings student records, attendance, fees, report cards, timetables, and parent communication into one secure platform -- so nothing falls through the cracks.')}
           </p>
 
           {/* Centered login CTA -- visible on mobile without opening the menu */}
@@ -51,13 +52,13 @@ export default function LandingPage() {
               to="/login"
               className="w-full sm:w-auto px-10 py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 text-center"
             >
-              Login to Your School
+              {t('Login to Your School')}
             </Link>
             <Link
               to="/schools"
               className="w-full sm:w-auto px-10 py-4 bg-white text-primary rounded-xl font-bold text-lg border border-outline-variant hover:bg-surface-container-low transition-all text-center"
             >
-              Explore Schools
+              {t('Explore Schools')}
             </Link>
           </div>
 
@@ -66,7 +67,7 @@ export default function LandingPage() {
             {stats.map((stat, i) => (
               <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-outline-variant/20 shadow-sm">
                 <div className="text-3xl font-extrabold text-primary">{stat.value}</div>
-                <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mt-1">{stat.label}</div>
+                <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mt-1">{t(stat.label)}</div>
               </div>
             ))}
           </div>

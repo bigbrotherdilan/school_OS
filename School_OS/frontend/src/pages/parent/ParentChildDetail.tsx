@@ -1,9 +1,11 @@
 ﻿import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { parentApi, type ChildSummary } from '../../services/parentApi';
 import { useTenantStore } from '../../stores/tenantStore';
 
 const ParentChildDetail: React.FC = () => {
+    const { t } = useTranslation('parent');
     const { childId } = useParams<{ childId: string }>();
     const { schoolConfig } = useTenantStore();
     const [summary, setSummary] = useState<ChildSummary | null>(null);
@@ -27,7 +29,7 @@ const ParentChildDetail: React.FC = () => {
                     }
                 }
             })
-            .catch(() => setError('Failed to load child details.'))
+            .catch(() => setError(t('Failed to load child details.')))
             .finally(() => setLoading(false));
     }, [childId]);
 
@@ -45,9 +47,9 @@ const ParentChildDetail: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
                 <span className="material-symbols-outlined text-5xl text-slate-300">cloud_off</span>
-                <p className="text-slate-500 text-center text-lg">{error || 'Student not found'}</p>
+                <p className="text-slate-500 text-center text-lg">{error || t('Student not found')}</p>
                 <Link to="/parent" className="px-6 py-3 bg-blue-900 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform">
-                    Back to Dashboard
+                    {t('Back to Dashboard')}
                 </Link>
             </div>
         );
@@ -62,7 +64,7 @@ const ParentChildDetail: React.FC = () => {
             {/* Back Navigation */}
             <Link to="/parent" className="flex items-center gap-2 text-sm font-semibold text-blue-900 hover:underline">
                 <span className="material-symbols-outlined text-lg">arrow_back</span>
-                Dashboard
+                {t('Dashboard')}
             </Link>
 
             {/* Child Header */}
@@ -100,9 +102,9 @@ const ParentChildDetail: React.FC = () => {
                         </span>
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-slate-900">Attendance</p>
+                        <p className="text-sm font-bold text-slate-900">{t('Attendance')}</p>
                         <p className="text-xs text-slate-500">
-                            {summary.attendance.present_days} / {summary.attendance.total_days} days present
+                            {t('{{present}} / {{total}} days present', { present: summary.attendance.present_days, total: summary.attendance.total_days })}
                         </p>
                     </div>
                 </div>
@@ -145,13 +147,13 @@ const ParentChildDetail: React.FC = () => {
                         >
                             {seq.sequence_name}
                             {!seq.is_locked && (
-                                <span className="w-2 h-2 rounded-full bg-amber-400" title="Not yet finalised" />
+                                <span className="w-2 h-2 rounded-full bg-amber-400" title={t('Not yet finalised')} />
                             )}
                             {seq.is_locked && !seq.is_shared && (
-                                <span className="w-2 h-2 rounded-full bg-slate-300" title="Marks finalised - not yet shared" />
+                                <span className="w-2 h-2 rounded-full bg-slate-300" title={t('Marks finalised - not yet shared')} />
                             )}
                             {seq.is_locked && seq.is_shared && (
-                                <span className="w-2 h-2 rounded-full bg-emerald-400" title="Results visible" />
+                                <span className="w-2 h-2 rounded-full bg-emerald-400" title={t('Results visible')} />
                             )}
                         </button>
                     ))}
@@ -166,12 +168,12 @@ const ParentChildDetail: React.FC = () => {
                             <h2 className="font-bold text-slate-900">
                                 {currentSequence.sequence_name} - {currentTerm.term_name}
                             </h2>
-                            <p className="text-xs text-slate-500 mt-0.5">Subject scores (out of {scaleMax})</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{t('Subject scores (out of {{max}})', { max: scaleMax })}</p>
                         </div>
                         {currentSequence.subjects.length === 0 ? (
                             <div className="p-8 text-center">
                                 <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">analytics</span>
-                                <p className="text-sm text-slate-500">No results available for this sequence.</p>
+                                <p className="text-sm text-slate-500">{t('No results available for this sequence.')}</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-100">
@@ -192,7 +194,7 @@ const ParentChildDetail: React.FC = () => {
                                                     <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }} />
                                                 </div>
                                                 {subj.coefficient !== 1 && (
-                                                    <p className="text-[10px] text-slate-400 mt-1">Coefficient: {subj.coefficient}</p>
+                                                    <p className="text-[10px] text-slate-400 mt-1">{t('Coefficient: {{coef}}', { coef: subj.coefficient })}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -207,29 +209,29 @@ const ParentChildDetail: React.FC = () => {
                             {currentSequence.is_locked ? 'visibility_off' : 'lock_open'}
                         </span>
                         <p className="text-sm font-bold text-slate-900 mb-1">
-                            {currentSequence.is_locked ? 'Results not yet shared' : 'Results pending'}
+                            {currentSequence.is_locked ? t('Results not yet shared') : t('Results pending')}
                         </p>
                         <p className="text-xs text-slate-500">
                             {currentSequence.is_locked
-                                ? 'Marks have been finalised but are not yet visible to parents. The school admin will share them soon.'
-                                : 'Results will appear here once the exam session closes and marks are finalised by the admin.'}
+                                ? t('Marks have been finalised but are not yet visible to parents. The school admin will share them soon.')
+                                : t('Results will appear here once the exam session closes and marks are finalised by the admin.')}
                         </p>
                     </div>
                 )
             ) : (
                 <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm text-center">
                     <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">school</span>
-                    <p className="text-sm text-slate-500">No sequences available for this term.</p>
+                    <p className="text-sm text-slate-500">{t('No sequences available for this term.')}</p>
                 </div>
             )}
 
             {/* Quick Nav */}
             <div className="flex gap-3">
                 <Link to="/parent/analytics" className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 text-center hover:bg-slate-50 transition-colors">
-                    View All Grades
+                    {t('View All Grades')}
                 </Link>
                 <Link to="/parent/reports" className="flex-1 py-3 bg-blue-900 rounded-xl text-sm font-bold text-white text-center active:scale-[0.98] transition-transform">
-                    Report Cards
+                    {t('Report Cards')}
                 </Link>
             </div>
         </div>

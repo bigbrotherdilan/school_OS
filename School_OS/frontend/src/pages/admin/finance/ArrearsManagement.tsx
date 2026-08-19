@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 
 export default function ArrearsManagement() {
+  const { t } = useTranslation('adminFinance');
   const { addToast } = useToastStore();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -34,9 +36,9 @@ export default function ArrearsManagement() {
     setReminderLoading(invoiceId);
     try {
       const res = await api.post(`/finance/invoices/${invoiceId}/send-reminder/`);
-      addToast(res.data.detail || `Reminder sent for ${studentName}.`, 'success');
+      addToast(res.data.detail || t('Reminder sent for {{studentName}}.', { studentName }), 'success');
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to send reminder.', 'error');
+      addToast(err.response?.data?.detail || t('Failed to send reminder.'), 'error');
     } finally {
       setReminderLoading(null);
     }
@@ -45,38 +47,38 @@ export default function ArrearsManagement() {
   return (
     <div className="p-4 lg:p-12 space-y-8 max-w-[1400px] mx-auto animate-in fade-in duration-500">
       <div>
-        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Collections</span>
-        <h1 className="text-4xl font-semibold tracking-tight text-on-surface">Arrears Management</h1>
-        <p className="text-on-surface-variant mt-1">Track overdue accounts and send payment reminders.</p>
+        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{t('Collections')}</span>
+        <h1 className="text-4xl font-semibold tracking-tight text-on-surface">{t('Arrears Management')}</h1>
+        <p className="text-on-surface-variant mt-1">{t('Track overdue accounts and send payment reminders.')}</p>
       </div>
 
       <div className="flex items-center gap-4">
         <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20">
-          <option value="">All Classes</option>
+          <option value="">{t('All Classes')}</option>
           {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <span className="text-sm text-on-surface-variant font-medium">{invoices.length} outstanding fee{invoices.length !== 1 ? 's' : ''}</span>
+        <span className="text-sm text-on-surface-variant font-medium">{t('{{count}} outstanding fee', { count: invoices.length })}</span>
       </div>
 
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-on-surface-variant">Loading...</div>
+          <div className="p-12 text-center text-on-surface-variant">{t('Loading...')}</div>
         ) : invoices.length === 0 ? (
           <div className="p-12 text-center">
             <span className="material-symbols-outlined text-5xl block mb-3 opacity-30 mx-auto">check_circle</span>
-            <p className="text-sm font-bold text-secondary">No outstanding arrears - all fees are settled!</p>
+            <p className="text-sm font-bold text-secondary">{t('No outstanding arrears - all fees are settled!')}</p>
           </div>
         ) : (
           <table className="w-full text-left">
             <thead>
               <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 bg-surface-container-low">
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Class</th>
-                <th className="px-6 py-4">Ref</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Balance</th>
-                <th className="px-6 py-4">Due Date</th>
-                <th className="px-6 py-4">Days Overdue</th>
+                <th className="px-6 py-4">{t('Student')}</th>
+                <th className="px-6 py-4">{t('Class')}</th>
+                <th className="px-6 py-4">{t('Ref')}</th>
+                <th className="px-6 py-4">{t('Amount')}</th>
+                <th className="px-6 py-4">{t('Balance')}</th>
+                <th className="px-6 py-4">{t('Due Date')}</th>
+                <th className="px-6 py-4">{t('Days Overdue')}</th>
                 <th className="px-6 py-4"></th>
               </tr>
             </thead>
@@ -101,7 +103,7 @@ export default function ArrearsManagement() {
                         disabled={reminderLoading === inv.id}
                         className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline disabled:opacity-50"
                       >
-                        {reminderLoading === inv.id ? 'Sending...' : 'Remind'}
+                        {reminderLoading === inv.id ? t('Sending...') : t('Remind')}
                       </button>
                     </td>
                   </tr>

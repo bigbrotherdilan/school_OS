@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useToastStore } from '../../stores/toastStore';
 import { api } from '../../services/api';
 import { KeyRound, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => void }) {
+  const { t } = useTranslation('ui');
   const { addToast } = useToastStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOld, setShowOld] = useState(false);
@@ -23,12 +25,12 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
     e.preventDefault();
 
     if (formData.new_password !== formData.confirm_password) {
-      addToast('New passwords do not match.', 'error');
+      addToast(t('New passwords do not match.'), 'error');
       return;
     }
 
     if (formData.new_password.length < 8) {
-      addToast('New password must be at least 8 characters.', 'error');
+      addToast(t('New password must be at least 8 characters.'), 'error');
       return;
     }
 
@@ -40,10 +42,10 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
       });
       setSuccess(true);
       setFormData({ old_password: '', new_password: '', confirm_password: '' });
-      addToast('Password changed successfully.', 'success');
+      addToast(t('Password changed successfully.'), 'success');
       onSuccess?.();
     } catch (error: any) {
-      const detail = error.response?.data?.detail || 'Failed to change password.';
+      const detail = error.response?.data?.detail || t('Failed to change password.');
       addToast(detail, 'error');
     } finally {
       setIsSubmitting(false);
@@ -58,15 +60,15 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
             <KeyRound className="w-5 h-5 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-on-surface">Change Password</h3>
-            <p className="text-xs text-on-surface-variant">Update your account password</p>
+            <h3 className="text-lg font-bold text-on-surface">{t('Change Password')}</h3>
+            <p className="text-xs text-on-surface-variant">{t('Update your account password')}</p>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 space-y-6">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Current Password</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Current Password')}</label>
           <div className="relative">
             <input
               required
@@ -75,7 +77,7 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
               value={formData.old_password}
               onChange={handleChange}
               className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 pr-12 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40"
-              placeholder="Enter current password"
+              placeholder={t('Enter current password')}
             />
             <button type="button" onClick={() => setShowOld(!showOld)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-on-surface-variant/40 hover:text-on-surface-variant transition-colors">
               {showOld ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -84,7 +86,7 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">New Password</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('New Password')}</label>
           <div className="relative">
             <input
               required
@@ -93,7 +95,7 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
               value={formData.new_password}
               onChange={handleChange}
               className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 pr-12 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40"
-              placeholder="Minimum 8 characters"
+              placeholder={t('Minimum 8 characters')}
             />
             <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-on-surface-variant/40 hover:text-on-surface-variant transition-colors">
               {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -102,7 +104,7 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Confirm New Password</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Confirm New Password')}</label>
           <input
             required
             type="password"
@@ -110,13 +112,13 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
             value={formData.confirm_password}
             onChange={handleChange}
             className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-4 py-3 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40"
-            placeholder="Re-enter new password"
+            placeholder={t('Re-enter new password')}
           />
         </div>
 
         {success && (
           <div className="flex items-center gap-2 p-3 bg-secondary/10 text-secondary rounded-xl text-sm font-bold">
-            <CheckCircle className="w-4 h-4" /> Password changed successfully.
+            <CheckCircle className="w-4 h-4" /> {t('Password changed successfully.')}
           </div>
         )}
 
@@ -127,7 +129,7 @@ export default function ChangePasswordCard({ onSuccess }: { onSuccess?: () => vo
             className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? <span className="material-symbols-outlined animate-spin text-lg">sync</span> : <KeyRound className="w-4 h-4" />}
-            {isSubmitting ? 'Updating...' : 'Update Password'}
+            {isSubmitting ? t('Updating...') : t('Update Password')}
           </button>
         </div>
       </form>

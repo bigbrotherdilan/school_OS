@@ -3,8 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import PublicNavbar from '../../components/layout/public/PublicNavbar';
 import PublicFooter from '../../components/layout/public/PublicFooter';
 import { fetchSchools, fetchRegions, type PublicSchool, type RegionCount } from '../../services/publicApi';
+import { useTranslation } from 'react-i18next';
 
 export default function SchoolsList() {
+  const { t } = useTranslation('publicSite');
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const [search, setSearch] = useState(initialQuery);
@@ -38,7 +40,7 @@ export default function SchoolsList() {
         setLoading(false);
       })
       .catch(() => {
-        setError('Could not load schools. Make sure the backend server is running.');
+        setError(t('Could not load schools. Make sure the backend server is running.'));
         setLoading(false);
       });
   }, [search, regionFilter, typeFilter]);
@@ -113,13 +115,13 @@ export default function SchoolsList() {
           {school.student_count != null && (
             <div className="text-center">
               <div className="text-sm font-bold text-primary">{school.student_count.toLocaleString()}</div>
-              <div className="text-[10px] text-on-surface-variant uppercase tracking-wider">Students</div>
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-wider">{t('Students')}</div>
             </div>
           )}
           {school.class_count != null && (
             <div className="text-center">
               <div className="text-sm font-bold text-primary">{school.class_count}</div>
-              <div className="text-[10px] text-on-surface-variant uppercase tracking-wider">Classes</div>
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-wider">{t('Classes')}</div>
             </div>
           )}
           <div className="ml-auto">
@@ -144,8 +146,8 @@ export default function SchoolsList() {
 
       <section className="pt-24 pb-8 bg-gradient-to-b from-primary-container/5 to-transparent">
         <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-primary tracking-tight mb-4">Find Your School</h1>
-          <p className="text-on-surface-variant text-lg mb-8">Browse schools on School OS. View profiles, fees, programs, and enroll online.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-primary tracking-tight mb-4">{t('Find Your School')}</h1>
+          <p className="text-on-surface-variant text-lg mb-8">{t('Browse schools on School OS. View profiles, fees, programs, and enroll online.')}</p>
 
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
@@ -154,7 +156,7 @@ export default function SchoolsList() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by school name, city, or region..."
+                placeholder={t('Search by school name, city, or region...')}
                 className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-outline-variant/30 bg-white text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
               />
             </div>
@@ -163,7 +165,7 @@ export default function SchoolsList() {
               onChange={(e) => setRegionFilter(e.target.value)}
               className="px-4 py-3.5 rounded-xl border border-outline-variant/30 bg-white text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             >
-              <option value="">All Regions</option>
+              <option value="">{t('All Regions')}</option>
               {regions.map((r) => (
                 <option key={r.name} value={r.name}>{r.name} ({r.count})</option>
               ))}
@@ -173,10 +175,10 @@ export default function SchoolsList() {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-3.5 rounded-xl border border-outline-variant/30 bg-white text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             >
-              <option value="">All Types</option>
-              <option value="anglophone">Anglophone</option>
-              <option value="francophone">Francophone</option>
-              <option value="bilingual">Bilingual</option>
+              <option value="">{t('All Types')}</option>
+              <option value="anglophone">{t('Anglophone')}</option>
+              <option value="francophone">{t('Francophone')}</option>
+              <option value="bilingual">{t('Bilingual')}</option>
             </select>
           </form>
         </div>
@@ -187,25 +189,25 @@ export default function SchoolsList() {
           {loading ? (
             <div className="text-center py-20">
               <div className="inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-              <p className="text-on-surface-variant">Loading schools...</p>
+              <p className="text-on-surface-variant">{t('Loading schools...')}</p>
             </div>
           ) : error ? (
             <div className="text-center py-20">
               <span className="material-symbols-outlined text-error/40 text-7xl mb-4 block">cloud_off</span>
-              <h2 className="text-2xl font-bold text-primary mb-2">Unable to Load Schools</h2>
+              <h2 className="text-2xl font-bold text-primary mb-2">{t('Unable to Load Schools')}</h2>
               <p className="text-on-surface-variant">{error}</p>
             </div>
           ) : schools.length === 0 ? (
             <div className="text-center py-20">
               <span className="material-symbols-outlined text-on-surface-variant/30 text-7xl mb-4 block">school</span>
-              <h2 className="text-2xl font-bold text-primary mb-2">No Schools Yet</h2>
-              <p className="text-on-surface-variant">No schools have been registered on School OS yet. Schools will appear here once they sign up.</p>
+              <h2 className="text-2xl font-bold text-primary mb-2">{t('No Schools Yet')}</h2>
+              <p className="text-on-surface-variant">{t('No schools have been registered on School OS yet. Schools will appear here once they sign up.')}</p>
             </div>
           ) : (
             <>
               {exactMatch.length > 0 && (
                 <div className="mb-12">
-                  <SectionHeader title="Exact Match" count={exactMatch.length} icon="match_word" />
+                  <SectionHeader title={t('Exact Match')} count={exactMatch.length} icon="match_word" />
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {exactMatch.map((s) => <SchoolCard key={s.slug} school={s} />)}
                   </div>
@@ -214,7 +216,7 @@ export default function SchoolsList() {
 
               {closeMatch.length > 0 && (
                 <div className="mb-12">
-                  <SectionHeader title="In This Area" count={closeMatch.length} icon="near_me" />
+                  <SectionHeader title={t('In This Area')} count={closeMatch.length} icon="near_me" />
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {closeMatch.map((s) => <SchoolCard key={s.slug} school={s} />)}
                   </div>
@@ -224,7 +226,7 @@ export default function SchoolsList() {
               {otherSchools.length > 0 && (
                 <div className="mb-12">
                   <SectionHeader
-                    title={search.trim() ? 'Other Schools' : 'All Schools'}
+                    title={search.trim() ? t('Other Schools') : t('All Schools')}
                     count={otherSchools.length}
                     icon="school"
                   />

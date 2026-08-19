@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useTenantStore } from '../../stores/tenantStore';
 import { api } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface PinLockScreenProps {
   onUnlock: () => void;
@@ -10,6 +11,7 @@ interface PinLockScreenProps {
 }
 
 export default function PinLockScreen({ onUnlock, schoolName: schoolNameProp }: PinLockScreenProps) {
+  const { t } = useTranslation('ui');
   const navigate = useNavigate();
   const { logout, tenants } = useAuthStore();
   const { activeTenantId } = useTenantStore();
@@ -47,7 +49,7 @@ export default function PinLockScreen({ onUnlock, schoolName: schoolNameProp }: 
       await api.post('/auth/pin/verify/', { pin: pinString });
       onUnlock();
     } catch (err: any) {
-      const detail = err.response?.data?.detail || 'Incorrect PIN. Please try again.';
+      const detail = err.response?.data?.detail || t('Incorrect PIN. Please try again.');
       setError(detail);
       setPin(['', '', '', '', '', '']);
       focusInput(0);
@@ -156,8 +158,8 @@ export default function PinLockScreen({ onUnlock, schoolName: schoolNameProp }: 
           </div>
 
           {/* Welcome */}
-          <h1 className="text-center text-xl font-bold text-white mb-1">Welcome back</h1>
-          <p className="text-center text-sm text-slate-400 mb-8">Enter your PIN to continue</p>
+          <h1 className="text-center text-xl font-bold text-white mb-1">{t('Welcome back')}</h1>
+          <p className="text-center text-sm text-slate-400 mb-8">{t('Enter your PIN to continue')}</p>
 
           {/* PIN Inputs */}
           <div className="flex justify-center gap-2.5 mb-6">
@@ -197,7 +199,7 @@ export default function PinLockScreen({ onUnlock, schoolName: schoolNameProp }: 
           {isLoading && (
             <div className="flex items-center justify-center gap-2 text-slate-400 text-xs mb-2">
               <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-              Verifying...
+              {t('Verifying...')}
             </div>
           )}
 
@@ -208,7 +210,7 @@ export default function PinLockScreen({ onUnlock, schoolName: schoolNameProp }: 
               disabled={isLoading}
               className="text-xs text-slate-500 hover:text-indigo-400 transition-colors font-medium disabled:opacity-40"
             >
-              Use password instead
+              {t('Use password instead')}
             </button>
           </div>
         </div>

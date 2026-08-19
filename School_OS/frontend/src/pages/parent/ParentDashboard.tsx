@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParentStore, type WardSummary, type AlertSummary } from '../../stores/parentStore';
 import { useTenantStore } from '../../stores/tenantStore';
 import { parentApi, type ChildSummary } from '../../services/parentApi';
@@ -6,6 +7,7 @@ import { api } from '../../services/api';
 import { Link } from 'react-router-dom';
 
 const ParentDashboard: React.FC = () => {
+    const { t } = useTranslation('parent');
     const { dashboardData, isLoading, error, setDashboardData, setLoading, setError, comparisonChildren, setComparisonChildren, setComparisonLoading } = useParentStore();
     const { schoolConfig } = useTenantStore();
     const [refreshing, setRefreshing] = useState(false);
@@ -25,7 +27,7 @@ const ParentDashboard: React.FC = () => {
             setDashboardData(data);
         } catch (err) {
             console.error("Failed to fetch parent dashboard", err);
-            setError("Failed to load dashboard data. Please try again later.");
+            setError(t('Failed to load dashboard data. Please try again later.'));
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -90,7 +92,7 @@ const ParentDashboard: React.FC = () => {
     financialAlerts.forEach(a => {
         const sid = a.student_id || 'unknown';
         if (!childFeeMap.has(sid)) {
-            childFeeMap.set(sid, { name: `${a.student_first_name || ''} ${a.student_last_name || ''}`.trim() || 'Your child', amount: 0, alerts: [] });
+            childFeeMap.set(sid, { name: `${a.student_first_name || ''} ${a.student_last_name || ''}`.trim() || t('Your child'), amount: 0, alerts: [] });
         }
         const entry = childFeeMap.get(sid)!;
         entry.amount += (a.amount || 0);
@@ -120,7 +122,7 @@ const ParentDashboard: React.FC = () => {
                     onClick={() => fetchDashboard()}
                     className="px-6 py-3 bg-blue-900 text-white rounded-xl font-semibold text-base active:scale-95 transition-transform"
                 >
-                    Try Again
+                    {t('Try Again')}
                 </button>
             </div>
         );
@@ -137,7 +139,7 @@ const ParentDashboard: React.FC = () => {
                     <div className="flex items-start justify-between mb-1">
                         <div>
                             <p className="text-sm font-medium text-slate-500 mb-0.5">
-                                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'},
+                                {new Date().getHours() < 12 ? t('Good morning') : new Date().getHours() < 17 ? t('Good afternoon') : t('Good evening')},
                             </p>
                             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                                 {dashboardData.parent_name}
@@ -161,7 +163,7 @@ const ParentDashboard: React.FC = () => {
                         <div key={idx} className="bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-5 text-white shadow-lg shadow-red-500/30">
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="material-symbols-outlined text-xl text-red-100">warning</span>
-                                <span className="text-sm font-bold text-red-100 uppercase tracking-wider">Fee Balance Due</span>
+                                <span className="text-sm font-bold text-red-100 uppercase tracking-wider">{t('Fee Balance Due')}</span>
                             </div>
                             <p className="text-lg font-bold mb-1">{child.name}</p>
                             <p className="text-3xl sm:text-4xl font-black tracking-tight mb-3">
@@ -175,7 +177,7 @@ const ParentDashboard: React.FC = () => {
                                 className="mt-4 inline-flex items-center gap-2 bg-white text-red-700 rounded-xl px-6 py-3 font-bold text-sm active:scale-95 transition-transform shadow-lg"
                             >
                                 <span className="material-symbols-outlined text-lg">payments</span>
-                                Pay Now with Mobile Money
+                                {t('Pay Now with Mobile Money')}
                                 <span className="material-symbols-outlined text-lg">arrow_forward</span>
                             </Link>
                         </div>
@@ -187,7 +189,7 @@ const ParentDashboard: React.FC = () => {
                     <header className="flex items-start justify-between">
                         <div>
                             <p className="text-sm font-medium text-slate-500 mb-0.5">
-                                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'},
+                                {new Date().getHours() < 12 ? t('Good morning') : new Date().getHours() < 17 ? t('Good afternoon') : t('Good evening')},
                             </p>
                             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                                 {dashboardData.parent_name}
@@ -215,8 +217,8 @@ const ParentDashboard: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-2xl">check_circle</span>
                                 <div>
-                                    <p className="font-bold text-lg">All Fees Paid</p>
-                                    <p className="text-sm text-white/80">No outstanding balance</p>
+                                    <p className="font-bold text-lg">{t('All Fees Paid')}</p>
+                                    <p className="text-sm text-white/80">{t('No outstanding balance')}</p>
                                 </div>
                             </div>
                         </div>
@@ -229,7 +231,7 @@ const ParentDashboard: React.FC = () => {
                 <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
                     <div className="flex items-center gap-2 mb-3">
                         <span className="material-symbols-outlined text-blue-600 text-xl">calendar_today</span>
-                        <h3 className="text-sm font-bold text-blue-900">Current Academic Year</h3>
+                        <h3 className="text-sm font-bold text-blue-900">{t('Current Academic Year')}</h3>
                     </div>
                     <p className="text-lg font-extrabold text-blue-900 mb-2">{academicInfo.academicYear.name}</p>
                     <div className="flex flex-wrap gap-2">
@@ -245,7 +247,7 @@ const ParentDashboard: React.FC = () => {
             {/* Parent Announcements */}
             {announcements.length > 0 && (
                 <section>
-                    <h2 className="text-lg font-bold text-slate-900 mb-3">Announcements</h2>
+                    <h2 className="text-lg font-bold text-slate-900 mb-3">{t('Announcements')}</h2>
                     <div className="flex flex-col gap-2">
                         {announcements.map((a: any) => (
                             <div key={a.id} className="bg-blue-50 border-l-4 border-blue-400 rounded-xl p-4">
@@ -260,7 +262,7 @@ const ParentDashboard: React.FC = () => {
             {/* Multi-child Comparison Strip */}
             {comparisonChildren.length > 1 && (
                 <section>
-                    <h2 className="text-lg font-bold text-slate-900 mb-3">Compare Children</h2>
+                    <h2 className="text-lg font-bold text-slate-900 mb-3">{t('Compare Children')}</h2>
                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                         {comparisonChildren.map(child => (
                             <button
@@ -285,7 +287,7 @@ const ParentDashboard: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-slate-500">Attendance</span>
+                                        <span className="text-[11px] text-slate-500">{t('Attendance')}</span>
                                         <span className={`text-xs font-bold ${
                                             (child.attendance_pct ?? 0) >= 80 ? 'text-emerald-600' : (child.attendance_pct ?? 0) >= 60 ? 'text-amber-600' : 'text-red-600'
                                         }`}>
@@ -293,7 +295,7 @@ const ParentDashboard: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-slate-500">Marks available</span>
+                                        <span className="text-[11px] text-slate-500">{t('Marks available')}</span>
                                         <span className="text-xs font-bold text-slate-900">{child.sequences_with_marks}/{child.sequences_total}</span>
                                     </div>
                                     {child.subjects_with_scores.length > 0 && (
@@ -321,9 +323,9 @@ const ParentDashboard: React.FC = () => {
             {dashboardData.wards.length > 0 && (
                 <section>
                     <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-lg font-bold text-slate-900">Your Children</h2>
+                        <h2 className="text-lg font-bold text-slate-900">{t('Your Children')}</h2>
                         <Link to="/parent/reports" className="text-sm font-semibold text-blue-900 hover:underline">
-                            Reports
+                            {t('Reports')}
                         </Link>
                     </div>
                     <div className="flex flex-col gap-3">
@@ -337,15 +339,15 @@ const ParentDashboard: React.FC = () => {
             {dashboardData.wards.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
                     <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">child_care</span>
-                    <p className="text-slate-500 font-medium">No children linked to your account yet.</p>
-                    <p className="text-sm text-slate-400 mt-1">Contact your school to link your children.</p>
+                    <p className="text-slate-500 font-medium">{t('No children linked to your account yet.')}</p>
+                    <p className="text-sm text-slate-400 mt-1">{t('Contact your school to link your children.')}</p>
                 </div>
             )}
 
             {/* Recent Alerts */}
             {otherAlerts.length > 0 && (
                 <section>
-                    <h2 className="text-lg font-bold text-slate-900 mb-3">School Announcements</h2>
+                    <h2 className="text-lg font-bold text-slate-900 mb-3">{t('School Announcements')}</h2>
                     <div className="flex flex-col gap-2">
                         {otherAlerts.map((alert: AlertSummary) => (
                             <AlertCard key={alert.id} alert={alert} />
@@ -356,19 +358,19 @@ const ParentDashboard: React.FC = () => {
 
             {/* Quick Actions */}
             <section>
-                <h2 className="text-lg font-bold text-slate-900 mb-3">Quick Actions</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-3">{t('Quick Actions')}</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <QuickAction icon="receipt_long" label="Pay Fees" to="/parent/fees" color="red" />
-                    <QuickAction icon="description" label="Report Cards" to="/parent/reports" color="blue" />
-                    <QuickAction icon="analytics" label="Grades" to="/parent/analytics" color="emerald" />
-                    <QuickAction icon="settings" label="Settings" to="/parent/settings" color="slate" />
+                    <QuickAction icon="receipt_long" label={t('Pay Fees')} to="/parent/fees" color="red" />
+                    <QuickAction icon="description" label={t('Report Cards')} to="/parent/reports" color="blue" />
+                    <QuickAction icon="analytics" label={t('Grades')} to="/parent/analytics" color="emerald" />
+                    <QuickAction icon="settings" label={t('Settings')} to="/parent/settings" color="slate" />
                 </div>
             </section>
 
             {/* Financial Alerts Detail */}
             {financialAlerts.length > 0 && (
                 <section>
-                    <h2 className="text-lg font-bold text-slate-900 mb-3">Fee Details</h2>
+                    <h2 className="text-lg font-bold text-slate-900 mb-3">{t('Fee Details')}</h2>
                     <div className="flex flex-col gap-2">
                         {financialAlerts.map((alert: AlertSummary) => (
                             <AlertCard key={alert.id} alert={alert} />
@@ -381,12 +383,12 @@ const ParentDashboard: React.FC = () => {
             {selectedChildId && (
                 <section>
                     <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-lg font-bold text-slate-900">Child Details</h2>
+                        <h2 className="text-lg font-bold text-slate-900">{t('Child Details')}</h2>
                         <button
                             onClick={() => setSelectedChildId(null)}
                             className="text-sm font-semibold text-blue-900 hover:underline"
                         >
-                            Close
+                            {t('Close')}
                         </button>
                     </div>
                     {childSummaryLoading ? (
@@ -412,6 +414,7 @@ const ParentDashboard: React.FC = () => {
 };
 
 function WardCard({ ward, onSelect }: { ward: WardSummary; onSelect: (id: string) => void }) {
+    const { t } = useTranslation('parent');
     const initials = `${ward.first_name[0]}${ward.last_name[0]}`.toUpperCase();
     const hasAttendance = ward.attendance_percentage !== null && ward.attendance_percentage !== undefined;
     return (
@@ -432,7 +435,7 @@ function WardCard({ ward, onSelect }: { ward: WardSummary; onSelect: (id: string
 
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-slate-50 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Attendance</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">{t('Attendance')}</p>
                     {hasAttendance ? (
                         <>
                             <div className="flex items-end gap-1.5">
@@ -446,11 +449,11 @@ function WardCard({ ward, onSelect }: { ward: WardSummary; onSelect: (id: string
                             </div>
                         </>
                     ) : (
-                        <p className="text-sm text-slate-400">No data</p>
+                        <p className="text-sm text-slate-400">{t('No data')}</p>
                     )}
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Latest Results</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">{t('Latest Results')}</p>
                     {ward.recent_grade ? (
                         <>
                             <p className="text-sm font-bold text-slate-900 truncate">{ward.recent_grade.subject}</p>
@@ -459,7 +462,7 @@ function WardCard({ ward, onSelect }: { ward: WardSummary; onSelect: (id: string
                             </span>
                         </>
                     ) : (
-                        <p className="text-sm text-slate-400">No scores yet</p>
+                        <p className="text-sm text-slate-400">{t('No scores yet')}</p>
                     )}
                 </div>
             </div>
@@ -469,13 +472,13 @@ function WardCard({ ward, onSelect }: { ward: WardSummary; onSelect: (id: string
                     onClick={() => onSelect(ward.id)}
                     className="flex-1 py-2.5 bg-blue-900 text-white text-center rounded-xl text-sm font-bold active:scale-[0.98] transition-transform"
                 >
-                    See Grades
+                    {t('See Grades')}
                 </button>
                 <Link
                     to="/parent/reports"
                     className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 text-center rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors"
                 >
-                    Report Card
+                    {t('Report Card')}
                 </Link>
             </div>
         </div>
@@ -508,6 +511,7 @@ function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequenc
     onTermChange: (idx: number) => void;
     onSequenceChange: (idx: number) => void;
 }) {
+    const { t } = useTranslation('parent');
     const currentTerm = summary.terms[selectedTerm];
     const currentSequence = currentTerm?.sequences[selectedSequence];
     const scaleMax = currentSequence?.subjects[0]?.out_of || schoolConfig.grading_scale_max;
@@ -547,9 +551,9 @@ function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequenc
                         </span>
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-slate-900">Attendance</p>
+                        <p className="text-sm font-bold text-slate-900">{t('Attendance')}</p>
                         <p className="text-xs text-slate-500">
-                            {summary.attendance.present_days} / {summary.attendance.total_days} days present
+                            {t('{{present}} / {{total}} days present', { present: summary.attendance.present_days, total: summary.attendance.total_days })}
                         </p>
                     </div>
                 </div>
@@ -583,9 +587,9 @@ function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequenc
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${idx === selectedSequence ? 'bg-blue-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'}`}
                         >
                             {seq.sequence_name}
-                            {!seq.is_locked && <span className="w-2 h-2 rounded-full bg-amber-400" title="Not yet finalised" />}
-                            {seq.is_locked && !seq.is_shared && <span className="w-2 h-2 rounded-full bg-slate-300" title="Marks finalised - not yet shared" />}
-                            {seq.is_locked && seq.is_shared && <span className="w-2 h-2 rounded-full bg-emerald-400" title="Results visible" />}
+                            {!seq.is_locked && <span className="w-2 h-2 rounded-full bg-amber-400" title={t('Not yet finalised')} />}
+                            {seq.is_locked && !seq.is_shared && <span className="w-2 h-2 rounded-full bg-slate-300" title={t('Marks finalised - not yet shared')} />}
+                            {seq.is_locked && seq.is_shared && <span className="w-2 h-2 rounded-full bg-emerald-400" title={t('Results visible')} />}
                         </button>
                     ))}
                 </div>
@@ -597,12 +601,12 @@ function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequenc
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                         <div className="px-5 py-4 border-b border-slate-100">
                             <h2 className="font-bold text-slate-900">{currentSequence.sequence_name} - {currentTerm.term_name}</h2>
-                            <p className="text-xs text-slate-500 mt-0.5">Subject scores (out of {scaleMax})</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{t('Subject scores (out of {{max}})', { max: scaleMax })}</p>
                         </div>
                         {currentSequence.subjects.length === 0 ? (
                             <div className="p-8 text-center">
                                 <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">analytics</span>
-                                <p className="text-sm text-slate-500">No results available for this sequence.</p>
+                                <p className="text-sm text-slate-500">{t('No results available for this sequence.')}</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-100">
@@ -623,7 +627,7 @@ function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequenc
                                                     <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }} />
                                                 </div>
                                                 {subj.coefficient !== 1 && (
-                                                    <p className="text-[10px] text-slate-400 mt-1">Coefficient: {subj.coefficient}</p>
+                                                    <p className="text-[10px] text-slate-400 mt-1">{t('Coefficient: {{coef}}', { coef: subj.coefficient })}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -638,29 +642,29 @@ function ChildDetailPanel({ summary, schoolConfig, selectedTerm, selectedSequenc
                             {currentSequence.is_locked ? 'visibility_off' : 'lock_open'}
                         </span>
                         <p className="text-sm font-bold text-slate-900 mb-1">
-                            {currentSequence.is_locked ? 'Results not yet shared' : 'Results pending'}
+                            {currentSequence.is_locked ? t('Results not yet shared') : t('Results pending')}
                         </p>
                         <p className="text-xs text-slate-500">
                             {currentSequence.is_locked
-                                ? 'Marks have been finalised but are not yet visible to parents. The school admin will share them soon.'
-                                : 'Results will appear here once the exam session closes and marks are finalised by the admin.'}
+                                ? t('Marks have been finalised but are not yet visible to parents. The school admin will share them soon.')
+                                : t('Results will appear here once the exam session closes and marks are finalised by the admin.')}
                         </p>
                     </div>
                 )
             ) : (
                 <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm text-center">
                     <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">school</span>
-                    <p className="text-sm text-slate-500">No sequences available for this term.</p>
+                    <p className="text-sm text-slate-500">{t('No sequences available for this term.')}</p>
                 </div>
             )}
 
             {/* Quick Nav */}
             <div className="flex gap-3">
                 <Link to="/parent/analytics" className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 text-center hover:bg-slate-50 transition-colors">
-                    View All Grades
+                    {t('View All Grades')}
                 </Link>
                 <Link to="/parent/reports" className="flex-1 py-3 bg-blue-900 rounded-xl text-sm font-bold text-white text-center active:scale-[0.98] transition-transform">
-                    Report Cards
+                    {t('Report Cards')}
                 </Link>
             </div>
         </div>

@@ -1,7 +1,9 @@
 ﻿import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGovStore } from '../../stores/govStore';
 
 const GovAlerts: React.FC = () => {
+    const { t } = useTranslation('gov');
     const { dashboardData, isLoading, fetchDashboard } = useGovStore();
 
     useEffect(() => {
@@ -21,19 +23,19 @@ const GovAlerts: React.FC = () => {
         <div className="max-w-[1600px] mx-auto space-y-8">
             <div className="flex items-center gap-4">
                 <div className="w-1.5 h-10 bg-error"></div>
-                <h1 className="text-4xl font-black text-on-surface tracking-tight">National Security Alerts</h1>
+                <h1 className="text-4xl font-black text-on-surface tracking-tight">{t('National Security Alerts')}</h1>
             </div>
 
             {isLoading ? (
                 <div className="bg-white p-12 rounded-xl text-center shadow-sm">
                     <span className="material-symbols-outlined animate-spin text-primary text-3xl mb-4 block">sync</span>
-                    <p className="text-on-surface-variant font-medium">Loading alerts...</p>
+                    <p className="text-on-surface-variant font-medium">{t('Loading alerts...')}</p>
                 </div>
             ) : alerts.length === 0 ? (
                 <div className="bg-white p-12 rounded-xl text-center shadow-sm border border-outline-variant/10">
                     <span className="material-symbols-outlined text-5xl text-emerald-300 mb-4 block">check_circle</span>
-                    <h2 className="text-xl font-bold mb-2">No Active Alerts</h2>
-                    <p className="text-on-surface-variant">All systems operating normally.</p>
+                    <h2 className="text-xl font-bold mb-2">{t('No Active Alerts')}</h2>
+                    <p className="text-on-surface-variant">{t('All systems operating normally.')}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -43,7 +45,7 @@ const GovAlerts: React.FC = () => {
                             <div key={alert.id} className={`bg-white p-6 rounded-xl shadow-sm border border-outline-variant/10 ${config.border}`}>
                                 <div className={`flex items-center gap-2 ${config.color} font-bold text-xs uppercase tracking-widest mb-2`}>
                                     <span className="material-symbols-outlined text-sm">{config.icon}</span>
-                                    {alert.type} Alert
+                                    {t('{{type}} Alert', { type: alert.type })}
                                 </div>
                                 <h3 className="text-lg font-bold mb-1">{alert.title}</h3>
                                 <p className="text-sm text-on-surface-variant mb-4">{alert.message}</p>

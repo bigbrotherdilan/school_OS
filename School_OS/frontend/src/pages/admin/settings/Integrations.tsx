@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Mail,
   ShieldCheck,
@@ -70,6 +71,7 @@ const STATUS_BADGE: Record<Status, { label: string; className: string }> = {
 
 export default function Integrations() {
   const navigate = useNavigate();
+  const { t } = useTranslation('adminGov');
   const { addToast } = useToastStore();
 
   const handleClick = (integration: Integration) => {
@@ -77,7 +79,7 @@ export default function Integrations() {
       navigate(integration.route);
       return;
     }
-    addToast(`${integration.name} is coming soon.`, 'info');
+    addToast(t('{{name}} is coming soon.', { name: integration.name }), 'info');
   };
 
   return (
@@ -87,9 +89,9 @@ export default function Integrations() {
           <Plug className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-on-surface tracking-tight">Integrations</h1>
+          <h1 className="text-2xl font-black text-on-surface tracking-tight">{t('Integrations')}</h1>
           <p className="text-sm text-on-surface-variant mt-1">
-            Connect School OS to the tools your school already uses. Only the email integration is live today.
+            {t('Connect School OS to the tools your school already uses. Only the email integration is live today.')}
           </p>
         </div>
       </div>
@@ -111,20 +113,20 @@ export default function Integrations() {
                   <Icon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                 </div>
                 <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${badge.className}`}>
-                  {badge.label}
+                  {t(badge.label)}
                 </span>
               </div>
 
               <div className="space-y-1 flex-1">
                 <h2 className="text-sm font-black text-on-surface flex items-center gap-1.5">
-                  {integration.name}
+                  {t(integration.name)}
                   {comingSoon && <Lock className="w-3 h-3 text-on-surface-variant/40" />}
                 </h2>
-                <p className="text-[11px] text-on-surface-variant leading-relaxed">{integration.description}</p>
+                <p className="text-[11px] text-on-surface-variant leading-relaxed">{t(integration.description)}</p>
               </div>
 
               <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-primary">
-                {comingSoon ? 'Not available yet' : 'Open settings'}
+                {comingSoon ? t('Not available yet') : t('Open settings')}
                 <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </div>
             </button>
@@ -135,11 +137,10 @@ export default function Integrations() {
       <div className="bg-surface-container-low/50 rounded-3xl p-6 border border-outline-variant/5 space-y-2">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-primary" />
-          <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">Why connect integrations?</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">{t('Why connect integrations?')}</span>
         </div>
         <p className="text-[11px] text-on-surface-variant leading-relaxed">
-          Every connection is scoped to your school only. Credentials are encrypted and never shared with other
-          tenants. We'll roll out payment gateways and SMS next — watch the changelog.
+          {t("Every connection is scoped to your school only. Credentials are encrypted and never shared with other tenants. We'll roll out payment gateways and SMS next — watch the changelog.")}
         </p>
       </div>
     </div>

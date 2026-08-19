@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { useSectionStore } from '../../../stores/sectionStore';
@@ -13,6 +14,7 @@ interface Stats {
 }
 
 export default function AttendanceDashboard() {
+  const { t } = useTranslation('adminFinance');
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentSessions, setRecentSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function AttendanceDashboard() {
 
   const handleExportReport = async () => {
     try {
-      addToast('Preparing attendance report export...', 'info');
+      addToast(t('Preparing attendance report export...'), 'info');
       const response = await api.get('/attendance/sessions/export/', { responseType: 'blob' });
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -64,9 +66,9 @@ export default function AttendanceDashboard() {
       link.click();
       link.remove();
       
-      addToast('Attendance report ready for review.', 'success');
+      addToast(t('Attendance report ready for review.'), 'success');
     } catch (err) {
-      addToast('Failed to generate report.', 'error');
+      addToast(t('Failed to generate report.'), 'error');
     }
   };
 
@@ -74,22 +76,22 @@ export default function AttendanceDashboard() {
     <div className="p-4 lg:p-12 space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       <div className="flex justify-between items-end">
         <div>
-          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block tracking-wider">Daily Register</span>
-          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">School Attendance Register</h2>
-          <p className="text-on-surface-variant text-lg mt-2">Monitor daily presence, track absenteeism, and analyze attendance trends across all classes.</p>
+          <span className="text-secondary font-bold tracking-widest text-xs uppercase mb-2 block tracking-wider">{t('Daily Register')}</span>
+          <h2 className="text-4xl font-semibold tracking-tight text-on-surface">{t('School Attendance Register')}</h2>
+          <p className="text-on-surface-variant text-lg mt-2">{t('Monitor daily presence, track absenteeism, and analyze attendance trends across all classes.')}</p>
         </div>
         <div className="flex gap-4">
            <button 
              onClick={handleExportReport}
              className="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-medium flex items-center gap-2 hover:bg-surface-container-highest transition-all">
             <span className="material-symbols-outlined text-lg">download</span>
-            Export Report
+            {t('Export Report')}
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}
             className="bg-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
-            New Session
+            {t('New Session')}
           </button>
         </div>
       </div>
@@ -97,7 +99,7 @@ export default function AttendanceDashboard() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 text-on-surface-variant">
           <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-4">sync</span>
-          <p className="text-lg font-medium">Synchronizing records...</p>
+          <p className="text-lg font-medium">{t('Synchronizing records...')}</p>
         </div>
       ) : (
         <>
@@ -108,12 +110,12 @@ export default function AttendanceDashboard() {
                 <span className="material-symbols-outlined text-3xl">groups</span>
               </div>
               <div>
-                <p className="text-on-surface-variant font-medium text-sm mb-1 uppercase tracking-wider">Avg. Presence Rate</p>
+                <p className="text-on-surface-variant font-medium text-sm mb-1 uppercase tracking-wider">{t('Avg. Presence Rate')}</p>
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-4xl font-bold text-on-surface">{stats?.attendance_rate?.toFixed(1)}%</h3>
                   <span className="text-success text-sm font-bold flex items-center">
                     <span className="material-symbols-outlined text-sm">trending_up</span>
-                    Stable
+                    {t('Stable')}
                   </span>
                 </div>
               </div>
@@ -124,10 +126,10 @@ export default function AttendanceDashboard() {
                 <span className="material-symbols-outlined text-3xl">history_edu</span>
               </div>
               <div>
-                <p className="text-on-surface-variant font-medium text-sm mb-1 uppercase tracking-wider">Sessions Recorded</p>
+                <p className="text-on-surface-variant font-medium text-sm mb-1 uppercase tracking-wider">{t('Sessions Recorded')}</p>
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-4xl font-bold text-on-surface">{stats?.total_sessions}</h3>
-                  <p className="text-on-surface-variant/70 text-xs text-sm">Valid this term</p>
+                  <p className="text-on-surface-variant/70 text-xs text-sm">{t('Valid this term')}</p>
                 </div>
               </div>
             </div>
@@ -137,10 +139,10 @@ export default function AttendanceDashboard() {
                 <span className="material-symbols-outlined text-3xl">warning</span>
               </div>
               <div>
-                <p className="text-on-surface-variant font-medium text-sm mb-1 uppercase tracking-wider">Critical Absenteeism</p>
+                <p className="text-on-surface-variant font-medium text-sm mb-1 uppercase tracking-wider">{t('Critical Absenteeism')}</p>
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-4xl font-bold text-on-surface">{stats?.at_risk_count ?? '-'}</h3>
-                  <p className="text-on-surface-variant/70 text-xs text-sm">Students flagged</p>
+                  <p className="text-on-surface-variant/70 text-xs text-sm">{t('Students flagged')}</p>
                 </div>
               </div>
             </div>
@@ -150,18 +152,18 @@ export default function AttendanceDashboard() {
             {/* Recent Sessions Table */}
             <div className="lg:col-span-2 bg-surface-container-lowest rounded-3xl border border-outline-variant/15 shadow-sm overflow-hidden">
               <div className="px-8 py-6 border-b border-outline-variant/10 flex justify-between items-center">
-                <h3 className="text-xl font-bold text-on-surface">Recent Attendance Logs</h3>
-                <button className="text-primary font-bold text-sm hover:underline">View All</button>
+                <h3 className="text-xl font-bold text-on-surface">{t('Recent Attendance Logs')}</h3>
+                <button className="text-primary font-bold text-sm hover:underline">{t('View All')}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-surface-container-low/50">
-                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">Date & Time</th>
-                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">Class</th>
-                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">Subject</th>
-                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">Teacher</th>
-                      <th className="text-right py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">Action</th>
+                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">{t('Date & Time')}</th>
+                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">{t('Class')}</th>
+                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">{t('Subject')}</th>
+                      <th className="text-left py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">{t('Teacher')}</th>
+                      <th className="text-right py-4 px-8 text-sm font-bold text-on-surface-variant uppercase tracking-wider">{t('Action')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
@@ -170,16 +172,16 @@ export default function AttendanceDashboard() {
                         <td className="py-4 px-8">
                           <div className="flex flex-col">
                             <span className="font-medium text-on-surface">{new Date(session.date).toLocaleDateString()}</span>
-                            <span className="text-xs text-on-surface-variant">{session.start_time || 'N/A'}</span>
+                            <span className="text-xs text-on-surface-variant">{session.start_time || t('N/A')}</span>
                           </div>
                         </td>
                         <td className="py-4 px-8">
                            <span className="px-3 py-1 bg-secondary-container/50 text-on-secondary-container rounded-full text-xs font-bold">
-                            {session.academic_class_details?.name || 'Class'}
+                            {session.academic_class_details?.name || t('Class')}
                           </span>
                         </td>
-                        <td className="py-4 px-8 font-medium text-on-surface">{session.subject_details?.name || 'Subject'}</td>
-                        <td className="py-4 px-8 text-on-surface-variant">{session.teacher_details?.user_details?.full_name || 'Teacher'}</td>
+                        <td className="py-4 px-8 font-medium text-on-surface">{session.subject_details?.name || t('Subject')}</td>
+                        <td className="py-4 px-8 text-on-surface-variant">{session.teacher_details?.user_details?.full_name || t('Teacher')}</td>
                         <td className="py-4 px-8 text-right">
                           <button className="p-2 rounded-lg hover:bg-surface-container-highest transition-all opacity-0 group-hover:opacity-100">
                              <span className="material-symbols-outlined text-outline">visibility</span>
@@ -188,7 +190,7 @@ export default function AttendanceDashboard() {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={5} className="py-12 text-center text-on-surface-variant">No attendance records found.</td>
+                        <td colSpan={5} className="py-12 text-center text-on-surface-variant">{t('No attendance records found.')}</td>
                       </tr>
                     )}
                   </tbody>
@@ -198,7 +200,7 @@ export default function AttendanceDashboard() {
 
             {/* Attendance by Class */}
             <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/15 shadow-sm p-8">
-              <h3 className="text-xl font-bold text-on-surface mb-6">Attendance by Class</h3>
+              <h3 className="text-xl font-bold text-on-surface mb-6">{t('Attendance by Class')}</h3>
               <div className="space-y-6">
                 {(stats?.sessions_by_class || []).map((item: any, i: number) => (
                   <div key={i} className="space-y-2">
@@ -216,7 +218,7 @@ export default function AttendanceDashboard() {
                 ))}
                 {(!stats?.sessions_by_class || stats.sessions_by_class.length === 0) && (
                    <div className="text-center py-8 text-on-surface-variant italic">
-                    <p>No class metrics available yet.</p>
+                    <p>{t('No class metrics available yet.')}</p>
                   </div>
                 )}
               </div>
@@ -230,8 +232,8 @@ export default function AttendanceDashboard() {
           <div className="bg-surface-container-lowest w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-primary text-white">
               <div>
-                <h3 className="text-2xl font-bold">New Attendance Session</h3>
-                <p className="text-blue-100 text-sm">Initiate real-time tracking for a class</p>
+                <h3 className="text-2xl font-bold">{t('New Attendance Session')}</h3>
+                <p className="text-blue-100 text-sm">{t('Initiate real-time tracking for a class')}</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="hover:rotate-90 transition-transform p-2">
                 <span className="material-symbols-outlined text-3xl">close</span>
@@ -241,7 +243,7 @@ export default function AttendanceDashboard() {
             <form className="p-8 space-y-6" onSubmit={async (e) => {
               e.preventDefault();
               if (!formData.classId || !formData.subjectId || !formData.teacherId || !formData.termId) {
-                addToast('Please fill in all required fields.', 'error');
+                addToast(t('Please fill in all required fields.'), 'error');
                 return;
               }
               setSubmitting(true);
@@ -254,7 +256,7 @@ export default function AttendanceDashboard() {
                   date: formData.date,
                   start_time: formData.startTime || null,
                 });
-                addToast('Attendance session started. Students can now be marked present.', 'success');
+                addToast(t('Attendance session started. Students can now be marked present.'), 'success');
                 setIsModalOpen(false);
                 setFormData({ classId: '', subjectId: '', teacherId: '', termId: '', date: new Date().toISOString().split('T')[0], startTime: '' });
                 const [statsRes, sessionsRes] = await Promise.all([
@@ -264,14 +266,14 @@ export default function AttendanceDashboard() {
                 setStats(statsRes.data);
                 setRecentSessions(sessionsRes.data.results || sessionsRes.data);
               } catch {
-                addToast('Failed to initialize session.', 'error');
+                addToast(t('Failed to initialize session.'), 'error');
               } finally {
                 setSubmitting(false);
               }
             }}>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">Session Date</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">{t('Session Date')}</label>
                   <input 
                     type="date" 
                     value={formData.date}
@@ -280,56 +282,56 @@ export default function AttendanceDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">Academic Class</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">{t('Academic Class')}</label>
                   <select 
                     value={formData.classId}
                     onChange={(e) => setFormData({...formData, classId: e.target.value})}
                     className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                   >
-                    <option value="">Select Class</option>
+                    <option value="">{t('Select Class')}</option>
                     {metadata.classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">Subject / Course</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">{t('Subject / Course')}</label>
                 <select 
                   value={formData.subjectId}
                   onChange={(e) => setFormData({...formData, subjectId: e.target.value})}
                   className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                 >
-                  <option value="">Select Subject</option>
+                  <option value="">{t('Select Subject')}</option>
                   {metadata.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">Assigned Teacher</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">{t('Assigned Teacher')}</label>
                 <select 
                   value={formData.teacherId}
                   onChange={(e) => setFormData({...formData, teacherId: e.target.value})}
                   className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                 >
-                  <option value="">Select Teacher</option>
+                  <option value="">{t('Select Teacher')}</option>
                   {metadata.teachers.map(t => <option key={t.id} value={t.id}>{t.user_details?.full_name}</option>)}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">Term / Sequence</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">{t('Term / Sequence')}</label>
                   <select
                     value={formData.termId}
                     onChange={(e) => setFormData({...formData, termId: e.target.value})}
                     className="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                   >
-                    <option value="">Select Term</option>
+                    <option value="">{t('Select Term')}</option>
                     {metadata.terms.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">Start Time</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1">{t('Start Time')}</label>
                   <input
                     type="time"
                     value={formData.startTime}
@@ -345,14 +347,14 @@ export default function AttendanceDashboard() {
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-4 border border-outline-variant/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button 
                   type="submit"
                   disabled={submitting}
                   className="flex-1 py-4 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {submitting ? 'Launching...' : 'Launch Session'}
+                  {submitting ? t('Launching...') : t('Launch Session')}
                 </button>
               </div>
             </form>

@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, Briefcase, Globe, Loader2, Camera } from 'lucide-react';
 import { useToastStore } from '../../../stores/toastStore';
 import { api } from '../../../services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function TeacherProfileEdit() {
+  const { t } = useTranslation('teacher');
   const navigate = useNavigate();
   const { addToast } = useToastStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -161,13 +163,13 @@ export default function TeacherProfileEdit() {
   return (
     <div className="p-4 lg:p-12 max-w-[1000px] mx-auto bg-surface min-h-screen">
       <button onClick={() => navigate('/teacher')} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors mb-8">
-        <ArrowLeft className="w-4 h-4" /> Dashboard
+        <ArrowLeft className="w-4 h-4" /> {t('Dashboard')}
       </button>
 
       <section className="mb-12">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-3">Teacher Portal</span>
-        <h1 className="text-4xl font-black tracking-tight text-on-surface">My Profile</h1>
-        <p className="text-on-surface-variant mt-2 text-lg">Manage your professional profile and marketplace visibility.</p>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 block mb-3">{t('Teacher Portal')}</span>
+        <h1 className="text-4xl font-black tracking-tight text-on-surface">{t('My Profile')}</h1>
+        <p className="text-on-surface-variant mt-2 text-lg">{t('Manage your professional profile and marketplace visibility.')}</p>
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-10">

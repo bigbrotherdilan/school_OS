@@ -7,6 +7,7 @@ import ReportCardPreview, { type ReportCardStyle, DEFAULT_REPORT_CARD_STYLE } fr
 import ReportCardCustomizer from '../../../components/admin/ReportCardCustomizer';
 import PreviewFullscreenModal from '../../../components/admin/PreviewFullscreenModal';
 import ConfettiBurst from '../../../components/ui/ConfettiBurst';
+import { useTranslation } from 'react-i18next';
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
@@ -21,6 +22,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export default function ReportCardManagement() {
   const { addToast } = useToastStore();
+  const { t } = useTranslation('adminAcademicMgmt');
   const { activeSectionId } = useSectionStore();
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -203,9 +205,9 @@ export default function ReportCardManagement() {
       downloadBlob(new Blob([response.data], { type: 'application/zip' }), filename);
       fetchReportCards();
       setShowConfetti(true);
-      addToast('Report cards generated! Parents are going to love these.', 'success');
+      addToast(t('Report cards generated! Parents are going to love these.'), 'success');
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to generate report cards.';
+      const msg = err.response?.data?.detail || t('Failed to generate report cards.');
       setError(msg);
     } finally {
       setGenerating(false);
@@ -215,7 +217,7 @@ export default function ReportCardManagement() {
 
   const handleBatchGenerate = async () => {
     if (!selectedClass || !selectedTerm) {
-      setError('Please select both a class and a term.');
+      setError(t('Please select both a class and a term.'));
       return;
     }
 
@@ -282,9 +284,9 @@ export default function ReportCardManagement() {
       if (selectedTerm) payload.term_id = selectedTerm;
       if (selectedClass) payload.class_id = selectedClass;
       const res = await api.post('/assessments/mark-windows/notify-pending-teachers/', payload);
-      addToast(res.data.detail || 'Notifications sent!', 'success');
+      addToast(res.data.detail || t('Notifications sent!'), 'success');
     } catch {
-      addToast('Failed to send notifications.', 'error');
+      addToast(t('Failed to send notifications.'), 'error');
     } finally {
       setNotifying(false);
     }
@@ -292,7 +294,7 @@ export default function ReportCardManagement() {
 
   const handleSingleGenerate = async () => {
     if (!selectedStudent || !selectedTerm) {
-      setError('Please select both a student and a term.');
+      setError(t('Please select both a student and a term.'));
       return;
     }
     setGenerating(true);
@@ -311,9 +313,9 @@ export default function ReportCardManagement() {
       downloadBlob(new Blob([response.data], { type: 'application/pdf' }), filename);
       fetchReportCards();
       setShowConfetti(true);
-      addToast('Report card ready! This is what parents will remember.', 'success');
+      addToast(t('Report card ready! This is what parents will remember.'), 'success');
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to generate report card.';
+      const msg = err.response?.data?.detail || t('Failed to generate report card.');
       setError(msg);
     } finally {
       setGenerating(false);
@@ -330,7 +332,7 @@ export default function ReportCardManagement() {
     }
   };
 
-  const selectedTermName = terms.find((t: any) => t.id === selectedTerm)?.name || '1ST TERM';
+  const selectedTermName = terms.find((term: any) => term.id === selectedTerm)?.name || t('1ST TERM');
   const selectedYearName = academicYears.find((y: any) => y.id === selectedYear)?.name || '2024/2025';
 
   return (
@@ -352,11 +354,11 @@ export default function ReportCardManagement() {
                   <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight">⚠️ Incomplete Marks Detected</h2>
+                  <h2 className="text-2xl font-black tracking-tight">{t('⚠️ Incomplete Marks Detected')}</h2>
                   <p className="mt-1 text-white/80 text-sm leading-relaxed">
-                    The following teachers have <strong>not yet submitted marks</strong> for one or more open sequences in{' '}
-                    <strong>{unfilledWarningData.termName}</strong>. Generating report cards now will produce{' '}
-                    <strong>inaccurate or incomplete results</strong> for affected students.
+                    {t('The following teachers have')} <strong>{t('not yet submitted marks')}</strong> {t('for one or more open sequences in')}{' '}
+                    <strong>{unfilledWarningData.termName}</strong>. {t('Generating report cards now will produce')}{' '}
+                    <strong>{t('inaccurate or incomplete results')}</strong> {t('for affected students.')}
                   </p>
                 </div>
               </div>
@@ -364,27 +366,27 @@ export default function ReportCardManagement() {
               {/* Stats pills */}
               <div className="mt-6 flex gap-3 flex-wrap">
                 <div className="bg-white/20 rounded-xl px-4 py-2 text-sm font-bold">
-                  {unfilledWarningData.totalPending} teacher{unfilledWarningData.totalPending !== 1 ? 's' : ''} pending
+                  {t('{{count}} teacher(s) pending', { count: unfilledWarningData.totalPending })}
                 </div>
               </div>
             </div>
 
             {/* Teachers list */}
             <div className="p-6">
-              <h3 className="text-sm font-black uppercase tracking-widest text-error mb-3">Teachers With Missing Submissions</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest text-error mb-3">{t('Teachers With Missing Submissions')}</h3>
               <div className="space-y-3 max-h-72 overflow-y-auto">
-                {unfilledWarningData.teachers.map((t) => (
-                  <div key={t.key} className="bg-error/5 border border-error/15 rounded-xl px-4 py-3">
+                {unfilledWarningData.teachers.map((teacher) => (
+                  <div key={teacher.key} className="bg-error/5 border border-error/15 rounded-xl px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-bold text-on-surface text-sm">{t.name}</p>
-                        <p className="text-xs text-on-surface-variant mt-0.5">{t.subject} &bull; {t.class_name}</p>
+                        <p className="font-bold text-on-surface text-sm">{teacher.name}</p>
+                        <p className="text-xs text-on-surface-variant mt-0.5">{teacher.subject} &bull; {teacher.class_name}</p>
                       </div>
                       <span className="material-symbols-outlined text-error text-lg flex-shrink-0 mt-0.5">pending</span>
                     </div>
                     {/* Pending sequences as pills */}
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {t.sequences.map((seq) => (
+                      {teacher.sequences.map((seq) => (
                         <span
                           key={seq}
                           className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest bg-error/10 text-error px-2.5 py-1 rounded-lg border border-error/20"
@@ -402,7 +404,7 @@ export default function ReportCardManagement() {
               <div className="my-6 border-t border-outline-variant/15" />
 
               <p className="text-sm text-on-surface-variant mb-5 leading-relaxed">
-                Do you want to continue generating report cards despite missing submissions? Students without marks will show empty scores.
+                {t('Do you want to continue generating report cards despite missing submissions? Students without marks will show empty scores.')}
               </p>
 
               {/* Actions */}
@@ -415,13 +417,13 @@ export default function ReportCardManagement() {
                   <span className={`material-symbols-outlined text-lg ${notifying ? 'animate-spin' : ''}`}>
                     {notifying ? 'sync' : 'notifications'}
                   </span>
-                  {notifying ? 'Notifying...' : 'Notify All Pending'}
+                  {notifying ? t('Notifying...') : t('Notify All Pending')}
                 </button>
                 <button
                   onClick={() => setShowUnfilledWarning(false)}
                   className="flex-1 py-3 px-6 rounded-xl font-semibold border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-all"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button
                   onClick={async () => {
@@ -431,7 +433,7 @@ export default function ReportCardManagement() {
                   className="flex-1 py-3 px-6 rounded-xl font-semibold bg-error text-white hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-error/20"
                 >
                   <span className="material-symbols-outlined text-lg">description</span>
-                  Yes, Generate Anyway
+                  {t('Yes, Generate Anyway')}
                 </button>
               </div>
             </div>
@@ -445,10 +447,10 @@ export default function ReportCardManagement() {
           <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
             description
           </span>
-          <h1 className="text-2xl font-bold text-on-surface">Report Card Generator</h1>
+          <h1 className="text-2xl font-bold text-on-surface">{t('Report Card Generator')}</h1>
         </div>
         <p className="text-on-surface-variant">
-          Generate official PDF report cards with customizable design
+          {t('Generate official PDF report cards with customizable design')}
         </p>
       </div>
 
@@ -457,7 +459,7 @@ export default function ReportCardManagement() {
         <div className="xl:col-span-3 space-y-4">
           {/* Mode Toggle */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-4">
-            <label className="text-sm font-medium text-on-surface mb-3 block">Generation Mode</label>
+            <label className="text-sm font-medium text-on-surface mb-3 block">{t('Generation Mode')}</label>
             <div className="flex gap-4">
               <button
                 onClick={() => { setMode('individual'); setSelectedStudent(''); setPreviewStudent(null); }}
@@ -468,7 +470,7 @@ export default function ReportCardManagement() {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg mr-2">person</span>
-                Individual
+                {t('Individual')}
               </button>
               <button
                 onClick={() => { setMode('batch'); setSelectedStudent(''); setPreviewStudent(null); }}
@@ -479,50 +481,50 @@ export default function ReportCardManagement() {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg mr-2">groups</span>
-                Class Batch
+                {t('Class Batch')}
               </button>
             </div>
           </div>
 
           {/* Selection */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-            <h2 className="text-lg font-semibold text-on-surface mb-4">Selection</h2>
+            <h2 className="text-lg font-semibold text-on-surface mb-4">{t('Selection')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Academic Year *</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Academic Year *')}</label>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
                   className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm"
                 >
-                  <option value="">Select Year</option>
+                  <option value="">{t('Select Year')}</option>
                   {academicYears.map((y: any) => (
                     <option key={y.id} value={y.id}>{y.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Term *</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Term *')}</label>
                 <select
                   value={selectedTerm}
                   onChange={(e) => setSelectedTerm(e.target.value)}
                   disabled={!selectedYear}
                   className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm disabled:opacity-50"
                 >
-                  <option value="">Select Term</option>
-                  {terms.map((t: any) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
+                  <option value="">{t('Select Term')}</option>
+                  {terms.map((term: any) => (
+                    <option key={term.id} value={term.id}>{term.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Class *</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Class *')}</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => { setSelectedClass(e.target.value); setSelectedStudent(''); }}
                   className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm"
                 >
-                  <option value="">Select Class</option>
+                  <option value="">{t('Select Class')}</option>
                   {classes.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -530,14 +532,14 @@ export default function ReportCardManagement() {
               </div>
               {mode === 'individual' && (
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">Student *</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-1">{t('Student *')}</label>
                   <select
                     value={selectedStudent}
                     onChange={(e) => setSelectedStudent(e.target.value)}
                     disabled={!selectedClass}
                     className="w-full bg-white border border-outline-variant/30 rounded-lg text-sm font-medium px-4 py-3 focus:ring-primary shadow-sm disabled:opacity-50"
                   >
-                    <option value="">Select Student</option>
+                    <option value="">{t('Select Student')}</option>
                     {students.map((s: any) => (
                       <option key={s.id} value={s.id}>{s.full_name} ({s.admission_number})</option>
                     ))}
@@ -551,8 +553,8 @@ export default function ReportCardManagement() {
           {mode === 'individual' && selectedClass && students.length > 0 && (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
               <h2 className="text-lg font-semibold text-on-surface mb-4">
-                Students ({students.length})
-                {selectedStudent && <span className="text-sm font-normal text-on-surface-variant ml-2">- 1 selected</span>}
+                {t('Students ({{count}})', { count: students.length })}
+                {selectedStudent && <span className="text-sm font-normal text-on-surface-variant ml-2">{t('- 1 selected')}</span>}
               </h2>
               <div className="max-h-80 overflow-y-auto space-y-2">
                 {students.map((student: any) => (
@@ -574,7 +576,7 @@ export default function ReportCardManagement() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-on-surface truncate">{student.full_name}</div>
                       <div className="text-sm text-on-surface-variant truncate">
-                        {student.admission_number} • {student.current_class?.name || 'No class'}
+                        {student.admission_number} • {student.current_class?.name || t('No class')}
                       </div>
                     </div>
                     {selectedStudent === student.id && (
@@ -603,12 +605,12 @@ export default function ReportCardManagement() {
             {generating ? (
               <>
                 <span className="material-symbols-outlined animate-spin">sync</span>
-                Generating...
+                {t('Generating...')}
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined">description</span>
-                {mode === 'individual' ? 'Generate Report Card' : 'Batch Generate (ZIP)'}
+                {mode === 'individual' ? t('Generate Report Card') : t('Batch Generate (ZIP)')}
               </>
             )}
           </button>
@@ -623,7 +625,7 @@ export default function ReportCardManagement() {
             }`}
           >
             <span className="material-symbols-outlined text-lg">palette</span>
-            {showDesigner ? 'Hide Design Studio' : 'Customize Design'}
+            {showDesigner ? t('Hide Design Studio') : t('Customize Design')}
           </button>
 
           {/* Design Studio (collapsible) */}
@@ -644,24 +646,24 @@ export default function ReportCardManagement() {
           {previewStudent ? (
             <div ref={previewRef} className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-on-surface">Live Preview</h2>
+                <h2 className="text-lg font-semibold text-on-surface">{t('Live Preview')}</h2>
                 <button
                   onClick={() => setShowFullscreen(true)}
                   className="flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                  title="Open fullscreen preview"
+                  title={t('Open fullscreen preview')}
                 >
                   <span className="material-symbols-outlined text-sm">fullscreen</span>
-                  Enlarge
+                  {t('Enlarge')}
                 </button>
               </div>
               {mode === 'batch' && (
                 <p className="text-xs text-on-surface-variant mb-2 -mt-2">
                   {selectedStudent
-                    ? 'Previewing selected student'
-                    : 'Previewing first student in class'}
+                    ? t('Previewing selected student')
+                    : t('Previewing first student in class')}
                 </p>
               )}
-              <div className="flex justify-center overflow-x-auto py-2 cursor-zoom-in" onClick={() => setShowFullscreen(true)} title="Click to enlarge">
+              <div className="flex justify-center overflow-x-auto py-2 cursor-zoom-in" onClick={() => setShowFullscreen(true)} title={t('Click to enlarge')}>
                 <ReportCardPreview
                   style={customStyle}
                   studentName={previewStudent.full_name}
@@ -690,13 +692,13 @@ export default function ReportCardManagement() {
             </div>
           ) : (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-              <h2 className="text-lg font-semibold text-on-surface mb-4">Report Card Preview</h2>
+              <h2 className="text-lg font-semibold text-on-surface mb-4">{t('Report Card Preview')}</h2>
               <div className="flex flex-col items-center justify-center py-12 text-on-surface-variant">
                 <span className="material-symbols-outlined text-5xl mb-3 opacity-40">description</span>
                 <p className="text-sm text-center">
                   {mode === 'individual'
-                    ? 'Select a student to preview their report card'
-                    : 'Choose batch mode and select a class to generate all report cards'}
+                    ? t('Select a student to preview their report card')
+                    : t('Choose batch mode and select a class to generate all report cards')}
                 </p>
               </div>
             </div>
@@ -704,11 +706,11 @@ export default function ReportCardManagement() {
 
           {/* Generation History */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6">
-            <h2 className="text-lg font-semibold text-on-surface mb-4">Generated Report Cards</h2>
+            <h2 className="text-lg font-semibold text-on-surface mb-4">{t('Generated Report Cards')}</h2>
             {reportCards.length === 0 ? (
               <div className="text-center py-8">
                 <span className="material-symbols-outlined text-on-surface-variant text-3xl mb-2 block">description</span>
-                <p className="text-on-surface-variant text-sm font-medium">No report cards yet. Generate your first ones - parents are waiting!</p>
+                <p className="text-on-surface-variant text-sm font-medium">{t('No report cards yet. Generate your first ones - parents are waiting!')}</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -726,7 +728,7 @@ export default function ReportCardManagement() {
                       className="text-primary hover:underline text-xs font-semibold flex items-center gap-1 flex-shrink-0"
                     >
                       <span className="material-symbols-outlined text-sm">download</span>
-                      PDF
+                      {t('PDF')}
                     </button>
                   </div>
                 ))}
@@ -740,7 +742,7 @@ export default function ReportCardManagement() {
       <PreviewFullscreenModal
         open={showFullscreen && !!previewStudent}
         onClose={() => setShowFullscreen(false)}
-        title={previewStudent ? `Report Card — ${previewStudent.full_name}` : 'Report Card Preview'}
+        title={previewStudent ? t('Report Card — {{name}}', { name: previewStudent.full_name }) : t('Report Card Preview')}
         fit="width"
         maxScale={4}
       >

@@ -1,9 +1,11 @@
 ﻿import { useAuthLogin } from '../../hooks/useAuthLogin';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import DeviceLimitDialog from '../../components/ui/DeviceLimitDialog';
 import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function ParentLogin() {
+    const { t } = useTranslation('auth');
     const { email, setEmail, password, setPassword, error, isLoading, handleLogin, activeSessions, confirmKillSessions, cancelLogin } = useAuthLogin({ 
         allowedRole: 'parent', 
         targetPath: '/parent' 
@@ -21,8 +23,8 @@ export default function ParentLogin() {
                 <div className="w-16 h-16 bg-[#ef4444] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <span className="material-symbols-outlined text-white text-3xl">family_restroom</span>
                 </div>
-                <h2 className="text-3xl font-extrabold text-[#7f1d1d] tracking-tight">Parent Portal</h2>
-                <p className="mt-2 text-sm text-[#991b1b] font-medium">Access your ward's academic records.</p>
+                <h2 className="text-3xl font-extrabold text-[#7f1d1d] tracking-tight">{t('Parent Portal')}</h2>
+                <p className="mt-2 text-sm text-[#991b1b] font-medium">{t("Access your ward's academic records.")}</p>
             </div>
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
@@ -30,7 +32,7 @@ export default function ParentLogin() {
                     <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#ef4444]"></div>
                     <form className="space-y-6" onSubmit={handleLogin}>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Email Address')}</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span className="material-symbols-outlined text-slate-400 text-[20px]">mail</span>
@@ -47,7 +49,7 @@ export default function ParentLogin() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('Password')}</label>
                             <div className="mt-1 relative rounded-xl shadow-sm">
                                 <PasswordInput
                                     value={password}
@@ -69,16 +71,16 @@ export default function ParentLogin() {
                             disabled={isLoading}
                             className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#ef4444] hover:bg-[#dc2626] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ef4444] disabled:opacity-50 transition-all"
                         >
-                            {isLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : "Login"}
+                            {isLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : t('Login')}
                         </button>
                     </form>
                 </div>
                 <div className="mt-6 text-center space-y-3">
                     <Link to="/forgot-password" className="text-sm font-medium text-slate-500 hover:text-[#ef4444] transition-colors block">
-                        Forgot your password?
+                        {t('Forgot your password?')}
                     </Link>
                     <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-[#ef4444] transition-colors flex items-center gap-1 justify-center">
-                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> Change Portal
+                        <span className="material-symbols-outlined text-[16px]">arrow_back</span> {t('Change Portal')}
                     </Link>
                 </div>
             </div>

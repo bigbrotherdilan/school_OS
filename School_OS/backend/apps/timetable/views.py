@@ -1,3 +1,4 @@
+import json
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -111,6 +112,41 @@ def _parse_week(payload):
                 'label': (item.get('label') or 'break').strip()[:50],
             })
     return periods, working_days, day_periods, blocked_slots
+
+
+def _sync_lesson_teachers(timetable):
+    """
+    Update the teacher on existing lesson cards from the current
+    TeachingAssignments, so new or changed assignments are reflected even
+    when lessons already exist (the cards are only rebuilt when empty).
+    Returns the number of lessons whose teacher changed.
+    """
+    from apps.staff.models import TeachingAssignment
+    updated = 0
+    lessons = timetable.lessons.select_related('subject', 'student_group').all()
+    for lesson in lessons:
+        assignment = (
+            TeachingAssignment.objects.filter(
+                academic_class=timetable.class_obj, subject=lesson.subject,
+                student_group=lesson.student_group,
+            ).select_related('teacher').first()
+            or TeachingAssignment.objects.filter(
+                subject=lesson.subject, student_group=lesson.student_group,
+            ).select_related('teacher').first()
+            or TeachingAssignment.objects.filter(
+                academic_class=timetable.class_obj, subject=lesson.subject,
+            ).select_related('teacher').first()
+            or TeachingAssignment.objects.filter(
+                subject=lesson.subject
+            ).select_related('teacher').first()
+        )
+        new_teacher = assignment.teacher if assignment else None
+        new_teacher_id = new_teacher.id if new_teacher else None
+        if lesson.teacher_id != new_teacher_id:
+            lesson.teacher = new_teacher
+            lesson.save(update_fields=['teacher'])
+            updated += 1
+    return updated
 
 
 class TimetableViewSet(viewsets.ModelViewSet):
@@ -324,6 +360,11 @@ class TimetableViewSet(viewsets.ModelViewSet):
                 if error:
                     skipped.append({'class_name': tt.class_obj.name, 'reason': error})
                     continue
+            else:
+                # Lessons already exist (possibly with TBD teachers): re-sync
+                # their teachers from the current TeachingAssignments so new
+                # assignments show up without wiping the lesson cards.
+                _sync_lesson_teachers(tt)
             ready.append(tt)
 
         if not ready:
@@ -341,16 +382,10 @@ class TimetableViewSet(viewsets.ModelViewSet):
                 ])
             ).count()
             solver = SchoolSolver(ready + others, target_ids=target_ids)
-        else:
-            others = []
-            cross_count = 0
-            solver = SchoolSolver(ready, target_ids=target_ids)
-
-        result = solver.solve()
-        if result['ok']:
-            result['skipped'] = skipped
-            result['generated_classes'] = [r['class_name'] for r in result.get('classes', [])]
-            if stream_id:
+            result = solver.solve()
+            if result['ok']:
+                result['skipped'] = skipped
+                result['generated_classes'] = [r['class_name'] for r in result.get('classes', [])]
                 section_name = classes[0].stream.name if classes[0].stream else ''
                 msg = (
                     f'Scheduled {result["placed_periods"]} lesson periods across '
@@ -365,7 +400,65 @@ class TimetableViewSet(viewsets.ModelViewSet):
                     msg += 'Teachers are clash-free.'
                 result['message'] = msg
                 result['cross_section_slots_respected'] = cross_count
-        return Response(result, status=status.HTTP_200_OK if result['ok'] else status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(result, status=status.HTTP_200_OK if result['ok'] else status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        # Whole-year mode: classes may run different bell schedules (e.g. a
+        # 9-period anglophone section next to an 8-period francophone one).
+        # The solver needs one shared grid per model, so group the ready
+        # classes by identical week and solve each group separately. Every
+        # other group's committed/locked slots stay fixed, so shared teachers
+        # are never double-booked across groups.
+        others = _same_year_timetables(request, year.id, exclude_ids=target_ids)
+        groups = {}
+        for tt in ready:
+            sig = json.dumps({d: tt.periods_for_day(d) for d in tt.days()}, sort_keys=True)
+            groups.setdefault(sig, []).append(tt)
+
+        results = []
+        total_placed = 0
+        total_cross = 0
+        generated = []
+        for sig, group in groups.items():
+            group_ids = {tt.id for tt in group}
+            other_tts = others + [t for t in ready if t.id not in group_ids]
+            cross_count = TimeSlot.objects.filter(timetable__in=other_tts).filter(
+                Q(is_locked=True) | Q(timetable__generation_status__in=[
+                    Timetable.GenerationStatus.APPROVED, Timetable.GenerationStatus.PUBLISHED,
+                ])
+            ).count()
+            solver = SchoolSolver(group + other_tts, target_ids=group_ids)
+            result = solver.solve()
+            results.append(result)
+            if result['ok']:
+                total_placed += result.get('placed_periods', 0)
+                generated.extend(r['class_name'] for r in result.get('classes', []))
+                total_cross += cross_count
+
+        if all(r['ok'] for r in results):
+            msg = f'Scheduled {total_placed} lesson periods across {len(ready)} class(es). '
+            if len(groups) > 1:
+                msg += (
+                    f'{len(groups)} different school weeks were solved separately — '
+                    'shared teachers stay clash-free across them.'
+                )
+            else:
+                msg += 'Teachers are clash-free.'
+            if total_cross:
+                msg += (
+                    f' {total_cross} existing committed/locked slot(s) were respected — '
+                    'shared teachers are never double-booked.'
+                )
+            return Response({
+                'ok': True,
+                'message': msg,
+                'generated_classes': generated,
+                'placed_periods': total_placed,
+                'groups': len(groups),
+                'cross_section_slots_respected': total_cross,
+                'skipped': skipped,
+            }, status=status.HTTP_200_OK)
+        bad = next(r for r in results if not r['ok'])
+        return Response(bad, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     @action(detail=True, methods=['get'])
     def validate(self, request, pk=None):
@@ -599,6 +692,32 @@ class TimetableViewSet(viewsets.ModelViewSet):
             'message': f'Unpublished {count} timetable(s) for this section.',
         })
 
+    @action(detail=True, methods=['post'])
+    def unapprove(self, request, pk=None):
+        """
+        Reverse an approval: the timetable goes back to GENERATED and releases
+        its school-wide reservations of teachers and rooms, so other sections
+        may schedule around it again (spec §6-7).
+        """
+        timetable = self.get_object()
+        if timetable.generation_status not in Timetable.COMMITTED_STATUSES:
+            raise ValidationError('Only approved/published timetables can be unapproved.')
+        was_published = timetable.generation_status == Timetable.GenerationStatus.PUBLISHED
+        timetable.generation_status = Timetable.GenerationStatus.GENERATED
+        timetable.approved_by = None
+        timetable.approved_at = None
+        timetable.save(update_fields=[
+            'generation_status', 'approved_by', 'approved_at', 'updated_at',
+        ])
+        return Response({
+            'status': timetable.generation_status,
+            'message': (
+                f'{timetable.class_obj.name} is back to GENERATED. Its teachers and rooms are '
+                f'released — other sections can schedule around it again.'
+            ),
+            'was_published': was_published,
+        })
+
     @action(detail=False, methods=['get'])
     def export_pdf(self, request):
         """
@@ -745,7 +864,23 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             user=self.request.user, tenant_id=tenant_id
         ).first()
         if teacher is not None:
-            qs = qs.filter(teacher=teacher)
+            # Teachers see their own slots extracted from the committed
+            # (approved/published) admin timetables across ALL sections,
+            # plus their own locked personal slots — never drafts.
+            qs = qs.filter(
+                Q(timetable__generation_status__in=Timetable.COMMITTED_STATUSES)
+                | Q(is_locked=True),
+                teacher=teacher,
+            ).select_related(
+                'subject', 'subject__cycle', 'teacher__user',
+                'timetable__class_obj', 'timetable__class_obj__stream',
+                'student_group', 'room',
+            ).prefetch_related(
+                'teacher__assignments__subject',
+                'teacher__assignments__academic_class',
+            )
+        else:
+            qs = qs.select_related('subject', 'teacher__user', 'timetable__class_obj')
         return qs
 
     @action(detail=False, methods=['get', 'post'])
@@ -766,8 +901,13 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
 
         if request.method == 'GET':
             slots = TimeSlot.objects.filter(
-                timetable__tenant_id=tenant_id, teacher=teacher
-            ).select_related('subject', 'teacher', 'timetable__class_obj').order_by(
+                timetable__tenant_id=tenant_id, teacher=teacher,
+            ).filter(
+                Q(timetable__generation_status__in=Timetable.COMMITTED_STATUSES)
+                | Q(is_locked=True),
+            ).select_related(
+                'subject', 'teacher', 'timetable__class_obj', 'room',
+            ).order_by(
                 'day_of_week', 'start_time'
             )
             return Response(TimeSlotSerializer(slots, many=True).data)

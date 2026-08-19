@@ -4,8 +4,10 @@ import { useCurrentClass } from '../../../hooks/useCurrentClass';
 import { api } from '../../../services/api';
 import { analyticsApi } from '../../../services/analyticsApi';
 import { useTeacherStore } from '../../../stores/teacherStore';
+import { useTranslation } from 'react-i18next';
 
 export default function TeacherDashboardHome() {
+  const { t } = useTranslation('teacher');
   const navigate = useNavigate();
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   const { currentClass, nextClass, loading } = useCurrentClass();
@@ -119,15 +121,15 @@ export default function TeacherDashboardHome() {
         <div className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center mb-8 shadow-inner border border-slate-100">
           <span className="material-symbols-outlined text-6xl text-slate-300" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
         </div>
-        <h2 className="text-3xl font-black tracking-tight text-slate-800">Welcome to School OS</h2>
+        <h2 className="text-3xl font-black tracking-tight text-slate-800">{t('Welcome to School OS')}</h2>
         <p className="text-slate-500 max-w-md mt-4 text-sm leading-relaxed">
-          You don't have any teaching assignments yet. This usually means:
+          {t('You don\'t have any teaching assignments yet. This usually means:')}
         </p>
         <div className="mt-6 text-left max-w-sm space-y-3">
           {[
-            'Your subjects and classes haven\'t been assigned yet',
-            'The academic year hasn\'t been set up',
-            'Your role may need to be updated',
+            t('Your subjects and classes haven\'t been assigned yet'),
+            t('The academic year hasn\'t been set up'),
+            t('Your role may need to be updated'),
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-3 text-sm text-slate-600">
               <span className="material-symbols-outlined text-primary text-lg mt-0.5">info</span>
@@ -137,10 +139,10 @@ export default function TeacherDashboardHome() {
         </div>
         <div className="mt-8 flex gap-3">
           <button onClick={() => window.location.reload()} className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2">
-            <span className="material-symbols-outlined text-lg">refresh</span> Refresh
+            <span className="material-symbols-outlined text-lg">refresh</span> {t('Refresh')}
           </button>
           <button onClick={() => navigate('/teacher/timetable')} className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2">
-            <span className="material-symbols-outlined text-lg">calendar_today</span> View Timetable
+            <span className="material-symbols-outlined text-lg">calendar_today</span> {t('View Timetable')}
           </button>
         </div>
       </div>
@@ -159,7 +161,7 @@ export default function TeacherDashboardHome() {
       {/* Hero Section: Today's Schedule */}
       <div className="space-y-6">
         <div className="flex items-end justify-between px-2">
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">Today's Schedule</h3>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">{t('Today\'s Schedule')}</h3>
           <span className="text-sm font-bold text-slate-400">{today}</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -170,8 +172,8 @@ export default function TeacherDashboardHome() {
                 </div>
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex justify-between items-start mb-6">
-                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">Ongoing</span>
-                    <span className="text-primary-fixed font-bold text-sm">{currentClass.endsInMinutes} mins left</span>
+                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">{t('Ongoing')}</span>
+                    <span className="text-primary-fixed font-bold text-sm">{currentClass.endsInMinutes} {t('mins left')}</span>
                   </div>
                   <div>
                     <h4 className="text-2xl font-bold mb-1">{currentClass.subject}</h4>
@@ -180,24 +182,24 @@ export default function TeacherDashboardHome() {
                   <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-sm">group</span>
-                      <span className="text-xs font-medium">Class in progress</span>
+                      <span className="text-xs font-medium">{t('Class in progress')}</span>
                     </div>
-                    <button className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-full text-[10px] font-bold uppercase transition-colors" onClick={() => navigate('/teacher/logbook')}>Digitize</button>
+                    <button className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-full text-[10px] font-bold uppercase transition-colors" onClick={() => navigate('/teacher/logbook')}>{t('Digitize')}</button>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="bg-slate-100 p-6 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center text-center min-h-[180px]">
                 <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">event_busy</span>
-                <p className="text-slate-500 font-medium text-sm">No active lesson at this time</p>
-                <p className="text-slate-400 text-xs mt-1">Check your timetable for today's classes</p>
+                <p className="text-slate-500 font-medium text-sm">{t('No active lesson at this time')}</p>
+                <p className="text-slate-400 text-xs mt-1">{t('Check your timetable for today\'s classes')}</p>
               </div>
             )}
 
             {nextClass ? (
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col transition-all hover:shadow-md duration-300 group min-h-[180px]">
                 <div className="flex justify-between items-start mb-6">
-                  <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-200/50">Up Next</span>
+                  <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-200/50">{t('Up Next')}</span>
                   <span className="text-slate-400 font-bold text-sm">{nextClass.startTime.substring(0, 5)}</span>
                 </div>
                 <div>
@@ -207,15 +209,15 @@ export default function TeacherDashboardHome() {
                 <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
                   <div className="flex items-center gap-2 text-slate-400">
                     <span className="material-symbols-outlined text-sm">description</span>
-                    <span className="text-xs font-medium">Lesson Plan ready</span>
+                    <span className="text-xs font-medium">{t('Lesson Plan ready')}</span>
                   </div>
-                  <button className="text-primary text-xs font-bold hover:underline transition-all group-hover:translate-x-1 underline-offset-4" onClick={() => navigate('/teacher/planner')}>View Plan</button>
+                  <button className="text-primary text-xs font-bold hover:underline transition-all group-hover:translate-x-1 underline-offset-4" onClick={() => navigate('/teacher/planner')}>{t('View Plan')}</button>
                 </div>
               </div>
             ) : (
               <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center min-h-[180px]">
                 <span className="material-symbols-outlined text-4xl text-slate-200 mb-2">auto_awesome</span>
-                <p className="text-slate-400 text-xs font-medium italic">All caught up for today!</p>
+                <p className="text-slate-400 text-xs font-medium italic">{t('All caught up for today!')}</p>
               </div>
             )}
           </div>

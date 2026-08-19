@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, User, GraduationCap, Users, Camera, X, RotateCcw, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToastStore } from '../../../../stores/toastStore';
 import { api } from '../../../../services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function EditStudentPage() {
+  const { t } = useTranslation('adminAcademicMgmt');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { addToast } = useToastStore();
@@ -63,7 +65,7 @@ export default function EditStudentPage() {
         }
       }, 100);
     } catch {
-      addToast('Camera access denied. Please allow camera permissions.', 'error');
+      addToast(t('Camera access denied. Please allow camera permissions.'), 'error');
     }
   };
 
@@ -110,7 +112,7 @@ export default function EditStudentPage() {
         setClasses(classesRes.data.results || classesRes.data);
         setSeries(seriesRes.data.results || seriesRes.data);
       } catch (error) {
-        addToast("Failed to load academic data.", "error");
+        addToast(t('Failed to load academic data.'), 'error');
       } finally {
         setIsLoading(false);
       }
@@ -144,7 +146,7 @@ export default function EditStudentPage() {
           setPhotoPreview(student.photo_url);
         }
       } catch (error) {
-        addToast('Failed to load student details.', 'error');
+        addToast(t('Failed to load student details.'), 'error');
       }
     };
     fetchStudent();
@@ -196,11 +198,11 @@ export default function EditStudentPage() {
       if (formData.current_class) payload.current_class = formData.current_class;
 
       const response = await api.patch(`/students/students/${id}/`, payload);
-      addToast(`Student ${response.data.first_name} ${response.data.last_name} updated successfully.`, 'success');
+      addToast(t('Student {{first_name}} {{last_name}} updated successfully.', { first_name: response.data.first_name, last_name: response.data.last_name }), 'success');
       navigate('/admin/academic');
     } catch (error: any) {
       const data = error.response?.data;
-      let detail = 'Failed to update student.';
+      let detail = t('Failed to update student.');
       if (typeof data === 'string') {
         detail = data;
       } else if (data?.detail) {
@@ -221,13 +223,13 @@ export default function EditStudentPage() {
   return (
     <div className="p-4 lg:p-12 max-w-[1200px] mx-auto bg-surface min-h-screen">
       <button onClick={() => navigate('/admin/academic')} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors mb-8">
-        <ArrowLeft className="w-4 h-4" /> Back to Registry
+        <ArrowLeft className="w-4 h-4" /> {t('Back to Registry')}
       </button>
 
       <section className="mb-12">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary/80 block mb-3">Academic Management</span>
-        <h1 className="text-4xl font-black tracking-tight text-on-surface">Edit Student</h1>
-        <p className="text-on-surface-variant mt-2 text-lg">Update student information and academic placement.</p>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary/80 block mb-3">{t('Academic Management')}</span>
+        <h1 className="text-4xl font-black tracking-tight text-on-surface">{t('Edit Student')}</h1>
+        <p className="text-on-surface-variant mt-2 text-lg">{t('Update student information and academic placement.')}</p>
       </section>
 
       <div className="bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm max-w-3xl">
@@ -236,13 +238,13 @@ export default function EditStudentPage() {
           {/* Photo Capture */}
           <section className="space-y-6">
             <h3 className="text-xl font-bold tracking-tight text-on-surface border-b border-outline-variant/10 pb-4 flex items-center gap-3">
-              <User className="text-primary w-6 h-6" /> Personal Information
+              <User className="text-primary w-6 h-6" /> {t('Personal Information')}
             </h3>
 
             <div className="flex flex-col items-center gap-4">
               {photoPreview ? (
                 <div className="relative">
-                  <img src={photoPreview} alt="Student preview" className="w-32 h-32 rounded-3xl object-cover border-4 border-primary/20 shadow-lg" />
+                  <img src={photoPreview} alt={t('Student preview')} className="w-32 h-32 rounded-3xl object-cover border-4 border-primary/20 shadow-lg" />
                   <button onClick={discardPhoto} className="absolute -top-2 -right-2 w-7 h-7 bg-error text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
                     <X className="w-4 h-4" />
                   </button>
@@ -253,66 +255,66 @@ export default function EditStudentPage() {
                   <canvas ref={canvasRef} className="hidden" />
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
                     <button onClick={capturePhoto} className="px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                      <Camera className="w-4 h-4" /> Snap
+                      <Camera className="w-4 h-4" /> {t('Snap')}
                     </button>
                     <button onClick={stopCamera} className="px-4 py-2 bg-surface-container-high text-on-surface rounded-xl font-bold text-xs hover:bg-surface-container-highest transition-all flex items-center gap-2">
-                      <X className="w-4 h-4" /> Cancel
+                      <X className="w-4 h-4" /> {t('Cancel')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <button onClick={openCamera} className="w-32 h-32 rounded-3xl border-2 border-dashed border-outline-variant/30 bg-surface-container-low flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all group">
                   <Camera className="w-8 h-8 text-on-surface-variant/40 group-hover:text-primary transition-colors" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40 group-hover:text-primary transition-colors">Take Photo</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40 group-hover:text-primary transition-colors">{t('Take Photo')}</span>
                 </button>
               )}
               {photoPreview && (
                 <button onClick={retakePhoto} className="flex items-center gap-1.5 text-xs font-bold text-primary hover:underline">
-                  <RotateCcw className="w-3 h-3" /> Retake
+                  <RotateCcw className="w-3 h-3" /> {t('Retake')}
                 </button>
               )}
-              <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/30">Optional — Student Profile Photo</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/30">{t('Optional — Student Profile Photo')}</p>
             </div>
 
             <div className="grid grid-cols-3 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">First Name</label>
-                <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g., Marcus" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('First Name')}</label>
+                <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('e.g., Marcus')} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Middle Name</label>
-                <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g., Nfon" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Middle Name')}</label>
+                <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('e.g., Nfon')} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Last Name</label>
-                <input required type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="e.g., Aurelius" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Last Name')}</label>
+                <input required type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('e.g., Aurelius')} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Date of Birth</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Date of Birth')}</label>
                 <input required type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all" />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Legal Gender</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Legal Gender')}</label>
                 <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer">
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
+                  <option value="M">{t('Male')}</option>
+                  <option value="F">{t('Female')}</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 pt-4 border-t border-outline-variant/10">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Blood Group</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Blood Group')}</label>
                 <select name="blood_group" value={formData.blood_group} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer">
-                  <option value="">Select</option>
+                  <option value="">{t('Select')}</option>
                   {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Emergency Contact Phone</label>
-                <input type="tel" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="+237 6XX XXX XXX" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Emergency Contact Phone')}</label>
+                <input type="tel" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('+237 6XX XXX XXX')} />
               </div>
             </div>
           </section>
@@ -320,31 +322,31 @@ export default function EditStudentPage() {
           {/* Academic Placement */}
           <section className="space-y-6">
             <h3 className="text-xl font-bold tracking-tight text-on-surface border-b border-outline-variant/10 pb-4 flex items-center gap-3">
-              <GraduationCap className="text-primary w-5 h-5" /> Academic Placement
+              <GraduationCap className="text-primary w-5 h-5" /> {t('Academic Placement')}
             </h3>
             <div className="grid grid-cols-1 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Section</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Section')}</label>
                 <select name="section" value={formData.section} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer">
-                  <option value="">Select Section</option>
+                  <option value="">{t('Select Section')}</option>
                   {sections.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  {isLoading && <option disabled>Loading...</option>}
+                  {isLoading && <option disabled>{t('Loading...')}</option>}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Grade Level / Class</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Grade Level / Class')}</label>
                 <select name="current_class" value={formData.current_class} onChange={handleChange} disabled={!formData.section} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50">
-                  <option value="">Select Class</option>
+                  <option value="">{t('Select Class')}</option>
                   {classes.filter((c: any) => !formData.section || c.stream == formData.section).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  {isLoading && <option disabled>Loading...</option>}
+                  {isLoading && <option disabled>{t('Loading...')}</option>}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Series / Track <span className="text-on-surface-variant/40">(2nd Cycle only)</span></label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Series / Track')} <span className="text-on-surface-variant/40">{t('(2nd Cycle only)')}</span></label>
                 <select name="series" value={formData.series} onChange={handleChange} disabled={!formData.current_class} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer disabled:opacity-50">
-                  <option value="">Select Series (optional for 1st Cycle)</option>
+                  <option value="">{t('Select Series (optional for 1st Cycle)')}</option>
                   {series.filter((s: any) => !formData.section || s.stream == formData.section).map((s: any) => <option key={s.id} value={s.id}>{s.code} - {s.name}</option>)}
-                  {isLoading && <option disabled>Loading...</option>}
+                  {isLoading && <option disabled>{t('Loading...')}</option>}
                 </select>
               </div>
             </div>
@@ -353,31 +355,31 @@ export default function EditStudentPage() {
           {/* Parent / Guardian Info (optional update) */}
           <section className="space-y-6">
             <h3 className="text-xl font-bold tracking-tight text-on-surface border-b border-outline-variant/10 pb-4 flex items-center gap-3">
-              <Users className="text-primary w-5 h-5" /> Parent / Guardian Information (Optional Update)
+              <Users className="text-primary w-5 h-5" /> {t('Parent / Guardian Information (Optional Update)')}
             </h3>
-            <p className="text-sm text-on-surface-variant">To create/update a parent account, provide name and email. Phone is optional. Leave all blank to skip.</p>
+            <p className="text-sm text-on-surface-variant">{t('To create/update a parent account, provide name and email. Phone is optional. Leave all blank to skip.')}</p>
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent / Guardian Name</label>
-                <input type="text" name="parent_name" value={formData.parent_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="Full name" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Parent / Guardian Name')}</label>
+                <input type="text" name="parent_name" value={formData.parent_name} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('Full name')} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Relationship</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Relationship')}</label>
                 <select name="relationship_type" value={formData.relationship_type} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all appearance-none cursor-pointer">
-                  <option value="father">Father</option>
-                  <option value="mother">Mother</option>
-                  <option value="guardian">Guardian</option>
+                  <option value="father">{t('Father')}</option>
+                  <option value="mother">{t('Mother')}</option>
+                  <option value="guardian">{t('Guardian')}</option>
                 </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent Phone <span className="text-on-surface-variant/40 normal-case tracking-normal">(optional)</span></label>
-                <input type="tel" name="parent_phone" value={formData.parent_phone} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="+237 6XX XXX XXX" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Parent Phone')} <span className="text-on-surface-variant/40 normal-case tracking-normal">{t('(optional)')}</span></label>
+                <input type="tel" name="parent_phone" value={formData.parent_phone} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('+237 6XX XXX XXX')} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Parent Email</label>
-                <input type="email" name="parent_email" value={formData.parent_email} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder="email@example.com" />
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('Parent Email')}</label>
+                <input type="email" name="parent_email" value={formData.parent_email} onChange={handleChange} className="w-full bg-surface-container-highest border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-4 text-sm font-bold shadow-inner transition-all placeholder:text-on-surface-variant/40" placeholder={t('email@example.com')} />
               </div>
             </div>
           </section>

@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../services/api';
 import { useToastStore } from '../../../stores/toastStore';
 import { useSectionStore } from '../../../stores/sectionStore';
 import { downloadPdf } from '../../../utils/pdf';
 import {
   CalendarDays, Wand2, LayoutGrid, Pencil,
-  CheckCircle2, AlertTriangle, Printer, FileDown, CheckSquare, Square, RefreshCw
+  CheckCircle2, AlertTriangle, Printer, FileDown, CheckSquare, Square, RefreshCw, Undo2
 } from 'lucide-react';
 import TimetableWizard from './components/wizard/TimetableWizard';
 import TimetableGridView from './components/TimetableGridView';
@@ -15,6 +16,7 @@ type View = 'list' | 'wizard' | 'grid';
 
 const STATUS_COLORS: Record<string, string> = {
   published: 'bg-green-100 text-green-700',
+  approved:  'bg-emerald-100 text-emerald-700',
   generated: 'bg-blue-100 text-blue-700',
   relaxed:   'bg-amber-100 text-amber-700',
   infeasible:'bg-red-100 text-red-700',
@@ -30,6 +32,7 @@ const DEFAULT_PERIODS = [
 ];
 
 export default function Timetables() {
+  const { t } = useTranslation('adminAcademic');
   const { addToast } = useToastStore();
   const { activeSectionId } = useSectionStore();
   const allStoreSections = useSectionStore((st: any) => st.sections);
@@ -93,7 +96,7 @@ export default function Timetables() {
       setSubjects(  subsRes.data.results  || subsRes.data);
       setTeachers(  tchRes.data.results   || tchRes.data || []);
     } catch {
-      addToast('Failed to load timetable data.', 'error');
+      addToast(t('Failed to load timetable data.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -131,7 +134,7 @@ export default function Timetables() {
       setSelected(res.data);
       setView('grid');
     } catch {
-      addToast('Failed to load timetable.', 'error');
+      addToast(t('Failed to load timetable.'), 'error');
     }
   };
 
@@ -181,9 +184,9 @@ export default function Timetables() {
       const ids = snapshots.map(s => s.id).join(',');
       const year = snapshots[0].academic_year_name || 'Timetables';
       await downloadPdf(`/timetable/timetables/export_pdf/?ids=${ids}`, `${year}_Timetables.pdf`);
-      addToast(`Exported ${snapshots.length} timetable(s) to PDF.`, 'success');
+      addToast(t('Exported {{count}} timetable(s) to PDF.', { count: snapshots.length }), 'success');
     } catch {
-      addToast('PDF export failed.', 'error');
+      addToast(t('PDF export failed.'), 'error');
     } finally {
       setExporting(false);
     }
@@ -191,22 +194,84 @@ export default function Timetables() {
 
   const handlePrint = () => window.print();
 
+  // ── approve / commit a timetable to the school schedule ────────────────── //
+  const [approving, setApproving] = useState<string | null>(null);
+
+  const APPROVABLE = new Set(['generated', 'relaxed', 'under_review', 'draft']);
+
+  const handleApprove = async (tt: any) => {
+    const ok = window.confirm(
+      `${t('Approve {{name}}?', { name: tt.class_name })}\n\n` +
+      t('Approved timetables become the official school schedule: their teachers and rooms are reserved school-wide and every other section will schedule around them.')
+    );
+    if (!ok) return;
+    setApproving(tt.id);
+    try {
+      const res = await api.post(`/timetable/timetables/${tt.id}/approve/`);
+      addToast(res.data.message || t('{{name}} approved.', { name: tt.class_name }), 'success');
+      await fetchAll();
+      setRegenTick(t => t + 1);
+    } catch (err: any) {
+      addToast(err.response?.data?.detail || t('Failed to approve timetable.'), 'error');
+    } finally {
+      setApproving(null);
+    }
+  };
+
+  const handleApproveSelected = async () => {
+    if (selectedIds.length === 0) return;
+    const ok = window.confirm(
+      `${t('Approve {{count}} selected timetable(s)?', { count: selectedIds.length })}\n\n` +
+      t('Approved timetables become the official school schedule: their teachers and rooms are reserved school-wide and every other section will schedule around them.')
+    );
+    if (!ok) return;
+    setApproving('bulk');
+    const results = await Promise.allSettled(
+      selectedIds.map((id) => api.post(`/timetable/timetables/${id}/approve/`))
+    );
+    const okCount = results.filter((r) => r.status === 'fulfilled').length;
+    const failCount = results.length - okCount;
+    if (okCount > 0) addToast(t('Approved {{count}} timetable(s).', { count: okCount }), 'success');
+    if (failCount > 0) addToast(t('{{count}} timetable(s) failed approval (likely hard clashes).', { count: failCount }), 'error');
+    setApproving(null);
+    await fetchAll();
+    setRegenTick(t => t + 1);
+  };
+
+  const handleUnapprove = async (tt: any) => {
+    const wasPublished = tt.generation_status === 'published';
+    const ok = window.confirm(
+      `${t(wasPublished ? 'Unpublish {{name}}?' : 'Unapprove {{name}}?', { name: tt.class_name })}\n\n` +
+      t('It goes back to GENERATED: its teachers and rooms are released and other sections may schedule around them again. You can re-approve later.')
+    );
+    if (!ok) return;
+    setApproving(tt.id);
+    try {
+      const res = await api.post(`/timetable/timetables/${tt.id}/unapprove/`);
+      addToast(res.data.message || t('{{name}} reverted to generated.', { name: tt.class_name }), 'success');
+      await fetchAll();
+      setRegenTick(t => t + 1);
+    } catch (err: any) {
+      addToast(err.response?.data?.detail || t('Failed to revert timetable.'), 'error');
+    } finally {
+      setApproving(null);
+    }
+  };
+
   // ── regenerate the filtered scope (section or whole year) ──────────────── //
   const [regenerating, setRegenerating] = useState(false);
 
   const handleRegenerate = async () => {
     if (yearFilter === 'all') {
-      addToast('Select a specific academic year to regenerate.', 'info');
+      addToast(t('Select a specific academic year to regenerate.'), 'info');
       return;
     }
     const scope = sectionFilter === 'all'
-      ? `the whole year (${filtered.length} classes)`
-      : `the ${sectionFilter} section`;
+      ? t('the whole year ({{count}} classes)', { count: filtered.length })
+      : t('the {{section}} section', { section: sectionFilter });
     const ok = window.confirm(
-      `Regenerate ${scope} from the current lessons?\n\n` +
-      'All classes are solved together in one pass, so shared teachers are never double-booked. ' +
-      'Locked slots stay fixed and committed slots of other sections stay reserved. ' +
-      'Published timetables are skipped — unpublish them to include them.'
+      `${t('Regenerate {{scope}} from the current lessons?', { scope })}\n\n` +
+      t('All classes are solved together in one pass, so shared teachers are never double-booked. Locked slots stay fixed and committed slots of other sections stay reserved. Published timetables are skipped — unpublish them to include them.')
     );
     if (!ok) return;
     setRegenerating(true);
@@ -217,18 +282,25 @@ export default function Timetables() {
           (t.section_name || 'General') === sectionFilter && t.class_details?.stream);
         stream = tt?.class_details?.stream ?? null;
       }
-      const res = await api.post('/timetable/timetables/generate_school/', {
-        academic_year: yearId,
-        stream: stream || 'none',
-      });
-      addToast(res.data.message || 'Timetables regenerated.', 'success');
+      const payload: any = { academic_year: yearId };
+      if (sectionFilter !== 'all') {
+        payload.stream = stream || 'none';
+      }
+      const res = await api.post('/timetable/timetables/generate_school/', payload);
+      addToast(res.data.message || t('Timetables regenerated.'), 'success');
       if (res.data.skipped?.length) {
-        addToast(`Skipped ${res.data.skipped.length} published: ${res.data.skipped.map((s: any) => s.class_name).join(', ')}`, 'info');
+        addToast(t('Skipped {{count}} published: {{names}}', { count: res.data.skipped.length, names: res.data.skipped.map((s: any) => s.class_name).join(', ') }), 'info');
       }
       await fetchAll();
       setRegenTick(t => t + 1);
     } catch (err: any) {
-      addToast(err.response?.data?.detail || 'Failed to regenerate timetables.', 'error');
+      const reason = err.response?.data?.detail || err.response?.data?.message;
+      addToast(
+        reason
+          ? t('{{reason}} — The button is ready again; fix it and regenerate, or retry for a different combination.', { reason })
+          : t('Failed to regenerate timetables.'),
+        'error'
+      );
     } finally {
       setRegenerating(false);
     }
@@ -238,13 +310,13 @@ export default function Timetables() {
   const handleWizardDone = async (_result: any) => {
     await fetchAll();
     setView('list');
-    addToast('Timetables ready. Click any class row to edit the grid.', 'success');
+    addToast(t('Timetables ready. Click any class row to edit the grid.'), 'success');
   };
 
   // ── status badge ─────────────────────────────────────────────────────── //
   const badge = (status: string) => (
     <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${STATUS_COLORS[status] || STATUS_COLORS.draft}`}>
-      {status || 'draft'}
+      {t(status || 'draft')}
     </span>
   );
 
@@ -281,26 +353,26 @@ export default function Timetables() {
       {/* Page header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-on-surface">Timetables</h1>
-          <p className="text-sm text-on-surface-variant mt-0.5">Generate and manage class schedules across your school.</p>
+          <h1 className="text-3xl font-black text-on-surface">{t('Timetables')}</h1>
+          <p className="text-sm text-on-surface-variant mt-0.5">{t('Generate and manage class schedules across your school.')}</p>
         </div>
         <button
           onClick={() => setView('wizard')}
           className="bg-primary text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/25 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
         >
-          <Wand2 className="w-4 h-4" /> New Timetable Wizard
+          <Wand2 className="w-4 h-4" /> {t('New Timetable Wizard')}
         </button>
       </div>
 
       {/* Filters */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm px-5 py-4 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-[10px] font-black uppercase tracking-widest text-outline">Academic Year</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-outline">{t('Academic Year')}</span>
           <button
             onClick={() => setYearFilter('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${yearFilter === 'all' ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
           >
-            All
+            {t('All')}
           </button>
           {years.map((y: any) => (
             <button
@@ -315,12 +387,12 @@ export default function Timetables() {
 
         {sectionNames.length > 1 && (
           <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-outline-variant/10">
-            <span className="text-[10px] font-black uppercase tracking-widest text-outline">Section</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-outline">{t('Section')}</span>
             <button
               onClick={() => setSectionFilter('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${sectionFilter === 'all' ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
             >
-              All sections
+              {t('All sections')}
             </button>
             {sectionNames.map((s: any) => (
               <button
@@ -336,17 +408,17 @@ export default function Timetables() {
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-on-surface-variant animate-pulse">Loading timetables…</div>
+        <div className="text-center py-20 text-on-surface-variant animate-pulse">{t('Loading timetables…')}</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 bg-surface-container-lowest rounded-2xl border border-outline-variant/15 border-dashed">
           <CalendarDays className="w-12 h-12 text-outline mx-auto mb-4" />
-          <p className="font-bold text-on-surface-variant">No timetables match the selected filters.</p>
-          <p className="text-sm text-outline mt-1 mb-6">Try another year or section, or use the wizard to set up your school week and generate schedules.</p>
+          <p className="font-bold text-on-surface-variant">{t('No timetables match the selected filters.')}</p>
+          <p className="text-sm text-outline mt-1 mb-6">{t('Try another year or section, or use the wizard to set up your school week and generate schedules.')}</p>
           <button
             onClick={() => setView('wizard')}
             className="bg-primary text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/25 hover:opacity-90 transition-all inline-flex items-center gap-2"
           >
-            <Wand2 className="w-4 h-4" /> Start Wizard
+            <Wand2 className="w-4 h-4" /> {t('Start Wizard')}
           </button>
         </div>
       ) : (
@@ -356,56 +428,67 @@ export default function Timetables() {
               <button
                 onClick={toggleSelectAll}
                 className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors"
-                title={allSelected ? 'Clear selection' : 'Select all classes — their timetables are shown below, class by class'}
+                title={allSelected ? t('Clear selection') : t('Select all classes — their timetables are shown below, class by class')}
               >
                 {allSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
-                {allSelected ? 'Clear all' : 'Select all classes'}
+                {allSelected ? t('Clear all') : t('Select all classes')}
               </button>
               <span className="text-sm font-bold text-on-surface">
-                {filtered.length} timetable{filtered.length !== 1 ? 's' : ''}
+                {filtered.length} {t(filtered.length === 1 ? 'timetable' : 'timetables')}
               </span>
             </div>
             <div className="flex items-center gap-3">
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-2 mr-1">
-                  <span className="text-xs font-black text-primary bg-primary/10 rounded-full px-3 py-1">{selectedIds.length} selected</span>
+                  <span className="text-xs font-black text-primary bg-primary/10 rounded-full px-3 py-1">{t('{{count}} selected', { count: selectedIds.length })}</span>
                   <button
                     onClick={handleExportPdf}
                     disabled={exporting || snapshots.length === 0}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-primary text-white shadow-lg shadow-primary/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40"
-                    title="Download a PDF with one page per selected class"
+                    title={t('Download a PDF with one page per selected class')}
                   >
-                    <FileDown className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Export PDF'}
+                    <FileDown className="w-4 h-4" /> {exporting ? t('Exporting...') : t('Export PDF')}
                   </button>
                   <button
                     onClick={handlePrint}
                     disabled={snapshots.length === 0}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-40"
-                    title="Print the selected timetables"
+                    title={t('Print the selected timetables')}
                   >
-                    <Printer className="w-4 h-4" /> Print
+                    <Printer className="w-4 h-4" /> {t('Print')}
+                  </button>
+                  <button
+                    onClick={handleApproveSelected}
+                    disabled={approving !== null}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all disabled:opacity-40"
+                    title={t('Approve the selected timetables as the official school schedule')}
+                  >
+                    <CheckCircle2 className={`w-4 h-4 ${approving === 'bulk' ? 'animate-pulse' : ''}`} />
+                    {approving === 'bulk' ? t('Approving...') : t('Approve')}
                   </button>
                   <button
                     onClick={clearSelection}
                     className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-on-surface-variant hover:bg-surface-container transition-colors"
                   >
-                    Clear
+                    {t('Clear')}
                   </button>
                 </div>
               )}
-              <span className="text-xs text-outline">{filtered.filter((t: any) => t.generation_status === 'published').length} published</span>
+              <span className="text-xs text-outline">{t('{{count}} approved', { count: filtered.filter((t: any) => t.generation_status === 'approved').length })}</span>
               <span className="text-outline">·</span>
-              <span className="text-xs text-outline">{filtered.filter((t: any) => t.generation_status === 'generated').length} generated</span>
+              <span className="text-xs text-outline">{t('{{count}} published', { count: filtered.filter((t: any) => t.generation_status === 'published').length })}</span>
+              <span className="text-outline">·</span>
+              <span className="text-xs text-outline">{t('{{count}} generated', { count: filtered.filter((t: any) => t.generation_status === 'generated').length })}</span>
               <button
                 onClick={handleRegenerate}
                 disabled={regenerating || filtered.length === 0}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all disabled:opacity-40"
                 title={sectionFilter === 'all'
-                  ? 'Regenerate all classes of this year in one pass (clash-free)'
-                  : `Regenerate the whole ${sectionFilter} section in one pass (clash-free)`}
+                  ? t('Regenerate all classes of this year in one pass (clash-free)')
+                  : t('Regenerate the whole {{section}} section in one pass (clash-free)', { section: sectionFilter })}
               >
                 <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
-                {regenerating ? 'Solving...' : sectionFilter === 'all' ? 'Regenerate year' : `Regenerate ${sectionFilter}`}
+                {regenerating ? t('Solving...') : sectionFilter === 'all' ? t('Regenerate year') : t('Regenerate {{section}}', { section: sectionFilter })}
               </button>
             </div>
           </div>
@@ -425,7 +508,7 @@ export default function Timetables() {
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleSelect(tt.id); }}
                     className="shrink-0"
-                    title={isSel ? 'Deselect this class' : 'Select this class to view / export'}
+                    title={isSel ? t('Deselect this class') : t('Select this class to view / export')}
                   >
                     {isSel
                       ? <CheckSquare className="w-5 h-5 text-primary" />
@@ -443,19 +526,43 @@ export default function Timetables() {
                   <div>
                     <p className="font-bold text-sm">{tt.class_name}</p>
                     <p className="text-[11px] text-on-surface-variant">
-                      {tt.section_name} · {daysOf(tt).length} days × {periodsOf(tt).length} periods
+                      {t('{{section}} · {{days}} days × {{periods}} periods', { section: tt.section_name, days: daysOf(tt).length, periods: periodsOf(tt).length })}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {badge(tt.generation_status || 'draft')}
+                  {APPROVABLE.has(tt.generation_status) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleApprove(tt); }}
+                      disabled={approving === tt.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all disabled:opacity-40"
+                      title={t('Approve this timetable as the official school schedule — its teachers and rooms are reserved school-wide')}
+                    >
+                      <CheckCircle2 className={`w-3 h-3 ${approving === tt.id ? 'animate-pulse' : ''}`} />
+                      {approving === tt.id ? t('Approving...') : t('Approve')}
+                    </button>
+                  )}
+                  {(tt.generation_status === 'approved' || tt.generation_status === 'published') && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleUnapprove(tt); }}
+                      disabled={approving === tt.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest bg-slate-200 text-slate-700 hover:bg-slate-300 active:scale-95 transition-all disabled:opacity-40"
+                      title={tt.generation_status === 'published'
+                        ? t('Unpublish this timetable — release its teachers and rooms')
+                        : t('Unapprove this timetable — release its teachers and rooms')}
+                    >
+                      <Undo2 className="w-3 h-3" />
+                      {tt.generation_status === 'published' ? t('Unpublish') : t('Unapprove')}
+                    </button>
+                  )}
                   <button
                     onClick={(e) => { e.stopPropagation(); openGrid(tt); }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors"
-                    title="Open the interactive grid editor for this class"
-                  >
-                    <Pencil className="w-3 h-3" /> Edit
-                  </button>
+title={t('Open the interactive grid editor for this class')}
+                    >
+                      <Pencil className="w-3 h-3" /> {t('Edit')}
+                    </button>
                   <span className="text-on-surface-variant group-hover:text-on-surface transition-colors">›</span>
                 </div>
               </div>
@@ -471,12 +578,12 @@ export default function Timetables() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black text-on-surface">
-                {snapshots.length === 1 ? `${snapshots[0]?.class_name} — weekly timetable` : 'Weekly timetables'}
+                {snapshots.length === 1 ? t('{{name}} — weekly timetable', { name: snapshots[0]?.class_name }) : t('Weekly timetables')}
               </h2>
               <p className="text-xs text-on-surface-variant mt-0.5">
                 {snapshots.length === 1
-                  ? 'Showing the full weekly grid for this class.'
-                  : `Showing ${snapshots.length} classes of the section — scroll down to go class by class.`}
+                  ? t('Showing the full weekly grid for this class.')
+                  : t('Showing {{count}} classes of the section — scroll down to go class by class.', { count: snapshots.length })}
               </p>
             </div>
             <div className="flex items-center gap-2 print:hidden">
@@ -485,20 +592,20 @@ export default function Timetables() {
                 disabled={exporting || snapshots.length === 0}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-primary text-white shadow-lg shadow-primary/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40"
               >
-                <FileDown className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Export PDF'}
+                <FileDown className="w-4 h-4" /> {exporting ? t('Exporting...') : t('Export PDF')}
               </button>
               <button
                 onClick={handlePrint}
                 disabled={snapshots.length === 0}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors"
               >
-                <Printer className="w-4 h-4" /> Print
+                <Printer className="w-4 h-4" /> {t('Print')}
               </button>
             </div>
           </div>
 
           {loadingSnapshots ? (
-            <div className="text-center py-16 text-on-surface-variant animate-pulse">Loading timetables…</div>
+            <div className="text-center py-16 text-on-surface-variant animate-pulse">{t('Loading timetables…')}</div>
           ) : (
             snapshots.map((tt: any) => (
               <TimetableSnapshotGrid key={tt.id} tt={tt} />
@@ -519,16 +626,17 @@ export default function Timetables() {
 
       {/* Section summary */}
       {filtered.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {[
             { label: 'Total',     value: filtered.length,                                                              color: 'text-on-surface' },
-            { label: 'Generated', value: filtered.filter((t: any) => ['generated','published'].includes(t.generation_status)).length, color: 'text-blue-600' },
-            { label: 'Published', value: filtered.filter((t: any) => t.generation_status === 'published').length,     color: 'text-green-600' },
+            { label: 'Generated', value: filtered.filter((t: any) => t.generation_status === 'generated').length,       color: 'text-blue-600' },
+            { label: 'Approved',  value: filtered.filter((t: any) => t.generation_status === 'approved').length,        color: 'text-emerald-600' },
+            { label: 'Published', value: filtered.filter((t: any) => t.generation_status === 'published').length,       color: 'text-green-600' },
             { label: 'Draft',     value: filtered.filter((t: any) => !t.generation_status || t.generation_status === 'draft').length, color: 'text-outline' },
           ].map(s => (
             <div key={s.label} className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm p-4 text-center">
               <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-outline mt-1">{s.label}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-outline mt-1">{t(s.label)}</p>
             </div>
           ))}
         </div>

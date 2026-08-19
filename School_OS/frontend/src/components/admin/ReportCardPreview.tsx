@@ -1,4 +1,6 @@
-﻿export interface ReportCardStyle {
+﻿import { useTranslation } from 'react-i18next';
+
+export interface ReportCardStyle {
   primary_color: string;
   secondary_color: string;
   accent_color: string;
@@ -158,6 +160,7 @@ export default function ReportCardPreview({
   punishments = '-',
   warning = '-',
 }: ReportCardPreviewProps) {
+  const { t } = useTranslation('adminStaffOps');
   const font = FONT_STACK[st.header_font];
   const scale = 0.42;
   const previewW = 210 * scale;
@@ -194,10 +197,10 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
             {st.show_republic_header && (
               <>
                 <div className="font-bold leading-tight" style={{ fontSize: `${st.header_font_size * scale * 2.5}px` }}>
-                  REPUBLIC OF CAMEROON
+                  {t('REPUBLIC OF CAMEROON')}
                 </div>
                 <div className="italic" style={{ fontSize: `${st.header_font_size * scale * 2}px`, color: st.secondary_color }}>
-                  Peace – Work – Fatherland
+                  {t('Peace – Work – Fatherland')}
                 </div>
               </>
             )}
@@ -224,10 +227,10 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
               {termName}
             </div>
             <div className="font-bold tracking-wide" style={{ fontSize: `${st.title_font_size * scale * 1.8}px`, color: st.accent_color }}>
-              REPORT CARD
+              {t('REPORT CARD')}
             </div>
             <div className="italic" style={{ fontSize: `${st.header_font_size * scale * 2}px`, color: st.secondary_color }}>
-              Academic Year {academicYear}
+              {t('Academic Year {{year}}', { year: academicYear })}
             </div>
           </div>
 
@@ -236,18 +239,18 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
             {st.show_republic_header && (
               <>
                 <div className="font-bold leading-tight" style={{ fontSize: `${st.header_font_size * scale * 2.5}px` }}>
-                  RÉPUBLIQUE DU CAMEROUN
+                  {t('RÉPUBLIQUE DU CAMEROUN')}
                 </div>
                 <div className="italic" style={{ fontSize: `${st.header_font_size * scale * 2}px`, color: st.secondary_color }}>
-                  Paix – Travail – Patrie
+                  {t('Paix – Travail – Patrie')}
                 </div>
               </>
             )}
             {st.show_ministry_header && (
               <div className="mt-1" style={{ fontSize: `${st.header_font_size * scale * 2}px`, color: st.secondary_color }}>
-                <div className="font-bold">MINISTRY OF SECONDARY</div>
-                <div className="font-bold" style={{ marginTop: '-0.5px' }}>EDUCATION</div>
-                <div className="italic text-[2.8px]">Regional Delegation</div>
+                <div className="font-bold">{t('MINISTRY OF SECONDARY')}</div>
+                <div className="font-bold" style={{ marginTop: '-0.5px' }}>{t('EDUCATION')}</div>
+                <div className="italic text-[2.8px]">{t('Regional Delegation')}</div>
               </div>
             )}
           </div>
@@ -274,34 +277,34 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
           >
             <div className="flex" style={{ borderBottom: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
               <div className="flex-1 p-1" style={st.show_alternating_info_rows ? { backgroundColor: st.table_alt_row_bg } : {}}>
-                <span className="font-bold">Class :</span> {className}
+                <span className="font-bold">{t('Class :')}</span> {className}
               </div>
               <div className="flex-1 p-1" style={{ borderLeft: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
-                <span className="font-bold">Class Master :</span> _______________
+                <span className="font-bold">{t('Class Master :')}</span> _______________
               </div>
             </div>
             <div className="flex" style={{ borderBottom: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
               <div className="flex-1 p-1">
-                <span className="font-bold">Surname & Name :</span> {studentName}
+                <span className="font-bold">{t('Surname & Name :')}</span> {studentName}
               </div>
               <div className="flex-1 p-1" style={{ borderLeft: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
-                <span className="font-bold">Number on roll :</span> _______________
+                <span className="font-bold">{t('Number on roll :')}</span> _______________
               </div>
             </div>
             <div className="flex" style={{ borderBottom: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
               <div className="flex-1 p-1" style={st.show_alternating_info_rows ? { backgroundColor: st.table_alt_row_bg } : {}}>
-                <span className="font-bold">Admission No :</span> {admissionNumber}
+                <span className="font-bold">{t('Admission No :')}</span> {admissionNumber}
               </div>
               <div className="flex-1 p-1" style={{ borderLeft: `${st.table_border_width * 0.2}px solid ${st.border_color}`, ...(st.show_alternating_info_rows ? { backgroundColor: st.table_alt_row_bg } : {}) }}>
-                <span className="font-bold">Repeater :</span> {repeater || '-'}
+                <span className="font-bold">{t('Repeater :')}</span> {repeater || '-'}
               </div>
             </div>
             <div className="flex">
               <div className="flex-1 p-1">
-                <span className="font-bold">Date of birth :</span> {dateOfBirth || '-'}
+                <span className="font-bold">{t('Date of birth :')}</span> {dateOfBirth || '-'}
               </div>
               <div className="flex-1 p-1" style={{ borderLeft: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>
-                <span className="font-bold">Tel :</span> _______________
+                <span className="font-bold">{t('Tel :')}</span> _______________
               </div>
             </div>
           </div>
@@ -325,11 +328,11 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
               color: st.primary_color,
             }}
           >
-            <div className="py-1 px-1 text-left" style={{ flex: '3', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>SUBJECTS</div>
-            <div className="py-1 px-1" style={{ flex: '0.8', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>COEF.</div>
+            <div className="py-1 px-1 text-left" style={{ flex: '3', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>{t('SUBJECTS')}</div>
+            <div className="py-1 px-1" style={{ flex: '0.8', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>{t('COEF.')}</div>
             <div className="py-1 px-1" style={{ flex: '1.5', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>{termName}</div>
-            <div className="py-1 px-1" style={{ flex: '0.8', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>GRADE</div>
-            <div className="py-1 px-1" style={{ flex: '1.5' }}>REMARKS</div>
+            <div className="py-1 px-1" style={{ flex: '0.8', borderRight: `${st.table_border_width * 0.2}px solid ${st.border_color}` }}>{t('GRADE')}</div>
+            <div className="py-1 px-1" style={{ flex: '1.5' }}>{t('REMARKS')}</div>
           </div>
 
           {/* Subject Rows */}
@@ -348,7 +351,7 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
                 <span style={{ color: subj.grade === 'A' ? '#2E7D32' : subj.grade === 'D' ? '#C62828' : st.primary_color }}>{subj.grade}</span>
               </div>
               <div className="py-0.5 px-1 text-[9px] italic" style={{ flex: '1.5', ...(st.show_alternating_rows && i % 2 === 1 ? { backgroundColor: st.table_alt_row_bg } : {}) }}>
-                {subj.remarks || (subj.score && subj.score >= 15 ? 'Excellent' : subj.score && subj.score >= 12 ? 'Good' : subj.score && subj.score >= 10 ? 'Fair' : subj.score ? 'Weak' : '-')}
+                {subj.remarks || (subj.score && subj.score >= 15 ? t('Excellent') : subj.score && subj.score >= 12 ? t('Good') : subj.score && subj.score >= 10 ? t('Fair') : subj.score ? t('Weak') : '-')}
               </div>
             </InnerBorderedRow>
           ))}
@@ -356,7 +359,7 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
           {/* Total Row */}
           <InnerBorderedRow borderColor={st.border_color} borderWidth={st.table_border_width * 0.4}>
             <div className="py-1 px-1 font-bold" style={{ flex: '3', borderRight: `${Math.max(st.table_border_width * 0.15, 0.1)}px solid ${st.border_color}`, backgroundColor: st.table_header_bg }}>
-              TOTAL
+              {t('TOTAL')}
             </div>
             <div className="py-1 px-1 text-center font-bold" style={{ flex: '0.8', borderRight: `${Math.max(st.table_border_width * 0.15, 0.1)}px solid ${st.border_color}`, backgroundColor: st.table_header_bg }}>
               {totalCoef}
@@ -390,29 +393,29 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
               letterSpacing: '1px',
             }}
           >
-            ANNUAL PERFORMANCE SUMMARY
+            {t('ANNUAL PERFORMANCE SUMMARY')}
           </div>
           <div className="flex text-center">
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none', backgroundColor: st.table_header_bg }}>
-              <div className="font-bold">{termName} Av.</div>
+              <div className="font-bold">{t('{{term}} Av.', { term: termName })}</div>
               <div className="text-lg font-bold" style={{ color: st.accent_color }}>{fmt(annualAverage)}</div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none' }}>
-              <div className="font-bold">Class Av.</div>
+              <div className="font-bold">{t('Class Av.')}</div>
               <div className="text-lg font-bold" style={{ color: st.secondary_color }}>{fmt(classAverage)}</div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none', backgroundColor: st.table_header_bg }}>
-              <div className="font-bold">Best Av.</div>
+              <div className="font-bold">{t('Best Av.')}</div>
               <div className="text-lg">{fmt(bestAverage)}</div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ borderRight: st.show_summary_borders ? `${st.table_border_width * 0.15}px solid ${st.border_color}` : 'none' }}>
-              <div className="font-bold">Rank</div>
+              <div className="font-bold">{t('Rank')}</div>
               <div className="text-lg font-bold" style={{ color: rank !== undefined && rank !== null && rank <= 3 ? '#2E7D32' : st.primary_color }}>
                 {rank !== undefined && rank !== null ? <>{rank}<sup>{rankSuffix(rank)}</sup></> : '-'}
               </div>
             </div>
             <div className="flex-1 py-1 px-1" style={{ backgroundColor: st.table_header_bg }}>
-              <div className="font-bold">Annual Av.</div>
+              <div className="font-bold">{t('Annual Av.')}</div>
               <div className="text-lg font-bold" style={{ color: st.accent_color }}>{fmt(annualAverage)}</div>
             </div>
           </div>
@@ -435,20 +438,20 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
                 borderBottom: `${st.table_border_width * 0.2}px solid ${st.border_color}`,
               }}
             >
-              Discipline & Conduct
+              {t('Discipline & Conduct')}
             </div>
             <div className="flex text-center">
               <div className="flex-1 py-1" style={{ borderRight: `${st.table_border_width * 0.15}px solid ${st.border_color}` }}>
-                <span className="font-bold">Absences :</span> {absences ?? '-'}
+                <span className="font-bold">{t('Absences :')}</span> {absences ?? '-'}
               </div>
               <div className="flex-1 py-1" style={{ borderRight: `${st.table_border_width * 0.15}px solid ${st.border_color}` }}>
-                <span className="font-bold">Suspensions :</span> {suspensions}
+                <span className="font-bold">{t('Suspensions :')}</span> {suspensions}
               </div>
               <div className="flex-1 py-1" style={{ borderRight: `${st.table_border_width * 0.15}px solid ${st.border_color}` }}>
-                <span className="font-bold">Punishments :</span> {punishments}
+                <span className="font-bold">{t('Punishments :')}</span> {punishments}
               </div>
               <div className="flex-1 py-1">
-                <span className="font-bold">Warning :</span> {warning}
+                <span className="font-bold">{t('Warning :')}</span> {warning}
               </div>
             </div>
           </div>
@@ -467,7 +470,7 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
               letterSpacing: '0.5px',
             }}
           >
-            <span style={{ color: '#2E7D32' }}>DECISION :</span> {decision || '-'}
+            <span style={{ color: '#2E7D32' }}>{t('DECISION :')}</span> {decision || '-'}
           </div>
         )}
 
@@ -483,15 +486,15 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
           >
             <div className="text-center" style={{ width: '28%' }}>
               <div className="mb-1" style={{ borderTop: `${st.table_border_width * 0.2}px solid ${st.border_color}`, paddingTop: '0.5px', width: `${st.signature_line_width * scale * 1.2}mm` }} />
-              <div className="font-bold text-[7px]">CLASS MASTER</div>
+              <div className="font-bold text-[7px]">{t('CLASS MASTER')}</div>
             </div>
             <div className="text-center" style={{ width: '28%' }}>
               <div className="mb-1" style={{ borderTop: `${st.table_border_width * 0.2}px solid ${st.border_color}`, paddingTop: '0.5px', width: `${st.signature_line_width * scale * 1.2}mm` }} />
-              <div className="font-bold text-[7px]">PARENTS' SIGNATURE</div>
+              <div className="font-bold text-[7px]">{t("PARENTS' SIGNATURE")}</div>
             </div>
             <div className="text-center" style={{ width: '28%' }}>
               <div className="mb-1" style={{ borderTop: `${st.table_border_width * 0.2}px solid ${st.border_color}`, paddingTop: '0.5px', width: `${st.signature_line_width * scale * 1.2}mm` }} />
-              <div className="font-bold text-[7px]">PRINCIPAL</div>
+              <div className="font-bold text-[7px]">{t('PRINCIPAL')}</div>
             </div>
           </div>
         )}
@@ -507,7 +510,7 @@ function InnerBorderedRow({ children, borderColor, borderWidth }: { children: Re
               paddingTop: '1px',
             }}
           >
-            Generated by School OS — Official Report Card — {new Date().toLocaleDateString('en-GB')}
+            {t('Generated by School OS — Official Report Card — {{date}}', { date: new Date().toLocaleDateString('en-GB') })}
           </div>
         )}
       </div>
