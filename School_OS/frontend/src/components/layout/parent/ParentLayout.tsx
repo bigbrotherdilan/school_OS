@@ -5,7 +5,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useTenantStore } from '../../../stores/tenantStore';
 import { useParentStore } from '../../../stores/parentStore';
 import NotificationsDropdown from '../NotificationsDropdown';
-import LanguageSwitcher from '../ui/LanguageSwitcher';
+import LanguageSwitcher from '../../ui/LanguageSwitcher';
 
 const ParentLayout: React.FC = () => {
     const { t } = useTranslation('layout');
