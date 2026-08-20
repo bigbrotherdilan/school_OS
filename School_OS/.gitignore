@@ -11,6 +11,10 @@ __pycache__/
 .env.local
 .env.production
 backend/.env
+credentials.md
+*.secret
+*.key
+tester_credentials.csv
 
 # Build
 frontend/dist/

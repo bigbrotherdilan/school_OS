@@ -49,6 +49,7 @@ _cookies.txt
 _r*.json
 _c*.json
 *.secret
+tester_credentials.csv
 
 # Process/server logs
 *.err
